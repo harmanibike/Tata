@@ -48,7 +48,7 @@ class NetworkHelper(context: Context, private val knowledgeStore: KnowledgeStore
         val allNews = mutableListOf<NewsItem>()
         val errors = mutableListOf<String>()
 
-        feeds.forEach { (feedUrl, source) ->
+        feeds.forEach { (source, feedUrl) ->
             try {
                 allNews += readFeed(feedUrl, source).filter { item ->
                     SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(item.publishedAt) == today

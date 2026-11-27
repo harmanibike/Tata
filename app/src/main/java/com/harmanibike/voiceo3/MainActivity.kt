@@ -60,176 +60,194 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun buildInterface() {
-        val ink = Color.rgb(25, 37, 52)
-        val muted = Color.rgb(119, 132, 148)
-        val accent = Color.rgb(38, 105, 230)
+        val purple = Color.rgb(91, 38, 226)
+        val violet = Color.rgb(174, 47, 235)
+        val ink = Color.rgb(43, 43, 53)
+        val muted = Color.rgb(115, 115, 128)
+        val white = Color.WHITE
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.rgb(246, 248, 252))
-            setPadding(dp(16), dp(10), dp(16), dp(12))
+            setBackgroundColor(Color.rgb(247, 247, 250))
         }
 
         val header = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(4), dp(8), dp(4), dp(12))
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), dp(22), dp(24), dp(30))
+            background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(Color.rgb(72, 35, 232), violet)
+            ).apply { cornerRadii = floatArrayOf(0f,0f,0f,0f,dp(42).toFloat(),dp(42).toFloat(),dp(42).toFloat(),dp(42).toFloat()) }
         }
-        val brandColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val headerLine = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         val title = TextView(this).apply {
             text = "Tata AI"
-            textSize = 23f
-            setTextColor(ink)
+            textSize = 34f
+            setTextColor(white)
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
-        val subtitle = TextView(this).apply {
-            text = "Asisten pribadi cerdas"
-            textSize = 12f
-            setTextColor(muted)
-        }
-        brandColumn.addView(title)
-        brandColumn.addView(subtitle)
-        header.addView(brandColumn, LinearLayout.LayoutParams(0, -2, 1f))
+        headerLine.addView(title, LinearLayout.LayoutParams(0, -2, 1f))
         val status = TextView(this).apply {
-            text = "● Siap membantu"
-            textSize = 11f
-            setTextColor(Color.rgb(28, 153, 103))
-            setPadding(dp(10), dp(7), dp(10), dp(7))
-            setBackgroundColor(Color.rgb(229, 247, 239))
+            text = "🔒 OFFLINE"
+            textSize = 12f
+            setTextColor(white)
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            background = rounded(Color.rgb(19, 184, 126), 18)
         }
-        header.addView(status)
+        headerLine.addView(status)
+        header.addView(headerLine)
         root.addView(header)
 
-        val welcome = TextView(this).apply {
-            text = "Halo! Saya Tata.\nApa yang ingin kamu lakukan hari ini?"
-            textSize = 17f
-            setTextColor(Color.WHITE)
-            setTypeface(null, android.graphics.Typeface.BOLD)
-            setPadding(dp(18), dp(18), dp(18), dp(18))
-            setBackgroundColor(accent)
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(22), dp(22), dp(22), dp(14))
+            background = rounded(Color.rgb(250, 250, 252), 34)
         }
-        root.addView(welcome, LinearLayout.LayoutParams(-1, -2).apply {
-            bottomMargin = dp(12)
-        })
-
-        val quickActions = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        fun quickAction(label: String, command: String) {
-            val chip = Button(this).apply {
-                text = label
-                textSize = 11f
-                isAllCaps = false
-                setTextColor(Color.rgb(49, 81, 132))
-                setOnClickListener { processCommand(command) }
-                minHeight = dp(40)
-                setPadding(dp(8), 0, dp(8), 0)
-            }
-            quickActions.addView(chip, LinearLayout.LayoutParams(0, dp(42), 1f).apply {
-                marginEnd = dp(5)
-            })
-        }
-        quickAction("Bantuan", "bantuan")
-        quickAction("Jam", "jam berapa")
-        quickAction("Baterai", "cek baterai")
-        quickAction("Berita", "berita hari ini")
-        root.addView(quickActions)
-
-        val conversationTitle = TextView(this).apply {
-            text = "Percakapan"
-            textSize = 13f
+        val stateLabel = TextView(this).apply {
+            text = "Siap mendengarkan"
+            textSize = 20f
             setTextColor(ink)
             setTypeface(null, android.graphics.Typeface.BOLD)
-            setPadding(dp(2), dp(12), dp(2), dp(8))
+            gravity = Gravity.CENTER
         }
-        root.addView(conversationTitle)
+        panel.addView(stateLabel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+
+        val micButton = Button(this).apply {
+            text = "🎙"
+            textSize = 58f
+            isAllCaps = false
+            setTextColor(white)
+            background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+                intArrayOf(Color.rgb(109, 42, 238), Color.rgb(66, 38, 202), Color.rgb(188, 85, 255))
+            ).apply { shape = android.graphics.drawable.GradientDrawable.OVAL; setStroke(dp(5), Color.rgb(221, 195, 255)) }
+            elevation = dp(14).toFloat()
+            setOnClickListener { toggleConversationMode() }
+        }
+        panel.addView(micButton, LinearLayout.LayoutParams(dp(206), dp(206)).apply {
+            topMargin = dp(10); bottomMargin = dp(20)
+        })
 
         val scroll = ScrollView(this).apply {
-            isFillViewport = true
+            isFillViewport = false
             clipToPadding = false
             setPadding(0, 0, 0, dp(8))
         }
         logView = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(2), dp(4), dp(2), dp(12))
+            setPadding(dp(2), dp(4), dp(2), dp(8))
         }
         scroll.addView(logView)
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        panel.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { minHeight = dp(130); maxHeight = dp(210) })
 
-        val toolsRow = LinearLayout(this).apply {
+        val controlRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(0, dp(8), 0, dp(8))
         }
-        fun toolButton(label: String, action: () -> Unit) {
+        fun roundControl(label: String, icon: String, action: () -> Unit) {
+            val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
             val button = Button(this).apply {
-                text = label
-                textSize = 10f
+                text = icon
+                textSize = 22f
                 isAllCaps = false
+                setTextColor(white)
+                background = rounded(Color.rgb(160, 160, 164), 50)
                 setOnClickListener { action() }
-                minHeight = dp(38)
-                setPadding(dp(4), 0, dp(4), 0)
             }
-            toolsRow.addView(button, LinearLayout.LayoutParams(0, dp(40), 1f).apply {
-                marginEnd = dp(4)
-            })
+            column.addView(button, LinearLayout.LayoutParams(dp(68), dp(68)))
+            val caption = TextView(this).apply { text = label; textSize = 12f; setTextColor(muted); gravity = Gravity.CENTER }
+            column.addView(caption)
+            controlRow.addView(column, LinearLayout.LayoutParams(0, -2, 1f))
         }
-        toolButton("Pengetahuan", ::showKnowledgeManager)
-        toolButton("Suara", ::showVoiceSettings)
-        toolButton("Cadangan", ::showKnowledgeBackupOptions)
-        toolButton("Privasi", ::showDataPrivacySettings)
-        toolButton("Sumber", ::showNewsSourcesManager)
-        root.addView(toolsRow)
+        roundControl("Mute", "🎙") {
+            isVoiceMuted = !isVoiceMuted
+            Toast.makeText(this, if (isVoiceMuted) "Suara Tata dimatikan." else "Suara Tata diaktifkan.", Toast.LENGTH_SHORT).show()
+        }
+        roundControl("Obrolan", "◉") { toggleConversationMode() }
+        roundControl("Keyboard", "⌨") { messageInput.requestFocus(); (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).showSoftInput(messageInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT) }
+        panel.addView(controlRow)
 
-        val composer = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(8), dp(4), dp(4), dp(4))
-            setBackgroundColor(Color.WHITE)
+        val hint = TextView(this).apply {
+            text = "◈  Tekan lingkaran untuk bicara  •  Obrolan otomatis tersedia"
+            textSize = 11f
+            setTextColor(muted)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(5), 0, dp(8))
         }
+        panel.addView(hint)
+        root.addView(panel, LinearLayout.LayoutParams(-1, 0, 1f).apply {
+            topMargin = -dp(18)
+            leftMargin = dp(8); rightMargin = dp(8)
+        })
+
         messageInput = EditText(this).apply {
             hint = "Tulis pesan untuk Tata..."
             textSize = 14f
             setTextColor(ink)
-            setHintTextColor(muted)
-            background = null
-            maxLines = 4
+            background = rounded(white, 22)
+            maxLines = 3
             minLines = 1
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setPadding(dp(14), dp(10), dp(14), dp(10))
         }
+        val composer = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14), dp(6), dp(14), dp(6)) }
         composer.addView(messageInput, LinearLayout.LayoutParams(0, -2, 1f))
-        val sendButton = Button(this).apply {
-            text = "Kirim"
-            textSize = 13f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            setBackgroundColor(accent)
+        val send = Button(this).apply {
+            text = "Kirim"; isAllCaps = false; setTextColor(white); background = rounded(purple, 18)
             setOnClickListener {
-                val message = messageInput.text.toString().trim()
-                if (message.isNotEmpty()) {
-                    messageInput.setText("")
-                    processCommand(message)
-                }
+                val value = messageInput.text.toString().trim()
+                if (value.isNotEmpty()) { messageInput.setText(""); processCommand(value) }
             }
         }
-        composer.addView(sendButton, LinearLayout.LayoutParams(dp(76), dp(46)))
-        root.addView(composer, LinearLayout.LayoutParams(-1, -2).apply {
-            topMargin = dp(8)
-        })
+        composer.addView(send, LinearLayout.LayoutParams(dp(78), dp(46)).apply { leftMargin = dp(8) })
+        root.addView(composer)
 
-        listenButton = Button(this).apply {
-            text = "▶  Mulai ngobrol otomatis"
-            textSize = 14f
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.rgb(24, 157, 111))
-            setOnClickListener { toggleConversationMode() }
+        val nav = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            background = rounded(white, 28)
+            elevation = dp(8).toFloat()
         }
-        root.addView(listenButton, LinearLayout.LayoutParams(-1, dp(50)).apply {
-            topMargin = dp(8)
+        fun navItem(label: String, icon: String, action: () -> Unit, selected: Boolean = false) {
+            val item = TextView(this).apply {
+                text = "$icon\n$label"
+                textSize = 12f
+                gravity = Gravity.CENTER
+                setTextColor(if (selected) white else muted)
+                setPadding(dp(7), dp(8), dp(7), dp(8))
+                if (selected) background = rounded(purple, 16)
+                setOnClickListener { action() }
+            }
+            nav.addView(item, LinearLayout.LayoutParams(0, dp(62), 1f))
+        }
+        navItem("Chat", "▤", { appendLog("Tata", "Silakan tulis atau ucapkan pesan.") })
+        navItem("Suara", "◉", { toggleConversationMode() }, true)
+        navItem("Riwayat", "◷", { showDataPrivacySettings() })
+        navItem("Pengaturan", "⚙", {
+            AlertDialog.Builder(this).setTitle("Pengaturan Tata")
+                .setItems(arrayOf("Suara Tata", "Pengetahuan", "Cadangan data", "Privasi", "Sumber berita")) { _, which ->
+                    when (which) {
+                        0 -> showVoiceSettings()
+                        1 -> showKnowledgeManager()
+                        2 -> showKnowledgeBackupOptions()
+                        3 -> showDataPrivacySettings()
+                        4 -> showNewsSourcesManager()
+                    }
+                }.setNegativeButton("Tutup", null).show()
         })
+        root.addView(nav, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dp(8); rightMargin = dp(8); topMargin = dp(4); bottomMargin = dp(8) })
         setContentView(root)
     }
+
+    private var isVoiceMuted = false
+
+    private fun rounded(color: Int, radius: Int): android.graphics.drawable.GradientDrawable =
+        android.graphics.drawable.GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = dp(radius).toFloat()
+        }
 
     private fun availableIndonesianVoices(): List<android.speech.tts.Voice> {
         if (!::textToSpeech.isInitialized) return emptyList()

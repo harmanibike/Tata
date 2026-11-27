@@ -18,6 +18,12 @@
 - Compile/target SDK: 34
 - JDK: 17
 
+## Desain dan penyimpanan baru
+- Antarmuka chat modern dengan identitas Tata AI, status siap, saran perintah cepat, input teks, tombol kirim, dan tombol bicara.
+- Database SQLite lokal `tata_ai.db` dengan tabel pengetahuan, riwayat percakapan, dan pengaturan aplikasi.
+- Instalasi baru membuat database kosong; tidak ada data contoh alamat toko yang dimasukkan otomatis.
+- Data JSON lama tidak dibaca lagi. Data pengguna lama yang ingin dipertahankan harus diekspor sebelum mengganti versi aplikasi.
+
 ## Fitur yang tersedia
 - Pengenalan suara Android dengan preferensi bahasa Indonesia (`id-ID`) dan preferensi offline; ketersediaannya bergantung pada layanan dan paket bahasa di perangkat.
 - Text-to-Speech bahasa Indonesia dengan pilihan suara yang tersedia dari mesin Android, penyimpanan pilihan suara, serta karakter bicara lebih lembut (pitch sedikit lebih tinggi dan tempo sedikit lebih pelan).
@@ -25,7 +31,7 @@
 - Perintah sapaan, identitas Tata, bantuan fitur, jam, tanggal, dan persentase baterai.
 - Perintah membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, aplikasi peta, browser, Galeri, dan aplikasi catatan yang tersedia.
 - Pengetahuan lokal yang dapat dikelola langsung dari aplikasi melalui tombol **Pengetahuan Tata**: tambah, edit, hapus pertanyaan, kata kunci, dan jawaban.
-- Data pengetahuan disimpan di penyimpanan internal aplikasi dalam file `knowledge.json` dan tetap tersedia setelah aplikasi ditutup atau perangkat dimulai ulang.
+- Data pengetahuan dan riwayat percakapan disimpan dalam database SQLite baru `tata_ai.db` di penyimpanan internal aplikasi. Database dibuat otomatis saat aplikasi pertama kali dibuka.
 - Data awal alamat Harmani Bike: Jln. Pancasila No. 5, Sukosewu.
 - Pemeriksaan koneksi tervalidasi dan pengambilan harga PAXGUSDT dari Binance saat online.
 
@@ -48,7 +54,7 @@ Karakter bawaan yang diterapkan adalah pitch sedikit lebih tinggi dan kecepatan 
 
 ## Batasan saat ini
 - Tata menggunakan pencocokan pertanyaan dan kata kunci sederhana, bukan model AI percakapan bebas.
-- Data pengetahuan tersimpan lokal di HP ini; belum tersinkron otomatis ke perangkat lain. Cadangan JSON dapat diekspor dan diimpor secara manual melalui aplikasi.
+- Database lokal dibuat ulang dengan tabel `knowledge`, `chat_messages`, dan `app_settings`. File JSON lama tidak lagi digunakan sebagai sumber data; database baru dimulai kosong tanpa data contoh. Data pengetahuan tersimpan lokal di HP ini; belum tersinkron otomatis ke perangkat lain. Cadangan pengetahuan tetap dapat diekspor dan diimpor secara manual dalam format JSON.
 - Harga PAXGUSDT membutuhkan internet dan dapat gagal jika API tidak tersedia.
 - Fitur suara memerlukan izin mikrofon dan layanan pengenalan suara Android.
 

@@ -11,21 +11,30 @@
 - Compile/target SDK: 34
 - JDK: 17
 
-## Fitur yang sudah disiapkan
-- Pengenalan suara Android dengan preferensi bahasa Indonesia (`id-ID`) dan mode offline.
+## Fitur yang tersedia
+- Pengenalan suara Android dengan preferensi bahasa Indonesia (`id-ID`) dan preferensi offline; ketersediaannya bergantung pada layanan dan paket bahasa di perangkat.
 - Text-to-Speech bahasa Indonesia.
 - Tombol Bicara dan log percakapan.
 - Perintah sapaan, identitas Tata, bantuan fitur, jam, tanggal, dan persentase baterai.
 - Perintah membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, aplikasi peta, browser, Galeri, dan aplikasi catatan yang tersedia.
-- KnowledgeStore berbasis file `knowledge.json` di `filesDir`, dengan data awal alamat Harmani Bike: Jln. Pancasila No. 5, Sukosewu.
-- Pemeriksaan koneksi tervalidasi dan pengambilan harga PAXGUSDT dari Binance secara asynchronous pada dispatcher IO.
+- Pengetahuan lokal yang dapat dikelola langsung dari aplikasi melalui tombol **Pengetahuan Tata**: tambah, edit, hapus pertanyaan, kata kunci, dan jawaban.
+- Data pengetahuan disimpan di penyimpanan internal aplikasi dalam file `knowledge.json` dan tetap tersedia setelah aplikasi ditutup atau perangkat dimulai ulang.
+- Data awal alamat Harmani Bike: Jln. Pancasila No. 5, Sukosewu.
+- Pemeriksaan koneksi tervalidasi dan pengambilan harga PAXGUSDT dari Binance saat online.
 
-## Rencana pengembangan percakapan AI
+## Cara menambah pengetahuan
+1. Buka aplikasi Tata AI.
+2. Tekan **Pengetahuan Tata**.
+3. Tekan **Tambah data**.
+4. Isi pertanyaan, kata kunci (pisahkan dengan koma), dan jawaban.
+5. Tekan **Simpan**. Data dapat dipilih kembali untuk diedit atau dihapus.
+6. Setelah tersimpan, tanyakan hal yang sesuai melalui tombol **Bicara**.
 
-Rancangan arsitektur AI lokal, tahapan integrasi Whisper.cpp + Qwen, fallback, dan kriteria pengujian: [docs/AI_OFFLINE_ARCHITECTURE.md](docs/AI_OFFLINE_ARCHITECTURE.md).
-- Mode ngobrol dua arah akan ditambahkan sebagai tahap berikutnya.
-- Integrasi model AI harus menggunakan backend/proxy yang menyimpan API key di server, bukan menanam API key rahasia langsung di APK.
-- Fitur percakapan AI belum aktif pada build saat ini.
+## Batasan saat ini
+- Tata menggunakan pencocokan pertanyaan dan kata kunci sederhana, bukan model AI percakapan bebas.
+- Data pengetahuan tersimpan lokal di HP ini; belum tersinkron otomatis ke perangkat lain dan belum ada ekspor/impor cadangan dari aplikasi.
+- Harga PAXGUSDT membutuhkan internet dan dapat gagal jika API tidak tersedia.
+- Fitur suara memerlukan izin mikrofon dan layanan pengenalan suara Android.
 
 ## Build APK
 Workflow GitHub Actions berjalan saat push ke branch `main` atau melalui `workflow_dispatch`.
@@ -37,9 +46,3 @@ gradle assembleDebug --no-daemon
 
 Artifact:
 `app/build/outputs/apk/debug/app-debug.apk`
-
-## Catatan
-- SpeechRecognizer memakai `EXTRA_PREFER_OFFLINE=true`, tetapi ketersediaan pengenalan suara offline bahasa Indonesia bergantung pada layanan dan paket bahasa yang terpasang di perangkat.
-- Harga PAXGUSDT membutuhkan internet dan dapat gagal jika API tidak tersedia.
-- Aplikasi meminta izin mikrofon saat fitur Bicara digunakan.
-- Build saat ini difokuskan untuk ABI arm64-v8a agar sesuai target Redmi 14C.

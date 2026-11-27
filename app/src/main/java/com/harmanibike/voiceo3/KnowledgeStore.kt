@@ -16,7 +16,7 @@ class KnowledgeStore(context: Context) {
                     .put("keywords", JSONArray(listOf("alamat", "lokasi", "harmani bike", "toko")))
                     .put("answer", "Alamat Harmani Bike: Jln. Pancasila No. 5, Sukosewu.")
             )
-            file.writeText(defaults.toString( indentSpaces = 2), Charsets.UTF_8)
+            file.writeText(defaults.toString(2), Charsets.UTF_8)
         }
     }
 

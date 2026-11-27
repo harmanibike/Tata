@@ -13,6 +13,13 @@ data class KnowledgeEntry(
     val answer: String
 )
 
+data class NewsSource(
+    val id: Long,
+    val name: String,
+    val feedUrl: String,
+    val enabled: Boolean
+)
+
 /**
  * Penyimpanan lokal baru Tata AI.
  * Database dibuat bersih pada instalasi baru; data contoh/JSON lama tidak dimigrasikan.
@@ -210,6 +217,47 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
         } finally {
             db.endTransaction()
         }
+    }
+
+    @Synchronized
+    fun getAllNewsSources(): List<NewsSource> {
+        val sources = mutableListOf<NewsSource>()
+        readableDatabase.rawQuery(
+            "SELECT id, name, feed_url, enabled FROM news_sources ORDER BY id ASC", null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                sources += NewsSource(
+                    cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getInt(3) == 1
+                )
+            }
+        }
+        return sources
+    }
+
+    @Synchronized
+    fun addNewsSource(name: String, feedUrl: String) {
+        val normalizedUrl = feedUrl.trim()
+        require(normalizedUrl.startsWith("https://") || normalizedUrl.startsWith("http://")) {
+            "Alamat sumber harus menggunakan HTTP atau HTTPS."
+        }
+        val values = ContentValues().apply {
+            put("name", name.trim())
+            put("feed_url", normalizedUrl)
+            put("enabled", 1)
+            put("created_at", System.currentTimeMillis())
+        }
+        writableDatabase.insertOrThrow("news_sources", null, values)
+    }
+
+    @Synchronized
+    fun setNewsSourceEnabled(id: Long, enabled: Boolean) {
+        val values = ContentValues().apply { put("enabled", if (enabled) 1 else 0) }
+        writableDatabase.update("news_sources", values, "id=?", arrayOf(id.toString()))
+    }
+
+    @Synchronized
+    fun deleteNewsSource(id: Long) {
+        writableDatabase.delete("news_sources", "id=?", arrayOf(id.toString()))
     }
 
     @Synchronized

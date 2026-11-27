@@ -2,6 +2,13 @@
 
 **Tata AI** adalah aplikasi asisten suara Android native berbasis Kotlin untuk perangkat arm64, dengan perintah lokal cepat dan fitur online saat internet tersedia.
 
+### Cadangan Pengetahuan Tata
+- Tombol **CADANGAN PENGETAHUAN JSON** membuka pilihan ekspor atau impor.
+- Ekspor menyimpan `pengetahuan-tata.json` ke lokasi yang dipilih melalui pemilih file Android.
+- Impor membaca file JSON, memeriksa struktur serta pertanyaan/jawaban wajib, lalu mengganti daftar pengetahuan di perangkat dengan isi file cadangan.
+- Pilih file JSON cadangan yang benar saat impor. Proses impor dibatasi maksimal 2 MB.
+- Cadangan dapat dipindahkan ke perangkat lain secara manual; data tidak otomatis tersinkron antarperangkat.
+
 ## Identitas aplikasi
 - Nama aplikasi: Tata AI
 - Application ID: `com.harmanibike.voiceo3`

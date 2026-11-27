@@ -55,13 +55,50 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
                 setting_value TEXT NOT NULL
             )""".trimIndent()
         )
+        createDynamicCapabilityTables(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Versi awal database baru. Migrasi eksplisit ditambahkan saat skema berkembang.
-        if (oldVersion < 2) {
-            db.execSQL("CREATE TABLE IF NOT EXISTS app_settings (setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL)")
-        }
+        // Migrasi bersifat aditif: seluruh pengetahuan dan riwayat lama tetap dipertahankan.
+        if (oldVersion < 2) createDynamicCapabilityTables(db)
+    }
+
+    private fun createDynamicCapabilityTables(db: SQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS assistant_capabilities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                capability_key TEXT NOT NULL UNIQUE,
+                display_name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                version INTEGER NOT NULL DEFAULT 1,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                config_json TEXT NOT NULL DEFAULT '{}',
+                updated_at INTEGER NOT NULL
+            )""".trimIndent()
+        )
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS news_sources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                feed_url TEXT NOT NULL UNIQUE,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at INTEGER NOT NULL
+            )""".trimIndent()
+        )
+        db.execSQL(
+            "INSERT OR IGNORE INTO assistant_capabilities " +
+                "(capability_key, display_name, description, version, enabled, config_json, updated_at) " +
+                "VALUES ('news_reader', 'Pembaca berita', 'Mengambil dan membacakan berita dari sumber RSS yang diaktifkan.', 1, 1, '{}', ?)",
+            arrayOf(System.currentTimeMillis())
+        )
+        db.execSQL(
+            "INSERT OR IGNORE INTO news_sources (name, feed_url, enabled, created_at) VALUES (?, ?, 1, ?)",
+            arrayOf("ANTARA", "https://www.antaranews.com/rss/terkini.xml", System.currentTimeMillis())
+        )
+        db.execSQL(
+            "INSERT OR IGNORE INTO news_sources (name, feed_url, enabled, created_at) VALUES (?, ?, 1, ?)",
+            arrayOf("CNA Indonesia", "https://www.cna.id/api/v1/rss-outbound-feed?_format=xml", System.currentTimeMillis())
+        )
     }
 
     @Synchronized
@@ -131,6 +168,39 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     fun delete(index: Int) {
         val id = getIdAt(index) ?: return
         writableDatabase.delete("knowledge", "id=?", arrayOf(id.toString()))
+    }
+
+    @Synchronized
+    fun getKnowledgeCount(): Int {
+        readableDatabase.rawQuery("SELECT COUNT(*) FROM knowledge", null).use { cursor ->
+            return if (cursor.moveToFirst()) cursor.getInt(0) else 0
+        }
+    }
+
+    /** Menghapus hanya pengetahuan yang dipelajari; riwayat chat dan pengaturan tidak disentuh. */
+    @Synchronized
+    fun clearAllLearnedKnowledge(): Int {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val count = getKnowledgeCount()
+            db.delete("knowledge", null, null)
+            db.setTransactionSuccessful()
+            return count
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    @Synchronized
+    fun getEnabledNewsSources(): List<Pair<String, String>> {
+        val sources = mutableListOf<Pair<String, String>>()
+        readableDatabase.rawQuery(
+            "SELECT name, feed_url FROM news_sources WHERE enabled=1 ORDER BY id ASC", null
+        ).use { cursor ->
+            while (cursor.moveToNext()) sources += cursor.getString(0) to cursor.getString(1)
+        }
+        return sources
     }
 
     @Synchronized
@@ -223,6 +293,6 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
 
     companion object {
         private const val DATABASE_NAME = "tata_ai.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
     }
 }

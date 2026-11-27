@@ -703,6 +703,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         } else {
             "Tata akan menghapus $count data pengetahuan yang tersimpan. Riwayat percakapan, pengaturan aplikasi, dan konfigurasi sumber berita tidak ikut dihapus. Tindakan ini tidak dapat dibatalkan."
         }
+        if (ttsReady) textToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, "tata-confirm-clear-knowledge")
         AlertDialog.Builder(this)
             .setTitle("Konfirmasi hapus seluruh pengetahuan")
             .setMessage(message)

@@ -38,6 +38,11 @@ jobs:
 
   build-signed-release:
     runs-on: ubuntu-latest
+    env:
+      TATA_KEYSTORE_BASE64: ${{ secrets.TATA_KEYSTORE_BASE64 }}
+      TATA_STORE_PASSWORD: ${{ secrets.TATA_STORE_PASSWORD }}
+      TATA_KEY_ALIAS: ${{ secrets.TATA_KEY_ALIAS }}
+      TATA_KEY_PASSWORD: ${{ secrets.TATA_KEY_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,9 +59,7 @@ jobs:
           gradle-version: '8.2'
 
       - name: Restore private release keystore
-        if: ${{ secrets.TATA_KEYSTORE_BASE64 != '' && secrets.TATA_STORE_PASSWORD != '' && secrets.TATA_KEY_ALIAS != '' && secrets.TATA_KEY_PASSWORD != '' }}
-        env:
-          TATA_KEYSTORE_BASE64: ${{ secrets.TATA_KEYSTORE_BASE64 }}
+        if: ${{ env.TATA_KEYSTORE_BASE64 != '' && env.TATA_STORE_PASSWORD != '' && env.TATA_KEY_ALIAS != '' && env.TATA_KEY_PASSWORD != '' }}
         run: |
           printf '%s' "$TATA_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/tata-release.jks"
           test -s "$RUNNER_TEMP/tata-release.jks"
@@ -65,9 +68,9 @@ jobs:
         if: ${{ secrets.TATA_KEYSTORE_BASE64 != '' && secrets.TATA_STORE_PASSWORD != '' && secrets.TATA_KEY_ALIAS != '' && secrets.TATA_KEY_PASSWORD != '' }}
         env:
           TATA_SIGNING_STORE_FILE: ${{ runner.temp }}/tata-release.jks
-          TATA_SIGNING_STORE_PASSWORD: ${{ secrets.TATA_STORE_PASSWORD }}
-          TATA_SIGNING_KEY_ALIAS: ${{ secrets.TATA_KEY_ALIAS }}
-          TATA_SIGNING_KEY_PASSWORD: ${{ secrets.TATA_KEY_PASSWORD }}
+          TATA_SIGNING_STORE_PASSWORD: ${{ env.TATA_STORE_PASSWORD }}
+          TATA_SIGNING_KEY_ALIAS: ${{ env.TATA_KEY_ALIAS }}
+          TATA_SIGNING_KEY_PASSWORD: ${{ env.TATA_KEY_PASSWORD }}
         run: gradle assembleRelease --no-daemon
 
       - name: Upload signed release APK
@@ -79,5 +82,5 @@ jobs:
           if-no-files-found: error
 
       - name: Explain missing signing secrets
-        if: ${{ secrets.TATA_KEYSTORE_BASE64 == '' || secrets.TATA_STORE_PASSWORD == '' || secrets.TATA_KEY_ALIAS == '' || secrets.TATA_KEY_PASSWORD == '' }}
+        if: ${{ env.TATA_KEYSTORE_BASE64 == '' || env.TATA_STORE_PASSWORD == '' || env.TATA_KEY_ALIAS == '' || env.TATA_KEY_PASSWORD == '' }}
         run: echo "Release signing belum dijalankan. Tambahkan empat GitHub Actions Secrets sesuai README."

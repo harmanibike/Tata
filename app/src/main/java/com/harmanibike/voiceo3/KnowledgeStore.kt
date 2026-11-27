@@ -171,6 +171,26 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     }
 
     @Synchronized
+    fun getSetting(key: String): String? {
+        readableDatabase.rawQuery(
+            "SELECT setting_value FROM app_settings WHERE setting_key=?", arrayOf(key)
+        ).use { cursor ->
+            return if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+    }
+
+    @Synchronized
+    fun setSetting(key: String, value: String) {
+        val values = ContentValues().apply {
+            put("setting_key", key)
+            put("setting_value", value)
+        }
+        writableDatabase.insertWithOnConflict(
+            "app_settings", null, values, SQLiteDatabase.CONFLICT_REPLACE
+        )
+    }
+
+    @Synchronized
     fun getKnowledgeCount(): Int {
         readableDatabase.rawQuery("SELECT COUNT(*) FROM knowledge", null).use { cursor ->
             return if (cursor.moveToFirst()) cursor.getInt(0) else 0

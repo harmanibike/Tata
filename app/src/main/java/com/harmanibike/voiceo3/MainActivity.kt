@@ -138,7 +138,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setPadding(dp(2), dp(4), dp(2), dp(8))
         }
         scroll.addView(logView)
-        panel.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { minHeight = dp(130); maxHeight = dp(210) })
+        panel.addView(scroll, LinearLayout.LayoutParams(-1, dp(190)))
 
         val controlRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -585,6 +585,10 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun speakAssistant(message: String) {
+        if (isVoiceMuted) {
+            if (conversationModeActive) conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 250)
+            return
+        }
         if (!ttsReady) {
             if (conversationModeActive) conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 500)
             return

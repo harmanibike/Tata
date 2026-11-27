@@ -207,6 +207,63 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
+    private fun showKnowledgeBackupOptions() {
+        AlertDialog.Builder(this)
+            .setTitle("Cadangan Pengetahuan Tata")
+            .setItems(arrayOf("Ekspor / simpan cadangan JSON", "Impor dari file JSON")) { _, which ->
+                if (which == 0) exportKnowledgeJson() else importKnowledgeJson()
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun exportKnowledgeJson() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "pengetahuan-tata.json")
+        }
+        startActivityForResult(intent, REQUEST_EXPORT_JSON)
+    }
+
+    private fun importKnowledgeJson() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivityForResult(intent, REQUEST_IMPORT_JSON)
+    }
+
+    @Deprecated("Use document picker result handling")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        when (requestCode) {
+            REQUEST_EXPORT_JSON -> runCatching {
+                val json = knowledgeStore.exportJson()
+                contentResolver.openOutputStream(uri)?.use { output ->
+                    output.write(json.toByteArray(Charsets.UTF_8))
+                } ?: error("Tidak dapat menyimpan file.")
+            }.onSuccess {
+                Toast.makeText(this, "Cadangan pengetahuan berhasil disimpan.", Toast.LENGTH_LONG).show()
+            }.onFailure {
+                Toast.makeText(this, "Gagal mengekspor: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+            REQUEST_IMPORT_JSON -> runCatching {
+                val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: error("Tidak dapat membaca file.")
+                require(bytes.size <= 2 * 1024 * 1024) { "Ukuran file maksimal 2 MB." }
+                knowledgeStore.importJson(String(bytes, Charsets.UTF_8))
+            }.onSuccess { count ->
+                Toast.makeText(this, "${count} data pengetahuan berhasil diimpor.", Toast.LENGTH_LONG).show()
+            }.onFailure {
+                Toast.makeText(this, "Impor dibatalkan: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     private fun setupSpeechRecognizer() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             appendLog("Sistem", "Layanan pengenalan suara tidak tersedia di perangkat.")
@@ -322,5 +379,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
     companion object {
         private const val REQUEST_AUDIO = 301
+        private const val REQUEST_EXPORT_JSON = 302
+        private const val REQUEST_IMPORT_JSON = 303
     }
 }

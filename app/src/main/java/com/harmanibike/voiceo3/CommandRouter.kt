@@ -21,6 +21,13 @@ class CommandRouter(
     suspend fun handle(rawCommand: String): String = withContext(Dispatchers.Main) {
         val command = rawCommand.lowercase(Locale("id", "ID")).trim()
         when {
+            command.contains("hapus semua pengetahuan") ||
+                command.contains("hapus seluruh pengetahuan") ||
+                command.contains("hapus semua yang kamu pelajari") ||
+                command.contains("hapus semua yang pernah kamu pelajari") ||
+                command.contains("hapus semua data yang kamu pelajari") ||
+                command.contains("hapus seluruh data yang kamu pelajari") ->
+                CONFIRM_CLEAR_KNOWLEDGE
             command == "bantuan" || command == "fitur" || command == "apa yang bisa kamu lakukan" ->
                 "Saya bisa memberi tahu jam dan tanggal, mengecek baterai, membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, peta, browser, Galeri, dan catatan. Saya juga bisa membaca berita terbaru hari ini dari sumber berita online. Mode ngobrol AI yang lebih luas sedang disiapkan."
             command in listOf("halo", "hai", "hello", "assalamualaikum", "selamat pagi", "selamat siang", "selamat sore", "selamat malam") ->
@@ -67,6 +74,10 @@ class CommandRouter(
                 }
             }
         }
+    }
+
+    companion object {
+        const val CONFIRM_CLEAR_KNOWLEDGE = "__TATA_CONFIRM_CLEAR_KNOWLEDGE__"
     }
 
     private fun getBatteryStatus(): String {

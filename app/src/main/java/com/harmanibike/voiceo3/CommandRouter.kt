@@ -26,7 +26,11 @@ class CommandRouter(
                 command.contains("hapus semua yang kamu pelajari") ||
                 command.contains("hapus semua yang pernah kamu pelajari") ||
                 command.contains("hapus semua data yang kamu pelajari") ||
-                command.contains("hapus seluruh data yang kamu pelajari") ->
+                command.contains("hapus seluruh data yang kamu pelajari") ||
+                command.contains("hapus semua yang pernah dipelajari") ||
+                command.contains("hapus seluruh yang pernah dipelajari") ||
+                command.contains("hapus semua data yang pernah dipelajari") ||
+                command.contains("kosongkan seluruh pengetahuan") ->
                 CONFIRM_CLEAR_KNOWLEDGE
             command == "bantuan" || command == "fitur" || command == "apa yang bisa kamu lakukan" ->
                 "Saya bisa memberi tahu jam dan tanggal, mengecek baterai, membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, peta, browser, Galeri, dan catatan. Saya juga bisa membaca berita terbaru hari ini dari sumber berita online. Mode ngobrol AI yang lebih luas sedang disiapkan."

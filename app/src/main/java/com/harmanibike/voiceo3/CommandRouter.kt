@@ -74,7 +74,7 @@ class CommandRouter(
                     command.contains("kabar hari ini") || command.contains("headline")) {
                     networkHelper.getTodayNews()
                 } else {
-                    "Maaf, perintah belum ada di pengetahuan lokal. Coba tanyakan berita hari ini, alamat Harmani Bike, jam, atau tanggal."
+                    "Maaf, saya belum memahami perintah tersebut. Bisa diulangi dengan cara lain?"
                 }
             }
         }

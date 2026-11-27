@@ -450,16 +450,31 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             }.onFailure {
                 Toast.makeText(this, "Gagal mengekspor: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
             }
-            REQUEST_IMPORT_JSON -> runCatching {
-                val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                    ?: error("Tidak dapat membaca file.")
-                require(bytes.size <= 2 * 1024 * 1024) { "Ukuran file maksimal 2 MB." }
-                knowledgeStore.importJson(String(bytes, Charsets.UTF_8))
-            }.onSuccess { count ->
-                Toast.makeText(this, "${count} data pengetahuan berhasil diimpor.", Toast.LENGTH_LONG).show()
-            }.onFailure {
-                Toast.makeText(this, "Impor dibatalkan: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+            REQUEST_IMPORT_JSON -> {
+                if (knowledgeStore.getKnowledgeCount() > 0) {
+                    AlertDialog.Builder(this)
+                        .setTitle("Ganti pengetahuan Tata?")
+                        .setMessage("Impor JSON akan mengganti seluruh pengetahuan yang saat ini tersimpan. Lanjutkan hanya jika Anda mengizinkan penggantian data.")
+                        .setPositiveButton("Ya, lanjutkan impor") { _, _ -> performImportKnowledgeJson(uri) }
+                        .setNegativeButton("Batal", null)
+                        .show()
+                } else {
+                    performImportKnowledgeJson(uri)
+                }
             }
+        }
+    }
+
+    private fun performImportKnowledgeJson(uri: android.net.Uri) {
+        runCatching {
+            val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: error("Tidak dapat membaca file.")
+            require(bytes.size <= 2 * 1024 * 1024) { "Ukuran file maksimal 2 MB." }
+            knowledgeStore.importJson(String(bytes, Charsets.UTF_8))
+        }.onSuccess { count ->
+            Toast.makeText(this, "${count} data pengetahuan berhasil diimpor.", Toast.LENGTH_LONG).show()
+        }.onFailure {
+            Toast.makeText(this, "Impor dibatalkan: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
         }
     }
 

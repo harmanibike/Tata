@@ -97,6 +97,26 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         knowledgeParams.topMargin = dp(12)
         root.addView(knowledgeButton, knowledgeParams)
 
+        val voiceButton = Button(this).apply {
+            text = "🔊  SUARA TATA"
+            textSize = 14f
+            isAllCaps = false
+            setOnClickListener { showVoiceSettings() }
+        }
+        val voiceParams = LinearLayout.LayoutParams(-1, dp(48))
+        voiceParams.topMargin = dp(6)
+        root.addView(voiceButton, voiceParams)
+
+        val backupButton = Button(this).apply {
+            text = "💾  CADANGAN PENGETAHUAN JSON"
+            textSize = 13f
+            isAllCaps = false
+            setOnClickListener { showKnowledgeBackupOptions() }
+        }
+        val backupParams = LinearLayout.LayoutParams(-1, dp(48))
+        backupParams.topMargin = dp(6)
+        root.addView(backupButton, backupParams)
+
         listenButton = Button(this).apply {
             text = "🎙  BICARA"
             textSize = 16f
@@ -110,6 +130,91 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         root.addView(listenButton, buttonParams)
 
         setContentView(root)
+    }
+
+    private fun availableIndonesianVoices(): List<android.speech.tts.Voice> {
+        if (!::textToSpeech.isInitialized) return emptyList()
+        return textToSpeech.voices.orEmpty()
+            .filter { it.locale.language.equals("id", ignoreCase = true) }
+            .sortedBy { it.name }
+    }
+
+    private fun showVoiceSettings() {
+        if (!ttsReady) {
+            Toast.makeText(this, "Mesin suara Tata belum siap. Periksa mesin Text-to-Speech Android.", Toast.LENGTH_LONG).show()
+            return
+        }
+        val voices = availableIndonesianVoices()
+        if (voices.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Suara Tata")
+                .setMessage("Belum ada pilihan suara bahasa Indonesia dari mesin Text-to-Speech di HP ini. Tata akan memakai suara bawaan Android dengan karakter lebih lembut.")
+                .setPositiveButton("Pengaturan suara Android") { _, _ ->
+                    runCatching {
+                        startActivity(Intent("com.android.settings.TTS_SETTINGS"))
+                    }.onFailure {
+                        Toast.makeText(this, "Pengaturan Text-to-Speech tidak tersedia.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Tutup", null)
+                .show()
+            return
+        }
+
+        val prefs = getSharedPreferences(PREFS_VOICE, MODE_PRIVATE)
+        val savedName = prefs.getString(KEY_VOICE_NAME, null)
+        val selected = voices.indexOfFirst { it.name == savedName }.let { if (it >= 0) it else 0 }
+        val labels = voices.map { voice ->
+            val quality = if (voice.quality >= android.speech.tts.Voice.QUALITY_HIGH) " • kualitas tinggi" else ""
+            "${voice.name} (${voice.locale.displayName})$quality"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Pilih suara Tata")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                val voice = voices[which]
+                val result = textToSpeech.setVoice(voice)
+                if (result == TextToSpeech.SUCCESS) {
+                    prefs.edit().putString(KEY_VOICE_NAME, voice.name).apply()
+                    applyFriendlyVoiceStyle()
+                    textToSpeech.speak(
+                        "Halo, saya Tata. Senang bisa membantu kamu.",
+                        TextToSpeech.QUEUE_FLUSH, null, "tata-voice-preview"
+                    )
+                    Toast.makeText(this, "Suara Tata diperbarui.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Suara ini tidak dapat digunakan.", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+            .setPositiveButton("Selesai", null)
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun applyFriendlyVoiceStyle() {
+        if (!::textToSpeech.isInitialized) return
+        // Pitch sedikit lebih tinggi dan tempo sedikit lebih pelan untuk kesan lembut.
+        textToSpeech.setPitch(1.12f)
+        textToSpeech.setSpeechRate(0.94f)
+    }
+
+    private fun restorePreferredVoice() {
+        if (!::textToSpeech.isInitialized) return
+        val voices = availableIndonesianVoices()
+        val savedName = getSharedPreferences(PREFS_VOICE, MODE_PRIVATE)
+            .getString(KEY_VOICE_NAME, null)
+        val savedVoice = voices.firstOrNull { it.name == savedName }
+        val suggestedFemaleVoice = voices.firstOrNull { voice ->
+            val description = (voice.name + " " + voice.features.joinToString(" ")).lowercase(Locale.ROOT)
+            listOf("female", "woman", "perempuan", "wanita").any { description.contains(it) }
+        }
+        val preferred = savedVoice ?: suggestedFemaleVoice
+        if (preferred != null && textToSpeech.setVoice(preferred) == TextToSpeech.SUCCESS) {
+            getSharedPreferences(PREFS_VOICE, MODE_PRIVATE).edit()
+                .putString(KEY_VOICE_NAME, preferred.name).apply()
+        }
+        applyFriendlyVoiceStyle()
     }
 
     private fun showKnowledgeManager() {
@@ -380,6 +485,6 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     companion object {
         private const val REQUEST_AUDIO = 301
         private const val REQUEST_EXPORT_JSON = 302
-        private const val REQUEST_IMPORT_JSON = 303
+        private const val REQUEST_IMPORT_JSON = 303\n        private const val PREFS_VOICE = "tata_voice_preferences"\n        private const val KEY_VOICE_NAME = "voice_name"
     }
 }

@@ -33,7 +33,7 @@
 - Pengetahuan lokal yang dapat dikelola langsung dari aplikasi melalui tombol **Pengetahuan Tata**: tambah, edit, hapus pertanyaan, kata kunci, dan jawaban.
 - Data pengetahuan dan riwayat percakapan disimpan dalam database SQLite baru `tata_ai.db` di penyimpanan internal aplikasi. Database dibuat otomatis saat aplikasi pertama kali dibuka.
 - Data awal alamat Harmani Bike: Jln. Pancasila No. 5, Sukosewu.
-- Pemeriksaan koneksi tervalidasi dan pengambilan harga PAXGUSDT dari Binance saat online.
+- Membaca berita hari ini secara online melalui RSS gratis dari ANTARA dan CNA Indonesia. Tata menampilkan judul, ringkasan singkat, sumber, waktu terbit, dan tautan artikel, lalu membacakannya melalui Text-to-Speech Android.
 
 ## Mengatur suara Tata
 1. Buka aplikasi Tata AI.
@@ -55,7 +55,7 @@ Karakter bawaan yang diterapkan adalah pitch sedikit lebih tinggi dan kecepatan 
 ## Batasan saat ini
 - Tata menggunakan pencocokan pertanyaan dan kata kunci sederhana, bukan model AI percakapan bebas.
 - Database lokal dibuat ulang dengan tabel `knowledge`, `chat_messages`, dan `app_settings`. File JSON lama tidak lagi digunakan sebagai sumber data; database baru dimulai kosong tanpa data contoh. Data pengetahuan tersimpan lokal di HP ini; belum tersinkron otomatis ke perangkat lain. Cadangan pengetahuan tetap dapat diekspor dan diimpor secara manual dalam format JSON.
-- Harga PAXGUSDT membutuhkan internet dan dapat gagal jika API tidak tersedia.
+- Berita hari ini membutuhkan internet dan bergantung pada ketersediaan feed RSS ANTARA/CNA. Jika feed gagal diakses atau tidak memuat artikel bertanggal hari ini, Tata akan memberi tahu pengguna.
 - Fitur suara memerlukan izin mikrofon dan layanan pengenalan suara Android.
 
 ## Build APK

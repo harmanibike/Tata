@@ -20,7 +20,7 @@
 
 ## Fitur yang tersedia
 - Pengenalan suara Android dengan preferensi bahasa Indonesia (`id-ID`) dan preferensi offline; ketersediaannya bergantung pada layanan dan paket bahasa di perangkat.
-- Text-to-Speech bahasa Indonesia.
+- Text-to-Speech bahasa Indonesia dengan pilihan suara yang tersedia dari mesin Android, penyimpanan pilihan suara, serta karakter bicara lebih lembut (pitch sedikit lebih tinggi dan tempo sedikit lebih pelan).
 - Tombol Bicara dan log percakapan.
 - Perintah sapaan, identitas Tata, bantuan fitur, jam, tanggal, dan persentase baterai.
 - Perintah membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, aplikasi peta, browser, Galeri, dan aplikasi catatan yang tersedia.
@@ -28,6 +28,15 @@
 - Data pengetahuan disimpan di penyimpanan internal aplikasi dalam file `knowledge.json` dan tetap tersedia setelah aplikasi ditutup atau perangkat dimulai ulang.
 - Data awal alamat Harmani Bike: Jln. Pancasila No. 5, Sukosewu.
 - Pemeriksaan koneksi tervalidasi dan pengambilan harga PAXGUSDT dari Binance saat online.
+
+## Mengatur suara Tata
+1. Buka aplikasi Tata AI.
+2. Tekan **Suara Tata**.
+3. Pilih salah satu suara bahasa Indonesia yang tersedia dari mesin Text-to-Speech Android.
+4. Tata menyimpan pilihan tersebut dan menggunakannya kembali saat aplikasi dibuka.
+5. Jika tidak ada pilihan suara bahasa Indonesia, buka pengaturan Text-to-Speech Android untuk memasang atau mengunduh data suara jika tersedia.
+
+Karakter bawaan yang diterapkan adalah pitch sedikit lebih tinggi dan kecepatan bicara sedikit lebih pelan agar terdengar lebih lembut. Kesan suara perempuan muda tetap bergantung pada variasi suara yang disediakan mesin TTS HP; aplikasi tidak dapat mengubah suara bawaan menjadi suara perempuan jika mesin tidak menyediakan varian tersebut.
 
 ## Cara menambah pengetahuan
 1. Buka aplikasi Tata AI.
@@ -39,7 +48,7 @@
 
 ## Batasan saat ini
 - Tata menggunakan pencocokan pertanyaan dan kata kunci sederhana, bukan model AI percakapan bebas.
-- Data pengetahuan tersimpan lokal di HP ini; belum tersinkron otomatis ke perangkat lain dan belum ada ekspor/impor cadangan dari aplikasi.
+- Data pengetahuan tersimpan lokal di HP ini; belum tersinkron otomatis ke perangkat lain. Cadangan JSON dapat diekspor dan diimpor secara manual melalui aplikasi.
 - Harga PAXGUSDT membutuhkan internet dan dapat gagal jika API tidak tersedia.
 - Fitur suara memerlukan izin mikrofon dan layanan pengenalan suara Android.
 

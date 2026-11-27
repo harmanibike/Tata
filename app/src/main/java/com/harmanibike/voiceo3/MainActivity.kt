@@ -45,7 +45,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
 
         knowledgeStore = KnowledgeStore(this)
-        router = CommandRouter(this, knowledgeStore, NetworkHelper(this))
+        router = CommandRouter(this, knowledgeStore, NetworkHelper(this, knowledgeStore))
         textToSpeech = TextToSpeech(this, this)
         buildInterface()
         requestAudioPermission()
@@ -522,9 +522,36 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         appendLog("Anda", spoken)
         activityScope.launch {
             val answer = router.handle(spoken)
-            appendLog("Tata AI", answer)
-            if (ttsReady) textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, "tata-ai-response")
+            if (answer == CommandRouter.CONFIRM_CLEAR_KNOWLEDGE) {
+                showClearKnowledgeConfirmation()
+            } else {
+                appendLog("Tata AI", answer)
+                if (ttsReady) textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, "tata-ai-response")
+            }
         }
+    }
+
+    private fun showClearKnowledgeConfirmation() {
+        val count = knowledgeStore.getKnowledgeCount()
+        val message = if (count == 0) {
+            "Saat ini belum ada pengetahuan tersimpan yang perlu dihapus."
+        } else {
+            "Tata akan menghapus $count data pengetahuan yang tersimpan. Riwayat percakapan, pengaturan aplikasi, dan konfigurasi sumber berita tidak ikut dihapus. Tindakan ini tidak dapat dibatalkan."
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Konfirmasi hapus seluruh pengetahuan")
+            .setMessage(message)
+            .setPositiveButton(if (count == 0) "Mengerti" else "Ya, hapus pengetahuan") { dialog, _ ->
+                if (count > 0) {
+                    val deleted = knowledgeStore.clearAllLearnedKnowledge()
+                    val result = "Pengetahuan tersimpan berhasil dihapus sebanyak $deleted data. Riwayat percakapan dan pengaturan tetap dipertahankan."
+                    appendLog("Tata AI", result)
+                    if (ttsReady) textToSpeech.speak(result, TextToSpeech.QUEUE_FLUSH, null, "tata-clear-knowledge")
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 
     private fun appendLog(speaker: String, message: String) {

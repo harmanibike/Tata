@@ -32,7 +32,7 @@ class CommandRouter(
             command.contains("buka catatan") || command.contains("buat catatan") ->
                 launchIntent(Intent("android.intent.action.CREATE_NOTE").apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TITLE, "Catatan Asisten O3")
+                    putExtra(Intent.EXTRA_TITLE, "Catatan Tata")
                 }, "aplikasi catatan")
             else -> {
                 val localAnswer = knowledgeStore.search(command)

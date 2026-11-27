@@ -11,7 +11,6 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.view.Gravity
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -45,7 +44,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         buildInterface()
         requestAudioPermission()
         setupSpeechRecognizer()
-        appendLog("Tata AI", "Halo! Tekan Bicara lalu ucapkan perintah.")
+        appendLog("Tata", "Halo, saya Tata. Tekan Bicara untuk memberi perintah. Ucapkan bantuan untuk melihat kemampuan saya.")
     }
 
     private fun buildInterface() {
@@ -64,7 +63,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         root.addView(title, LinearLayout.LayoutParams(-1, dp(48)))
 
         val subtitle = TextView(this).apply {
-            text = "Asisten suara • perintah lokal dan online"
+            text = "Tata siap membantu • perintah suara lokal dan online"
             textSize = 13f
             setTextColor(Color.rgb(100, 115, 106))
         }

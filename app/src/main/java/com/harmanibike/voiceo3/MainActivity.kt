@@ -45,7 +45,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         buildInterface()
         requestAudioPermission()
         setupSpeechRecognizer()
-        appendLog("Asisten O3", "Halo! Tekan Bicara lalu ucapkan perintah.")
+        appendLog("Tata AI", "Halo! Tekan Bicara lalu ucapkan perintah.")
     }
 
     private fun buildInterface() {
@@ -55,7 +55,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setPadding(dp(18), dp(18), dp(18), dp(14))
         }
         val title = TextView(this).apply {
-            text = "Asisten O3"
+            text = "Tata AI"
             textSize = 26f
             setTextColor(Color.rgb(25, 55, 42))
             gravity = Gravity.CENTER_VERTICAL
@@ -160,8 +160,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         appendLog("Anda", spoken)
         activityScope.launch {
             val answer = router.handle(spoken)
-            appendLog("Asisten O3", answer)
-            if (ttsReady) textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, "o3-response")
+            appendLog("Tata AI", answer)
+            if (ttsReady) textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, "tata-ai-response")
         }
     }
 

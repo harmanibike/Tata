@@ -1,9 +1,9 @@
-# Asisten O3
+# Tata AI
 
-**Asisten O3** adalah aplikasi asisten suara Android native berbasis Kotlin untuk perangkat arm64, dengan perintah lokal cepat dan fitur online saat internet tersedia.
+**Tata AI** adalah aplikasi asisten suara Android native berbasis Kotlin untuk perangkat arm64, dengan perintah lokal cepat dan fitur online saat internet tersedia.
 
 ## Identitas aplikasi
-- Nama aplikasi: Asisten O3
+- Nama aplikasi: Tata AI
 - Application ID: `com.harmanibike.voiceo3`
 - Platform: Android native (Kotlin)
 - Target perangkat uji: Redmi 14C, ABI `arm64-v8a`

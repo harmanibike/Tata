@@ -14,6 +14,9 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.os.Handler
 import android.os.Looper
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.text.InputType
 import android.view.Gravity
 import android.widget.Button
@@ -42,6 +45,14 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private var recognizerReady = false
     private var conversationModeActive = false
     private val conversationHandler = Handler(Looper.getMainLooper())
+    private lateinit var connectionStatusView: TextView
+    private lateinit var connectivityManager: ConnectivityManager
+    private var networkCallbackRegistered = false
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) { refreshConnectionStatus() }
+        override fun onLost(network: Network) { refreshConnectionStatus() }
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) { refreshConnectionStatus() }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +62,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
         knowledgeStore = KnowledgeStore(this)
         router = CommandRouter(this, knowledgeStore, NetworkHelper(this, knowledgeStore))
+        connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         textToSpeech = TextToSpeech(this, this)
         buildInterface()
         requestAudioPermission()
@@ -86,14 +98,14 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
         headerLine.addView(title, LinearLayout.LayoutParams(0, -2, 1f))
-        val status = TextView(this).apply {
-            text = "🔒 OFFLINE"
+        connectionStatusView = TextView(this).apply {
+            text = "● OFFLINE"
             textSize = 12f
             setTextColor(white)
             setPadding(dp(12), dp(8), dp(12), dp(8))
-            background = rounded(Color.rgb(19, 184, 126), 18)
+            background = rounded(Color.rgb(110, 110, 118), 18)
         }
-        headerLine.addView(status)
+        headerLine.addView(connectionStatusView)
         header.addView(headerLine)
         root.addView(header)
 
@@ -242,6 +254,42 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private var isVoiceMuted = false
+
+    override fun onStart() {
+        super.onStart()
+        if (!networkCallbackRegistered) {
+            runCatching {
+                connectivityManager.registerDefaultNetworkCallback(networkCallback)
+                networkCallbackRegistered = true
+            }
+        }
+        refreshConnectionStatus()
+    }
+
+    override fun onStop() {
+        if (networkCallbackRegistered) {
+            runCatching { connectivityManager.unregisterNetworkCallback(networkCallback) }
+            networkCallbackRegistered = false
+        }
+        super.onStop()
+    }
+
+    private fun refreshConnectionStatus() {
+        val connected = runCatching {
+            val active = connectivityManager.activeNetwork
+            val caps = active?.let { connectivityManager.getNetworkCapabilities(it) }
+            caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        }.getOrDefault(false)
+        runOnUiThread {
+            if (!::connectionStatusView.isInitialized) return@runOnUiThread
+            connectionStatusView.text = if (connected) "● ONLINE" else "● OFFLINE"
+            connectionStatusView.background = rounded(
+                if (connected) Color.rgb(19, 184, 126) else Color.rgb(110, 110, 118),
+                18
+            )
+        }
+    }
 
     private fun rounded(color: Int, radius: Int): android.graphics.drawable.GradientDrawable =
         android.graphics.drawable.GradientDrawable().apply {

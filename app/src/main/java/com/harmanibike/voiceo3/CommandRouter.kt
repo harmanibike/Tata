@@ -22,7 +22,7 @@ class CommandRouter(
         val command = rawCommand.lowercase(Locale("id", "ID")).trim()
         when {
             command == "bantuan" || command == "fitur" || command == "apa yang bisa kamu lakukan" ->
-                "Saya bisa memberi tahu jam dan tanggal, mengecek baterai, membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, peta, browser, Galeri, dan catatan. Saya juga bisa mencari informasi Harmani Bike yang tersimpan serta harga PAXG saat online. Mode ngobrol AI yang lebih luas sedang disiapkan."
+                "Saya bisa memberi tahu jam dan tanggal, mengecek baterai, membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, peta, browser, Galeri, dan catatan. Saya juga bisa membaca berita terbaru hari ini dari sumber berita online. Mode ngobrol AI yang lebih luas sedang disiapkan."
             command in listOf("halo", "hai", "hello", "assalamualaikum", "selamat pagi", "selamat siang", "selamat sore", "selamat malam") ->
                 "Halo! Saya Tata, asisten suara Anda. Ada yang bisa saya bantu?"
             command.contains("siapa nama kamu") || command.contains("siapa namamu") ||
@@ -59,11 +59,11 @@ class CommandRouter(
             else -> {
                 val localAnswer = knowledgeStore.search(command)
                 if (localAnswer != null) localAnswer
-                else if (command.contains("harga emas") || command.contains("harga paxg") ||
-                    command.contains("paxg") || command.contains("harga gold")) {
-                    networkHelper.getPaxgUsdtPrice()
+                else if (command.contains("berita") || command.contains("bacakan kabar") ||
+                    command.contains("kabar hari ini") || command.contains("headline")) {
+                    networkHelper.getTodayNews()
                 } else {
-                    "Maaf, perintah belum ada di pengetahuan lokal. Coba tanyakan alamat Harmani Bike, jam, tanggal, atau harga emas PAXG saat online."
+                    "Maaf, perintah belum ada di pengetahuan lokal. Coba tanyakan berita hari ini, alamat Harmani Bike, jam, atau tanggal."
                 }
             }
         }

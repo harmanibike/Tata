@@ -17,8 +17,9 @@
 - Tabel utama: `knowledge`, `chat_messages`, `app_settings`, `assistant_capabilities`, dan `news_sources`.
 - Migrasi versi 1 ke 2 bersifat aditif. Data pengetahuan, riwayat percakapan, dan pengaturan yang sudah ada tidak dihapus saat migrasi.
 - `assistant_capabilities` menjadi katalog kemampuan Tata beserta versi, status aktif, dan konfigurasi JSON.
-- `news_sources` menyimpan sumber RSS. Pembaca berita mengambil daftar sumber aktif dari SQLite, bukan lagi dari daftar URL yang ditulis langsung di `NetworkHelper.kt`.
+- `news_sources` menyimpan sumber RSS. Pembaca berita mengambil daftar sumber aktif dari SQLite, bukan lagi dari daftar URL yang ditulis langsung di `NetworkHelper.kt`. Sumber RSS dapat dikelola melalui tombol **Sumber** tanpa build ulang APK.
 - Sumber awal yang dimasukkan ke database: ANTARA dan CNA Indonesia.
+- Menu **Sumber** memungkinkan pengguna menambahkan, mengaktifkan, menonaktifkan, dan menghapus sumber RSS langsung dari aplikasi.
 - Fondasi database kemampuan sudah tersedia secara lokal. Sinkronisasi konfigurasi dari server/database online belum diaktifkan pada tahap ini.
 
 ## Izin dan kendali data

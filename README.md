@@ -15,10 +15,15 @@
 - Pengenalan suara Android dengan preferensi bahasa Indonesia (`id-ID`) dan mode offline.
 - Text-to-Speech bahasa Indonesia.
 - Tombol Bicara dan log percakapan.
-- Perintah lokal untuk mengetahui jam dan tanggal.
-- Perintah membuka WhatsApp, YouTube, kamera, dan aplikasi catatan yang tersedia.
+- Perintah sapaan, identitas Tata, bantuan fitur, jam, tanggal, dan persentase baterai.
+- Perintah membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, aplikasi peta, browser, Galeri, dan aplikasi catatan yang tersedia.
 - KnowledgeStore berbasis file `knowledge.json` di `filesDir`, dengan data awal alamat Harmani Bike: Jln. Pancasila No. 5, Sukosewu.
 - Pemeriksaan koneksi tervalidasi dan pengambilan harga PAXGUSDT dari Binance secara asynchronous pada dispatcher IO.
+
+## Rencana pengembangan percakapan AI
+- Mode ngobrol dua arah akan ditambahkan sebagai tahap berikutnya.
+- Integrasi model AI harus menggunakan backend/proxy yang menyimpan API key di server, bukan menanam API key rahasia langsung di APK.
+- Fitur percakapan AI belum aktif pada build saat ini.
 
 ## Build APK
 Workflow GitHub Actions berjalan saat push ke branch `main` atau melalui `workflow_dispatch`.

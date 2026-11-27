@@ -97,15 +97,18 @@ class NetworkHelper(context: Context) {
             val parser = Xml.newPullParser()
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
             connection.inputStream.use { parser.setInput(it, null) }
-            val result = mutableListOf<NewsItem>()
-            var event = parser.eventType
-            while (event != XmlPullParser.END_DOCUMENT) {
-                if (event == XmlPullParser.START_TAG && parser.name.equals("item", true)) {
-                    parseItem(parser, source)?.let(result::add)
+            return connection.inputStream.use { input ->
+                parser.setInput(input, null)
+                val result = mutableListOf<NewsItem>()
+                var event = parser.eventType
+                while (event != XmlPullParser.END_DOCUMENT) {
+                    if (event == XmlPullParser.START_TAG && parser.name.equals("item", true)) {
+                        parseItem(parser, source)?.let(result::add)
+                    }
+                    event = parser.next()
                 }
-                event = parser.next()
+                result
             }
-            return result
         } finally {
             connection.disconnect()
         }

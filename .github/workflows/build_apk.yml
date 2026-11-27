@@ -1,54 +1,37 @@
-name: Build Tata AI APK
+name: Build Asisten O3 APK
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'lib/**'
-      - 'pubspec.yaml'
-      - '.github/workflows/build_apk.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  build-debug:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          channel: stable
-          cache: true
-
-      - name: Generate Android project files
-        run: flutter create --platforms=android --project-name tata_ai .
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Analyze source
-        run: flutter analyze
-
-      - name: Run tests
-        run: flutter test
+          gradle-version: '8.2'
 
       - name: Build debug APK
-        run: flutter build apk --debug
+        run: gradle assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: tata-ai-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: asisten-o3-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

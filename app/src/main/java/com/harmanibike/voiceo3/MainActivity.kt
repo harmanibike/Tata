@@ -194,7 +194,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         })
 
         messageInput = EditText(this).apply {
-            hint = "Tulis pesan untuk Tata..."
+            setHint("Tulis pesan untuk Tata...")
             textSize = 14f
             setTextColor(ink)
             background = rounded(white, 22)
@@ -654,7 +654,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             speakAssistant("Baik, mode ngobrol saya hentikan. Sampai nanti.")
             listenButton.text = "▶  Mulai ngobrol otomatis"
             return
-        }        appendLog("Anda", spoken)
+        }
+        appendLog("Anda", spoken)
         activityScope.launch {
             val answer = router.handle(spoken)
             if (answer == CommandRouter.CONFIRM_CLEAR_KNOWLEDGE) {

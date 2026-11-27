@@ -2,6 +2,7 @@ package com.harmanibike.voiceo3
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -10,8 +11,10 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.text.InputType
 import android.view.Gravity
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -28,6 +31,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var speechRecognizer: SpeechRecognizer
     private lateinit var textToSpeech: TextToSpeech
     private lateinit var router: CommandRouter
+    private lateinit var knowledgeStore: KnowledgeStore
     private lateinit var logView: TextView
     private lateinit var listenButton: Button
     private var ttsReady = false
@@ -39,7 +43,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         window.navigationBarColor = Color.WHITE
         window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
 
-        router = CommandRouter(this, KnowledgeStore(this), NetworkHelper(this))
+        knowledgeStore = KnowledgeStore(this)
+        router = CommandRouter(this, knowledgeStore, NetworkHelper(this))
         textToSpeech = TextToSpeech(this, this)
         buildInterface()
         requestAudioPermission()
@@ -82,6 +87,16 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         scroll.addView(logView)
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
+        val knowledgeButton = Button(this).apply {
+            text = "📚  PENGETAHUAN TATA"
+            textSize = 14f
+            isAllCaps = false
+            setOnClickListener { showKnowledgeManager() }
+        }
+        val knowledgeParams = LinearLayout.LayoutParams(-1, dp(50))
+        knowledgeParams.topMargin = dp(12)
+        root.addView(knowledgeButton, knowledgeParams)
+
         listenButton = Button(this).apply {
             text = "🎙  BICARA"
             textSize = 16f
@@ -91,10 +106,105 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setOnClickListener { startListening() }
         }
         val buttonParams = LinearLayout.LayoutParams(-1, dp(56))
-        buttonParams.topMargin = dp(14)
+        buttonParams.topMargin = dp(8)
         root.addView(listenButton, buttonParams)
 
         setContentView(root)
+    }
+
+    private fun showKnowledgeManager() {
+        val entries = knowledgeStore.getAll()
+        val labels = entries.map { entry ->
+            val keys = entry.keywords.take(3).joinToString(", ")
+            if (keys.isBlank()) entry.question else "${entry.question}\nKata kunci: $keys"
+        }.toTypedArray()
+
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Pengetahuan Tata")
+            .setItems(labels) { _, which -> showKnowledgeEditor(which) }
+            .setPositiveButton("Tambah data", null)
+            .setNegativeButton("Tutup", null)
+
+        if (entries.isEmpty()) builder.setMessage("Belum ada data pengetahuan.")
+        val dialog = builder.create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                dialog.dismiss()
+                showKnowledgeEditor(null)
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showKnowledgeEditor(index: Int?) {
+        val existing = index?.let { knowledgeStore.getAll().getOrNull(it) }
+        val form = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), dp(4))
+        }
+        fun field(hintText: String, value: String = "", multiline: Boolean = false): EditText {
+            return EditText(this).apply {
+                hint = hintText
+                setText(value)
+                textSize = 15f
+                if (multiline) {
+                    minLines = 3
+                    maxLines = 5
+                    inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                    gravity = Gravity.TOP
+                } else {
+                    singleLine = true
+                    inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                }
+            }
+        }
+        val question = field("Pertanyaan, contoh: siapa pemilik toko?", existing?.question.orEmpty())
+        val keywords = field("Kata kunci, pisahkan dengan koma", existing?.keywords?.joinToString(", ").orEmpty())
+        val answer = field("Jawaban yang akan disampaikan Tata", existing?.answer.orEmpty(), true)
+        form.addView(question)
+        form.addView(keywords)
+        form.addView(answer)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(if (index == null) "Tambah pengetahuan" else "Edit pengetahuan")
+            .setView(form)
+            .setPositiveButton("Simpan", null)
+            .setNegativeButton("Batal", null)
+            .apply {
+                if (index != null) setNeutralButton("Hapus", null)
+            }
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val q = question.text.toString().trim()
+                val a = answer.text.toString().trim()
+                if (q.isBlank() || a.isBlank()) {
+                    Toast.makeText(this, "Pertanyaan dan jawaban wajib diisi.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val words = keywords.text.toString().split(",").map { it.trim() }.filter { it.isNotBlank() }
+                if (index == null) knowledgeStore.add(q, words, a)
+                else knowledgeStore.update(index, q, words, a)
+                dialog.dismiss()
+                Toast.makeText(this, "Pengetahuan Tata berhasil disimpan.", Toast.LENGTH_SHORT).show()
+            }
+            if (index != null) {
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                    AlertDialog.Builder(this)
+                        .setTitle("Hapus pengetahuan?")
+                        .setMessage("Data ini akan dihapus dari Tata.")
+                        .setPositiveButton("Hapus") { _, _ ->
+                            knowledgeStore.delete(index)
+                            dialog.dismiss()
+                            Toast.makeText(this, "Data pengetahuan dihapus.", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Batal", null)
+                        .show()
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun setupSpeechRecognizer() {

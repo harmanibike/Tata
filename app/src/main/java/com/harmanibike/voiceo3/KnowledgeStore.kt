@@ -94,6 +94,31 @@ class KnowledgeStore(context: Context) {
         file.writeText(updated.toString(2), Charsets.UTF_8)
     }
 
+    @Synchronized
+    fun exportJson(): String = file.readText(Charsets.UTF_8)
+
+    @Synchronized
+    fun importJson(json: String): Int {
+        val source = JSONArray(json)
+        val validated = JSONArray()
+        for (i in 0 until source.length()) {
+            val item = source.optJSONObject(i)
+                ?: throw IllegalArgumentException("Format data ke-${i + 1} tidak valid.")
+            val question = item.optString("question").trim()
+            val answer = item.optString("answer").trim()
+            require(question.isNotBlank() && answer.isNotBlank()) {
+                "Pertanyaan dan jawaban pada data ke-${i + 1} wajib diisi."
+            }
+            val rawKeywords = item.optJSONArray("keywords") ?: JSONArray()
+            val keywords = (0 until rawKeywords.length())
+                .map { rawKeywords.optString(it).trim() }
+                .filter { it.isNotBlank() }
+            validated.put(toJson(question, keywords, answer))
+        }
+        file.writeText(validated.toString(2), Charsets.UTF_8)
+        return validated.length()
+    }
+
     private fun toJson(question: String, keywords: List<String>, answer: String) =
         JSONObject()
             .put("question", question.trim())

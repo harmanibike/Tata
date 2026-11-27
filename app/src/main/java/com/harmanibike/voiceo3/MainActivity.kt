@@ -221,7 +221,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val entries = knowledgeStore.getAll()
         val labels = entries.map { entry ->
             val keys = entry.keywords.take(3).joinToString(", ")
-            if (keys.isBlank()) entry.question else "${entry.question}\nKata kunci: $keys"
+            if (keys.isBlank()) entry.question else "${entry.question}
+Kata kunci: $keys"
         }.toTypedArray()
 
         val builder = AlertDialog.Builder(this)
@@ -438,7 +439,10 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun appendLog(speaker: String, message: String) {
         if (!::logView.isInitialized) return
-        logView.append("$speaker:\n$message\n\n")
+        logView.append("$speaker:
+$message
+
+")
     }
 
     private fun requestAudioPermission() {
@@ -485,6 +489,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     companion object {
         private const val REQUEST_AUDIO = 301
         private const val REQUEST_EXPORT_JSON = 302
-        private const val REQUEST_IMPORT_JSON = 303\n        private const val PREFS_VOICE = "tata_voice_preferences"\n        private const val KEY_VOICE_NAME = "voice_name"
+        private const val REQUEST_IMPORT_JSON = 303
+private const val PREFS_VOICE = "tata_voice_preferences"
+private const val KEY_VOICE_NAME = "voice_name"
     }
 }

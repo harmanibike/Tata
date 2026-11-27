@@ -51,6 +51,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         requestAudioPermission()
         setupSpeechRecognizer()
         appendLog("Tata", "Halo, saya Tata. Tekan Bicara untuk memberi perintah. Ucapkan bantuan untuk melihat kemampuan saya.")
+        requestChatStorageConsentIfNeeded()
     }
 
     private fun buildInterface() {
@@ -170,6 +171,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         toolButton("Pengetahuan", ::showKnowledgeManager)
         toolButton("Suara", ::showVoiceSettings)
         toolButton("Cadangan", ::showKnowledgeBackupOptions)
+        toolButton("Privasi", ::showDataPrivacySettings)
         root.addView(toolsRow)
 
         val composer = LinearLayout(this).apply {
@@ -531,6 +533,59 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         }
     }
 
+    private fun requestChatStorageConsentIfNeeded() {
+        if (knowledgeStore.getSetting(KEY_CHAT_STORAGE_CONSENT) != null) return
+        AlertDialog.Builder(this)
+            .setTitle("Izin penyimpanan percakapan")
+            .setMessage("Tata dapat menyimpan riwayat percakapan di database lokal HP agar percakapan dapat ditinjau. Riwayat tidak dikirim ke server. Apakah Anda mengizinkan penyimpanan ini?")
+            .setPositiveButton("Izinkan simpan") { _, _ ->
+                knowledgeStore.setSetting(KEY_CHAT_STORAGE_CONSENT, "allow")
+                Toast.makeText(this, "Penyimpanan riwayat percakapan diizinkan.", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Jangan simpan") { _, _ ->
+                knowledgeStore.setSetting(KEY_CHAT_STORAGE_CONSENT, "deny")
+                Toast.makeText(this, "Riwayat percakapan tidak akan disimpan.", Toast.LENGTH_SHORT).show()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showDataPrivacySettings() {
+        val allowed = knowledgeStore.getSetting(KEY_CHAT_STORAGE_CONSENT) == "allow"
+        val options = arrayOf(
+            if (allowed) "Matikan penyimpanan riwayat percakapan" else "Izinkan penyimpanan riwayat percakapan",
+            "Hapus seluruh riwayat percakapan tersimpan",
+            "Hapus seluruh pengetahuan yang dipelajari"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Privasi dan data Tata")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        val newValue = if (allowed) "deny" else "allow"
+                        knowledgeStore.setSetting(KEY_CHAT_STORAGE_CONSENT, newValue)
+                        Toast.makeText(
+                            this,
+                            if (newValue == "allow") "Penyimpanan riwayat diizinkan." else "Penyimpanan riwayat dimatikan.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    1 -> AlertDialog.Builder(this)
+                        .setTitle("Hapus riwayat percakapan?")
+                        .setMessage("Seluruh riwayat percakapan yang tersimpan di HP ini akan dihapus. Pengetahuan Tata tidak ikut dihapus.")
+                        .setPositiveButton("Ya, hapus") { _, _ ->
+                            knowledgeStore.clearChat()
+                            Toast.makeText(this, "Riwayat percakapan dihapus.", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Batal", null)
+                        .show()
+                    2 -> showClearKnowledgeConfirmation()
+                }
+            }
+            .setNegativeButton("Tutup", null)
+            .show()
+    }
+
     private fun showClearKnowledgeConfirmation() {
         val count = knowledgeStore.getKnowledgeCount()
         val message = if (count == 0) {
@@ -574,7 +629,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             (resources.displayMetrics.widthPixels * 0.78f).toInt(), -2
         ))
         logView.addView(row)
-        if (::knowledgeStore.isInitialized) knowledgeStore.saveChat(speaker, message)
+        if (::knowledgeStore.isInitialized && knowledgeStore.getSetting(KEY_CHAT_STORAGE_CONSENT) == "allow") {
+            knowledgeStore.saveChat(speaker, message)
+        }
     }
 
     private fun requestAudioPermission() {
@@ -623,7 +680,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         private const val REQUEST_AUDIO = 301
         private const val REQUEST_EXPORT_JSON = 302
         private const val REQUEST_IMPORT_JSON = 303
-private const val PREFS_VOICE = "tata_voice_preferences"
+        private const val KEY_CHAT_STORAGE_CONSENT = "chat_history_consent"
+        private const val PREFS_VOICE = "tata_voice_preferences"
 private const val KEY_VOICE_NAME = "voice_name"
     }
 }

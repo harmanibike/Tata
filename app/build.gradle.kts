@@ -3,6 +3,13 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val releaseSigningReady = listOf(
+    "TATA_SIGNING_STORE_FILE",
+    "TATA_SIGNING_STORE_PASSWORD",
+    "TATA_SIGNING_KEY_ALIAS",
+    "TATA_SIGNING_KEY_PASSWORD"
+).all { !System.getenv(it).isNullOrBlank() }
+
 android {
     namespace = "com.harmanibike.voiceo3"
     compileSdk = 34
@@ -15,6 +22,17 @@ android {
         versionName = "2.1.0"
         ndk {
             abiFilters += "arm64-v8a"
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            if (releaseSigningReady) {
+                storeFile = file(System.getenv("TATA_SIGNING_STORE_FILE")!!)
+                storePassword = System.getenv("TATA_SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("TATA_SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("TATA_SIGNING_KEY_PASSWORD")
+            }
         }
     }
 
@@ -32,6 +50,9 @@ android {
         }
         release {
             isMinifyEnabled = false
+            if (releaseSigningReady) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

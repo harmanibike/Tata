@@ -172,6 +172,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         toolButton("Suara", ::showVoiceSettings)
         toolButton("Cadangan", ::showKnowledgeBackupOptions)
         toolButton("Privasi", ::showDataPrivacySettings)
+        toolButton("Sumber", ::showNewsSourcesManager)
         root.addView(toolsRow)
 
         val composer = LinearLayout(this).apply {
@@ -531,6 +532,100 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 if (ttsReady) textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, "tata-ai-response")
             }
         }
+    }
+
+    private fun showNewsSourcesManager() {
+        val sources = knowledgeStore.getAllNewsSources()
+        val labels = sources.map { source ->
+            "${source.name} • ${if (source.enabled) "Aktif" else "Nonaktif"}"
+        }.toTypedArray()
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Sumber berita Tata")
+            .setItems(labels) { _, which -> showNewsSourceOptions(sources[which]) }
+            .setPositiveButton("Tambah sumber", null)
+            .setNegativeButton("Tutup", null)
+        if (sources.isEmpty()) builder.setMessage("Belum ada sumber berita.")
+        val dialog = builder.create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                dialog.dismiss()
+                showNewsSourceEditor()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showNewsSourceOptions(source: NewsSource) {
+        val actions = arrayOf(
+            if (source.enabled) "Nonaktifkan sumber" else "Aktifkan sumber",
+            "Hapus sumber"
+        )
+        AlertDialog.Builder(this)
+            .setTitle(source.name)
+            .setItems(actions) { _, which ->
+                if (which == 0) {
+                    knowledgeStore.setNewsSourceEnabled(source.id, !source.enabled)
+                    Toast.makeText(this, "Status sumber berita diperbarui.", Toast.LENGTH_SHORT).show()
+                    showNewsSourcesManager()
+                } else {
+                    AlertDialog.Builder(this)
+                        .setTitle("Hapus sumber berita?")
+                        .setMessage("Sumber ${source.name} akan dihapus dari database Tata.")
+                        .setPositiveButton("Hapus") { _, _ ->
+                            knowledgeStore.deleteNewsSource(source.id)
+                            Toast.makeText(this, "Sumber berita dihapus.", Toast.LENGTH_SHORT).show()
+                            showNewsSourcesManager()
+                        }
+                        .setNegativeButton("Batal", null)
+                        .show()
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun showNewsSourceEditor() {
+        val form = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), dp(4))
+        }
+        val name = EditText(this).apply {
+            hint = "Nama sumber, contoh: ANTARA"
+            setSingleLine(true)
+        }
+        val url = EditText(this).apply {
+            hint = "URL feed RSS (https://...)"
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+        }
+        form.addView(name)
+        form.addView(url)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Tambah sumber berita")
+            .setView(form)
+            .setPositiveButton("Simpan", null)
+            .setNegativeButton("Batal", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val sourceName = name.text.toString().trim()
+                val sourceUrl = url.text.toString().trim()
+                if (sourceName.isBlank() || sourceUrl.isBlank()) {
+                    Toast.makeText(this, "Nama dan URL sumber wajib diisi.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                runCatching { knowledgeStore.addNewsSource(sourceName, sourceUrl) }
+                    .onSuccess {
+                        dialog.dismiss()
+                        Toast.makeText(this, "Sumber berita disimpan.", Toast.LENGTH_SHORT).show()
+                        showNewsSourcesManager()
+                    }
+                    .onFailure {
+                        Toast.makeText(this, "Gagal menyimpan sumber: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+                    }
+            }
+        }
+        dialog.show()
     }
 
     private fun requestChatStorageConsentIfNeeded() {

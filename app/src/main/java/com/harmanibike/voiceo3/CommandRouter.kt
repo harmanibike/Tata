@@ -7,7 +7,6 @@ import android.provider.MediaStore
 import android.net.Uri
 import android.provider.Settings
 import android.os.BatteryManager
-import android.speech.RecognizerIntent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -22,6 +21,8 @@ class CommandRouter(
     suspend fun handle(rawCommand: String): String = withContext(Dispatchers.Main) {
         val command = rawCommand.lowercase(Locale("id", "ID")).trim()
         when {
+            command == "bantuan" || command == "fitur" || command == "apa yang bisa kamu lakukan" ->
+                "Saya bisa memberi tahu jam dan tanggal, mengecek baterai, membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, peta, browser, Galeri, dan catatan. Saya juga bisa mencari informasi Harmani Bike yang tersimpan serta harga PAXG saat online. Mode ngobrol AI yang lebih luas sedang disiapkan."
             command in listOf("halo", "hai", "hello", "assalamualaikum", "selamat pagi", "selamat siang", "selamat sore", "selamat malam") ->
                 "Halo! Saya Tata, asisten suara Anda. Ada yang bisa saya bantu?"
             command.contains("siapa nama kamu") || command.contains("siapa namamu") ||

@@ -126,6 +126,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         quickAction("Bantuan", "bantuan")
         quickAction("Jam", "jam berapa")
         quickAction("Baterai", "cek baterai")
+        quickAction("Berita", "berita hari ini")
         root.addView(quickActions)
 
         val conversationTitle = TextView(this).apply {

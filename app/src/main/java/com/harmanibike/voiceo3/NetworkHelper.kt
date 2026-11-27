@@ -96,7 +96,6 @@ class NetworkHelper(context: Context) {
             if (status !in 200..299) error("RSS HTTP $status")
             val parser = Xml.newPullParser()
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-            connection.inputStream.use { parser.setInput(it, null) }
             return connection.inputStream.use { input ->
                 parser.setInput(input, null)
                 val result = mutableListOf<NewsItem>()

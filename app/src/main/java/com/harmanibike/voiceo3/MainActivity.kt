@@ -153,7 +153,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
                     gravity = Gravity.TOP
                 } else {
-                    singleLine = true
+                    setSingleLine(true)
                     inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
                 }
             }

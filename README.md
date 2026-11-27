@@ -64,6 +64,16 @@ Karakter bawaan menggunakan pitch sedikit lebih tinggi dan kecepatan bicara sedi
 - Riwayat chat dan pengetahuan merupakan dua jenis data terpisah. Menghapus pengetahuan tidak otomatis menghapus riwayat chat.
 - Fitur suara memerlukan izin mikrofon dan layanan pengenalan suara Android.
 
+## Tanda tangan digital APK Release
+- Build Debug tetap tersedia untuk pengujian dan menggunakan application ID dengan akhiran `.debug`.
+- Build Release menggunakan konfigurasi signing permanen yang membaca keystore dan kata sandi dari GitHub Actions Secrets; file keystore tidak disimpan di repositori.
+- Siapkan empat GitHub Actions Secrets berikut sebelum build Release dapat dijalankan: `TATA_KEYSTORE_BASE64`, `TATA_STORE_PASSWORD`, `TATA_KEY_ALIAS`, dan `TATA_KEY_PASSWORD`.
+- Workflow hanya menjalankan job Release bertanda tangan jika keempat Secrets tersedia. Jika belum tersedia, job Debug tetap berjalan seperti biasa.
+- Pertahankan keystore dan kata sandinya dengan aman serta gunakan keystore yang sama untuk semua versi Release mendatang. Jangan membuat keystore baru untuk pembaruan.
+- Setiap rilis baru harus menaikkan `versionCode` dan mempertahankan `applicationId`.
+- Peralihan dari APK Debug ke APK Release memerlukan instalasi awal terpisah karena Debug memakai application ID `com.harmanibike.voiceo3.debug`, sedangkan Release memakai `com.harmanibike.voiceo3`. Setelah versi Release pertama terpasang, pembaruan Release berikutnya dapat dipasang di atas versi lama tanpa uninstall selama tanda tangan dan application ID tetap sama.
+- Penandatanganan APK tidak menghapus database aplikasi. Namun, tetap lakukan backup sebelum pembaruan besar.
+
 ## Build APK
 Workflow GitHub Actions berjalan saat push ke branch `main` atau melalui `workflow_dispatch`.
 

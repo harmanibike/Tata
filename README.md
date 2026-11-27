@@ -21,6 +21,8 @@
 - Pemeriksaan koneksi tervalidasi dan pengambilan harga PAXGUSDT dari Binance secara asynchronous pada dispatcher IO.
 
 ## Rencana pengembangan percakapan AI
+
+Rancangan arsitektur AI lokal, tahapan integrasi Whisper.cpp + Qwen, fallback, dan kriteria pengujian: [docs/AI_OFFLINE_ARCHITECTURE.md](docs/AI_OFFLINE_ARCHITECTURE.md).
 - Mode ngobrol dua arah akan ditambahkan sebagai tahap berikutnya.
 - Integrasi model AI harus menggunakan backend/proxy yang menyimpan API key di server, bukan menanam API key rahasia langsung di APK.
 - Fitur percakapan AI belum aktif pada build saat ini.

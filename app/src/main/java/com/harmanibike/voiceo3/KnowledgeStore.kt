@@ -23,6 +23,12 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     null,
     DATABASE_VERSION
 ) {
+    init {
+        // Reset penyimpanan lama sesuai permintaan: tidak mengimpor data knowledge.json.
+        context.applicationContext.deleteFile("knowledge.json")
+        writableDatabase
+    }
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             """CREATE TABLE knowledge (

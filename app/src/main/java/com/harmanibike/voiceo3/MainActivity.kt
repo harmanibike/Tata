@@ -221,8 +221,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val entries = knowledgeStore.getAll()
         val labels = entries.map { entry ->
             val keys = entry.keywords.take(3).joinToString(", ")
-            if (keys.isBlank()) entry.question else "${entry.question}
-Kata kunci: $keys"
+            if (keys.isBlank()) entry.question else "${entry.question}\nKata kunci: $keys"
         }.toTypedArray()
 
         val builder = AlertDialog.Builder(this)
@@ -439,10 +438,7 @@ Kata kunci: $keys"
 
     private fun appendLog(speaker: String, message: String) {
         if (!::logView.isInitialized) return
-        logView.append("$speaker:
-$message
-
-")
+        logView.append("$speaker:\n$message\n\n")
     }
 
     private fun requestAudioPermission() {
@@ -466,6 +462,7 @@ $message
             ttsReady = result != TextToSpeech.LANG_MISSING_DATA &&
                 result != TextToSpeech.LANG_NOT_SUPPORTED
             if (!ttsReady) appendLog("Sistem", "Data suara bahasa Indonesia belum tersedia di perangkat.")
+            else restorePreferredVoice()
         } else {
             appendLog("Sistem", "Text-to-Speech gagal diinisialisasi.")
         }

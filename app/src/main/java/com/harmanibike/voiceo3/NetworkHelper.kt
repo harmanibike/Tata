@@ -15,7 +15,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-class NetworkHelper(context: Context) {
+class NetworkHelper(context: Context, private val knowledgeStore: KnowledgeStore) {
     private val appContext = context.applicationContext
 
     private data class NewsItem(
@@ -37,10 +37,13 @@ class NetworkHelper(context: Context) {
     suspend fun getTodayNews(): String = withContext(Dispatchers.IO) {
         if (!hasInternetConnection()) return@withContext "Internet tidak tersedia. Hubungkan HP ke internet untuk mengambil berita hari ini."
 
-        val feeds = listOf(
-            "https://www.antaranews.com/rss/terkini.xml" to "ANTARA",
-            "https://www.cna.id/api/v1/rss-outbound-feed?_format=xml" to "CNA Indonesia"
-        )
+        val feeds = knowledgeStore.getEnabledNewsSources()
+            .filter { (name, feedUrl) ->
+                name.isNotBlank() && (feedUrl.startsWith("https://") || feedUrl.startsWith("http://"))
+            }
+        if (feeds.isEmpty()) {
+            return@withContext "Belum ada sumber berita aktif di database Tata. Aktifkan sumber berita terlebih dahulu."
+        }
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date())
         val allNews = mutableListOf<NewsItem>()
         val errors = mutableListOf<String>()

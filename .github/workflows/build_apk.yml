@@ -65,7 +65,7 @@ jobs:
           test -s "$RUNNER_TEMP/tata-release.jks"
 
       - name: Build signed release APK
-        if: ${{ secrets.TATA_KEYSTORE_BASE64 != '' && secrets.TATA_STORE_PASSWORD != '' && secrets.TATA_KEY_ALIAS != '' && secrets.TATA_KEY_PASSWORD != '' }}
+        if: ${{ env.TATA_KEYSTORE_BASE64 != '' && env.TATA_STORE_PASSWORD != '' && env.TATA_KEY_ALIAS != '' && env.TATA_KEY_PASSWORD != '' }}
         env:
           TATA_SIGNING_STORE_FILE: ${{ runner.temp }}/tata-release.jks
           TATA_SIGNING_STORE_PASSWORD: ${{ env.TATA_STORE_PASSWORD }}
@@ -74,7 +74,7 @@ jobs:
         run: gradle assembleRelease --no-daemon
 
       - name: Upload signed release APK
-        if: ${{ secrets.TATA_KEYSTORE_BASE64 != '' && secrets.TATA_STORE_PASSWORD != '' && secrets.TATA_KEY_ALIAS != '' && secrets.TATA_KEY_PASSWORD != '' }}
+        if: ${{ env.TATA_KEYSTORE_BASE64 != '' && env.TATA_STORE_PASSWORD != '' && env.TATA_KEY_ALIAS != '' && env.TATA_KEY_PASSWORD != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: tata-ai-signed-release-apk

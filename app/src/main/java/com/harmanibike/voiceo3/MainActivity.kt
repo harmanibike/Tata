@@ -11,6 +11,9 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import android.os.Handler
+import android.os.Looper
 import android.text.InputType
 import android.view.Gravity
 import android.widget.Button
@@ -37,6 +40,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var listenButton: Button
     private var ttsReady = false
     private var recognizerReady = false
+    private var conversationModeActive = false
+    private val conversationHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -213,12 +218,12 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         })
 
         listenButton = Button(this).apply {
-            text = "🎙  Bicara dengan Tata"
+            text = "▶  Mulai ngobrol otomatis"
             textSize = 14f
             isAllCaps = false
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.rgb(24, 157, 111))
-            setOnClickListener { startListening() }
+            setOnClickListener { toggleConversationMode() }
         }
         root.addView(listenButton, LinearLayout.LayoutParams(-1, dp(50)).apply {
             topMargin = dp(8)
@@ -495,7 +500,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             override fun onBufferReceived(buffer: ByteArray?) = Unit
             override fun onEndOfSpeech() { listenButton.text = "MEMPROSES..." }
             override fun onError(error: Int) {
-                listenButton.text = "🎙  BICARA"
+                listenButton.text = if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis"
                 val message = when (error) {
                     SpeechRecognizer.ERROR_NO_MATCH -> "Ucapan tidak dikenali. Coba bicara lebih jelas."
                     SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
@@ -504,10 +509,12 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Pengenal suara sedang sibuk. Coba lagi."
                     else -> "Terjadi kendala pengenalan suara (kode $error)."
                 }
-                appendLog("Sistem", message)
+                if (conversationModeActive) {
+                    conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 900)
+                } else appendLog("Sistem", message)
             }
             override fun onResults(results: Bundle?) {
-                listenButton.text = "🎙  BICARA"
+                listenButton.text = if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis"
                 val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     ?.firstOrNull().orEmpty()
                 if (spoken.isNotBlank()) processCommand(spoken)
@@ -517,8 +524,31 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         })
     }
 
-    private fun startListening() {
-        if (!recognizerReady) return
+    private fun toggleConversationMode() {
+        if (conversationModeActive) {
+            conversationModeActive = false
+            conversationHandler.removeCallbacksAndMessages(null)
+            if (recognizerReady) speechRecognizer.cancel()
+            if (::textToSpeech.isInitialized) textToSpeech.stop()
+            listenButton.text = "▶  Mulai ngobrol otomatis"
+            appendLog("Tata", "Mode ngobrol dihentikan.")
+            return
+        }
+        if (!recognizerReady) {
+            Toast.makeText(this, "Pengenal suara belum tersedia di perangkat.", Toast.LENGTH_LONG).show()
+            return
+        }
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestAudioPermission()
+            return
+        }
+        conversationModeActive = true
+        listenButton.text = "■  Hentikan ngobrol"
+        appendLog("Tata", "Mode ngobrol aktif. Silakan bicara. Katakan Tata berhenti untuk mengakhiri.")
+        speakAssistant("Halo, saya Tata. Saya siap ngobrol. Silakan bicara.")
+    }
+
+    private fun startListening() {        if (!recognizerReady) return
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestAudioPermission()
             return
@@ -536,15 +566,32 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             .onFailure { appendLog("Sistem", "Tidak dapat memulai mikrofon: ${it.localizedMessage}") }
     }
 
+    private fun speakAssistant(message: String) {
+        if (!ttsReady) {
+            if (conversationModeActive) conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 500)
+            return
+        }
+        textToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, "tata-conversation-" + System.nanoTime())
+    }
+
     private fun processCommand(spoken: String) {
-        appendLog("Anda", spoken)
+        val normalized = spoken.lowercase(Locale("id", "ID")).trim()
+        if (conversationModeActive && listOf("tata berhenti", "berhenti tata", "akhiri obrolan", "hentikan ngobrol", "stop ngobrol").any { normalized.contains(it) }) {
+            appendLog("Anda", spoken)
+            conversationModeActive = false
+            conversationHandler.removeCallbacksAndMessages(null)
+            if (recognizerReady) speechRecognizer.cancel()
+            speakAssistant("Baik, mode ngobrol saya hentikan. Sampai nanti.")
+            listenButton.text = "▶  Mulai ngobrol otomatis"
+            return
+        }        appendLog("Anda", spoken)
         activityScope.launch {
             val answer = router.handle(spoken)
             if (answer == CommandRouter.CONFIRM_CLEAR_KNOWLEDGE) {
                 showClearKnowledgeConfirmation()
             } else {
                 appendLog("Tata AI", answer)
-                if (ttsReady) textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, "tata-ai-response")
+                speakAssistant(answer)
             }
         }
     }
@@ -766,8 +813,19 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             ttsReady = result != TextToSpeech.LANG_MISSING_DATA &&
                 result != TextToSpeech.LANG_NOT_SUPPORTED
             if (!ttsReady) appendLog("Sistem", "Data suara bahasa Indonesia belum tersedia di perangkat.")
-            else restorePreferredVoice()
-        } else {
+            else {
+                restorePreferredVoice()
+                textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) = Unit
+                    override fun onDone(utteranceId: String?) {
+                        conversationHandler.post { if (conversationModeActive) startListening() }
+                    }
+                    @Deprecated("Deprecated in Java")
+                    override fun onError(utteranceId: String?) {
+                        conversationHandler.post { if (conversationModeActive) startListening() }
+                    }
+                })
+            }        } else {
             appendLog("Sistem", "Text-to-Speech gagal diinisialisasi.")
         }
     }

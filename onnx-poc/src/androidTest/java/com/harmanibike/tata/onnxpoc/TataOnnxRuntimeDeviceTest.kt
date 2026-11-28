@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.nio.FloatBuffer
+import java.nio.LongBuffer
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,6 +25,46 @@ class TataOnnxRuntimeDeviceTest {
         )
         val requested = packageInfo.requestedPermissions.orEmpty().toSet()
         assertFalse("PoC must not request INTERNET permission", requested.contains("android.permission.INTERNET"))
+    }
+
+    @Test
+    fun opensSyntheticTataTransformerAndRunsDynamicInt64InferenceOffline() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val modelFile = File(context.cacheDir, "tata_transformer_synthetic.onnx")
+        InstrumentationRegistry.getInstrumentation().context.assets
+            .open("tata_transformer_synthetic.onnx").use { input ->
+                modelFile.outputStream().use { output -> input.copyTo(output) }
+            }
+
+        val environment = OrtEnvironment.getEnvironment()
+        TataOnnxRuntimeProbe.open(modelFile).use { probe ->
+            assertEquals(setOf("input_ids"), probe.inputNames)
+            assertEquals(setOf("logits"), probe.outputNames)
+
+            val shapes = listOf(1L to 4L, 2L to 5L)
+            for ((batch, sequence) in shapes) {
+                val tokenIds = LongArray((batch * sequence).toInt()) { (it % 4 + 4).toLong() }
+                OnnxTensor.createTensor(
+                    environment,
+                    LongBuffer.wrap(tokenIds),
+                    longArrayOf(batch, sequence)
+                ).use { tensor ->
+                    probe.run(mapOf("input_ids" to tensor)).use { result ->
+                        @Suppress("UNCHECKED_CAST")
+                        val logits = result[0].value as Array<Array<FloatArray>>
+                        assertEquals(batch.toInt(), logits.size)
+                        for (batchLogits in logits) {
+                            assertEquals(sequence.toInt(), batchLogits.size)
+                            for (tokenLogits in batchLogits) {
+                                assertEquals(8, tokenLogits.size)
+                                assertFalse(tokenLogits.any { it.isNaN() || it.isInfinite() })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        modelFile.delete()
     }
 
     @Test

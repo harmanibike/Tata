@@ -297,4 +297,23 @@ class LocalReasoningEngineTest {
         assertEquals(null, generator.respond("Siapa presiden Indonesia?"))
         assertEquals(null, generator.respond("Apa itu fotosintesis?"))
     }
+
+    @Test
+    fun codeBasedGenerativeEngineKeepsShortLivedContextForFollowUps() {
+        val generator = TataGenerativeEngine()
+        generator.respond("Buatkan rencana untuk belajar Kotlin")
+        val followUp = generator.respond("Lanjutkan")
+        assertNotNull(followUp)
+        assertTrue(followUp!!.contains("belajar Kotlin"))
+        generator.clearSession()
+        assertEquals(null, generator.respond("Lanjutkan"))
+    }
+
+    @Test
+    fun codeBasedGenerativeEngineCanBrainstormWithoutClaimingFacts() {
+        val answer = TataGenerativeEngine().respond("Berikan ide untuk aplikasi pendidikan")
+        assertNotNull(answer)
+        assertTrue(answer!!.contains("aplikasi pendidikan"))
+        assertTrue(answer.contains("versi percobaan"))
+    }
 }

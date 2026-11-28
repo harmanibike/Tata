@@ -124,3 +124,8 @@ Evaluator held-out tersedia di `tools/model/evaluate_transformer.py`, dengan tes
 ### Evaluasi tokenizer sebelum model training
 
 Tool `tools/corpus/evaluate_tokenizer.py` menyediakan probe tetap untuk imbuhan Indonesia, reduplikasi, format rupiah, tanggal/jam, tanda baca, campuran bahasa, nama lokal, dan karakter emoji. Catat unknown rate, token-per-character, dan round-trip; bandingkan tokenizer pada korpus train yang sama. Probe ini hanya untuk evaluasi, tidak boleh digabung ke data training. Rasio token lebih kecil bukan bukti model lebih pintar atau lebih akurat.
+
+
+### Konteks pilot dan sampling validation
+
+Trainer mendukung `--context-length` dengan default 256. Konteks lebih pendek dapat dipakai untuk eksperimen pipeline pada contoh yang lebih pendek, tetapi hasilnya tidak boleh dibandingkan langsung dengan model berkonteks 256 tanpa mencatat konfigurasi. Validation memilih jendela yang tersebar merata dari seluruh kumpulan jendela penuh (maksimal 32 per evaluasi), bukan hanya jendela awal. Resume checkpoint tetap terikat pada konfigurasi yang sama.

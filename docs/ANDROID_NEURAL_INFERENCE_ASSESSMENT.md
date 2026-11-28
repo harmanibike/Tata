@@ -61,3 +61,20 @@ Alternatif seperti menulis runtime C++ Tata sendiri tidak dipilih sekarang karen
 ## Kriteria selesai untuk tahap ini
 
 Tahap inferensi Android baru dapat disebut selesai jika ekspor, tokenizer parity, kesetaraan numerik, runtime offline, validasi paket, dan uji performa perangkat fisik semuanya lulus. Sampai itu terjadi, mesin aturan Kotlin dan jalur GGUF yang ada tidak boleh disebut sebagai neural network Tata hasil training sendiri.
+
+
+## Eksperimen ekspor ONNX yang tersedia di branch
+
+Skrip `tools/model/export_transformer_onnx.py` kini menyediakan ekspor eksperimental dari checkpoint `best_validation`. Skrip hanya menerima checkpoint dengan asal bobot yang tercatat sebagai random initialization, memuatnya memakai `weights_only=True`, memeriksa ukuran vocabulary dan hash tokenizer terhadap metadata training, memeriksa konsistensi hash register sumber train/validation, lalu membuat graph ONNX opset 17 dan manifest checksum.
+
+Contoh pemakaian setelah tersedia checkpoint dan tokenizer hasil pipeline training yang sah:
+
+```bash
+python -m pip install torch onnx
+python -m tools.model.export_transformer_onnx \
+  --checkpoint runs/tata.best.pt \
+  --tokenizer artifacts/tokenizer.json \
+  --output artifacts/tata-experimental.onnx
+```
+
+Manifest berstatus `experimental_not_android_validated`. Ekspor yang berhasil dan graph yang lolos ONNX checker **belum** membuktikan kesetaraan numerik dengan PyTorch, kompatibilitas ONNX Runtime Android, parity tokenizer Kotlin, atau kelayakan performa perangkat. Jangan masukkan artefak ini ke APK produksi sebelum seluruh gerbang tersebut lulus.

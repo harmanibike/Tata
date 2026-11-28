@@ -87,7 +87,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(22), dp(24), dp(30))
+            setPadding(dp(18), dp(14), dp(18), dp(22))
             background = android.graphics.drawable.GradientDrawable(
                 android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
                 intArrayOf(Color.rgb(72, 35, 232), violet)
@@ -96,7 +96,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val headerLine = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         val title = TextView(this).apply {
             text = "Tata AI"
-            textSize = 34f
+            textSize = 27f
             setTextColor(white)
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
@@ -105,7 +105,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             text = "● OFFLINE"
             textSize = 12f
             setTextColor(white)
-            setPadding(dp(12), dp(8), dp(12), dp(8))
+            setPadding(dp(9), dp(5), dp(9), dp(5))
             background = rounded(Color.rgb(110, 110, 118), 18)
         }
         headerLine.addView(connectionStatusView)
@@ -115,21 +115,21 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(22), dp(22), dp(22), dp(14))
+            setPadding(dp(14), dp(12), dp(14), dp(8))
             background = rounded(Color.rgb(250, 250, 252), 34)
         }
         val stateLabel = TextView(this).apply {
             text = "Siap mendengarkan"
-            textSize = 20f
+            textSize = 16f
             setTextColor(ink)
             setTypeface(null, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
         }
-        panel.addView(stateLabel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+        panel.addView(stateLabel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(6) })
 
         val micButton = Button(this).apply {
             text = "🎙"
-            textSize = 58f
+            textSize = 42f
             isAllCaps = false
             setTextColor(white)
             background = android.graphics.drawable.GradientDrawable(
@@ -154,25 +154,25 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setPadding(dp(2), dp(4), dp(2), dp(8))
         }
         scroll.addView(logView)
-        panel.addView(scroll, LinearLayout.LayoutParams(-1, dp(190)))
+        panel.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { minimumHeight = dp(90) })
 
         val controlRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(0, dp(8), 0, dp(8))
+            setPadding(0, dp(4), 0, dp(4))
         }
         fun roundControl(label: String, icon: String, action: () -> Unit) {
             val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
             val button = Button(this).apply {
                 text = icon
-                textSize = 22f
+                textSize = 18f
                 isAllCaps = false
                 setTextColor(white)
                 background = rounded(Color.rgb(160, 160, 164), 50)
                 setOnClickListener { action() }
             }
-            column.addView(button, LinearLayout.LayoutParams(dp(68), dp(68)))
-            val caption = TextView(this).apply { text = label; textSize = 12f; setTextColor(muted); gravity = Gravity.CENTER }
+            column.addView(button, LinearLayout.LayoutParams(dp(52), dp(52)))
+            val caption = TextView(this).apply { text = label; textSize = 10f; setTextColor(muted); gravity = Gravity.CENTER }
             column.addView(caption)
             controlRow.addView(column, LinearLayout.LayoutParams(0, -2, 1f))
         }
@@ -186,7 +186,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
         val hint = TextView(this).apply {
             text = "◈  Tekan lingkaran untuk bicara  •  Obrolan otomatis tersedia"
-            textSize = 11f
+            textSize = 10f
             setTextColor(muted)
             gravity = Gravity.CENTER
             setPadding(0, dp(5), 0, dp(8))
@@ -207,7 +207,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             setPadding(dp(14), dp(10), dp(14), dp(10))
         }
-        val composer = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14), dp(6), dp(14), dp(6)) }
+        val composer = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(10), dp(4), dp(10), dp(4)) }
         composer.addView(messageInput, LinearLayout.LayoutParams(0, -2, 1f))
         val send = Button(this).apply {
             text = "Kirim"; isAllCaps = false; setTextColor(white); background = rounded(purple, 18)
@@ -216,13 +216,13 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 if (value.isNotEmpty()) { messageInput.setText(""); processCommand(value) }
             }
         }
-        composer.addView(send, LinearLayout.LayoutParams(dp(78), dp(46)).apply { leftMargin = dp(8) })
+        composer.addView(send, LinearLayout.LayoutParams(dp(68), dp(42)).apply { leftMargin = dp(8) })
         root.addView(composer)
 
         val nav = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setPadding(dp(6), dp(5), dp(6), dp(5))
             background = rounded(white, 28)
             elevation = dp(8).toFloat()
         }
@@ -236,7 +236,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 if (selected) background = rounded(purple, 16)
                 setOnClickListener { action() }
             }
-            nav.addView(item, LinearLayout.LayoutParams(0, dp(62), 1f))
+            nav.addView(item, LinearLayout.LayoutParams(0, dp(52), 1f))
         }
         navItem("Chat", "▤", { appendLog("Tata", "Silakan tulis atau ucapkan pesan.") })
         navItem("Suara", "◉", { toggleConversationMode() }, true)
@@ -253,7 +253,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     }
                 }.setNegativeButton("Tutup", null).show()
         })
-        root.addView(nav, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dp(8); rightMargin = dp(8); topMargin = dp(4); bottomMargin = dp(8) })
+        root.addView(nav, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dp(8); rightMargin = dp(8); topMargin = dp(4); bottomMargin = dp(5) })
         setContentView(root)
     }
 

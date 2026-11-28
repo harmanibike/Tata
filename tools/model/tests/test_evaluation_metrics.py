@@ -12,7 +12,11 @@ class FakeTensor:
         return self
 
     def numel(self):
-        return len(self.values)
+        def count(values):
+            if isinstance(values, (list, tuple)):
+                return sum(count(value) for value in values)
+            return 1
+        return count(self.values)
 
 
 class FakeModel:
@@ -33,7 +37,7 @@ class FakeFunctional:
     def cross_entropy(logits, targets, reduction="sum"):
         class Loss:
             def item(self):
-                return math.log(2) * len(targets.values)
+                return math.log(2) * targets.numel()
         return Loss()
 
 

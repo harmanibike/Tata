@@ -38,6 +38,9 @@
 - Karakter suara perempuan muda dipilih berdasarkan metadata suara yang disediakan mesin TTS; jika metadata gender tidak tersedia, Tata memilih suara Indonesia dengan kualitas tertinggi yang tersedia. Pitch dan tempo disetel lembut.
 - Suara online pada tahap ini memakai voice network-enabled dari mesin TTS Android (misalnya Google Speech Services jika tersedia), bukan layanan AI TTS cloud khusus. Kualitas, ketersediaan, dan karakter suara bergantung pada mesin TTS serta paket suara yang terpasang di HP.
 - Tombol Bicara, input teks, dan percakapan.
+- Mesin percakapan lokal berbasis aturan untuk sapaan, kabar, ucapan terima kasih, dukungan saat pengguna sedih/bosan, motivasi, lelucon ringan, identitas, jam, dan tanggal.
+- Pengetahuan lokal pengguna diperiksa sebelum jawaban percakapan bawaan, sehingga jawaban yang sudah diajarkan dapat diprioritaskan.
+- Mesin percakapan lokal tidak mengirim pesan ke server dan tidak menyimpan pengetahuan secara otomatis. Pengguna tetap harus menyimpan pengetahuan secara eksplisit melalui menu Pengetahuan.
 - Perintah sapaan, identitas Tata, bantuan fitur, jam, tanggal, dan persentase baterai.
 - Perintah membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, aplikasi peta, browser, Galeri, dan aplikasi catatan yang tersedia.
 - Pengetahuan lokal yang dapat dikelola melalui tombol **Pengetahuan Tata**: tambah, edit, dan hapus pertanyaan, kata kunci, serta jawaban.
@@ -59,7 +62,7 @@
 - Cadangan dapat dipindahkan ke perangkat lain secara manual; sinkronisasi otomatis antarperangkat belum tersedia.
 
 ## Batasan saat ini
-- Tata menggunakan pencocokan pertanyaan dan kata kunci sederhana, bukan model AI percakapan bebas.
+- Percakapan offline memakai mesin aturan dan pencocokan pengetahuan lokal, bukan model bahasa generatif. Tata dapat menangani obrolan umum yang dikenali, tetapi tidak dapat menjawab pertanyaan bebas seluas model AI besar tanpa model lokal tambahan.
 - Database kemampuan dan sumber berita saat ini berada di SQLite lokal. Pembaruan konfigurasi dari server online, cache berita offline, dan antarmuka untuk mengelola sumber berita masih menjadi pekerjaan tahap berikutnya.
 - Berita membutuhkan internet dan bergantung pada ketersediaan feed RSS. Jika feed gagal diakses atau tidak memuat artikel bertanggal hari ini, Tata akan memberi tahu pengguna.
 - Riwayat chat dan pengetahuan merupakan dua jenis data terpisah. Menghapus pengetahuan tidak otomatis menghapus riwayat chat.

@@ -264,3 +264,11 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Alat awal validasi korpus JSONL tersedia di `tools/corpus/validate_corpus.py`, dengan tes otomatis Python di `tools/corpus/tests` dan workflow CI tersendiri. Validator memeriksa struktur, lisensi yang diizinkan, status tinjauan privasi, role percakapan, indikasi email/nomor telepon/kredensial, ID duplikat, serta duplikasi percakapan.
 - Validator adalah pemeriksaan awal, bukan jaminan bahwa seluruh data bebas informasi pribadi atau bahwa lisensi sudah sah secara hukum. Setiap sumber tetap memerlukan pemeriksaan manusia dan bukti izin.
 - Generator manifest provenance tersedia di `tools/corpus/build_manifest.py`. Manifest mencatat hash korpus, jumlah contoh, sumber/lisensi, dan pembagian dataset tanpa menyalin isi percakapan. Manifest hanya dibuat setelah korpus lolos validator.
+
+## Dataset sintetis dan eksperimen tokenizer
+- Fixture awal delapan contoh Bahasa Indonesia sintetis tersedia di `tools/corpus/examples/synthetic_sample.jsonl`. Contoh ini bukan percakapan pengguna atau korpus produksi; status tinjauan kualitasnya masih **pending**.
+- Prototipe Character-BPE mandiri tersedia di `tools/corpus/train_tokenizer.py`. Script memakai Python standard library, deterministik, dapat menyimpan/memuat tokenizer JSON, dan tidak memakai API atau layanan eksternal.
+- Loader tokenizer hanya mengambil contoh dengan tinjauan privasi dan kualitas berstatus **passed**, serta tidak mengambil split validation/test. Contoh pending tidak akan melatih tokenizer.
+- Tes otomatis meliputi round-trip teks Unicode Indonesia, determinisme, token tak dikenal, penyimpanan/pemuatan, batas ukuran kosakata, dan pemisahan data yang belum ditinjau/held-out.
+- Prototipe ini masih tokenizer karakter-BPE untuk eksperimen fondasi, bukan tokenizer produksi dan bukan model neural network. Korpus yang besar, berizin, dan ditinjau tetap diperlukan sebelum pelatihan model.
+- Petunjuk teknis dan tahap berikutnya ada di [docs/OWN_NEURAL_NETWORK_ROADMAP.md](docs/OWN_NEURAL_NETWORK_ROADMAP.md).

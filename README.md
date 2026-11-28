@@ -243,7 +243,7 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Setiap perubahan pertanyaan, koreksi, atau sumber membatalkan status persetujuan/pengujian sebelumnya dan mengembalikan catatan ke **Perlu ditinjau**.
 - Catatan yang diedit harus diperiksa dan disetujui ulang sebelum dapat diterapkan sebagai pengetahuan aktif.
 ## Tata Generatif Hibrida tanpa ketergantungan GGUF
-- Tata mulai memiliki generator berbasis Kotlin yang dapat menyusun respons offline untuk membuat rencana, membandingkan pilihan, dan menimbang keputusan.
+- Tata mulai memiliki generator berbasis Kotlin yang dapat menyusun respons offline untuk membuat rencana, membandingkan pilihan, menimbang keputusan, mengembangkan ide awal, dan menanggapi tindak lanjut dengan konteks singkat di RAM.
 - Jalur ini tidak memerlukan GGUF, model pihak ketiga, API AI, jaringan, atau penyimpanan percakapan baru.
 - Generator berbasis kode bukan neural network dan tidak otomatis mengetahui fakta dunia. Untuk pertanyaan faktual yang belum ada di pengetahuan lokal, Tata harus menyatakan belum tahu; pengguna dapat mengajarkan materi melalui Learning Lab atau meminta riset web secara eksplisit.
 - Model GGUF yang sudah ada di proyek menjadi jalur opsional, bukan syarat menjalankan generator berbasis kode.

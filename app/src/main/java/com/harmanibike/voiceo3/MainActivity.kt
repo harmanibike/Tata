@@ -942,7 +942,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun isIdentityQuestion(command: String): Boolean =
-        listOf("siapa kamu", "siapa nama kamu", "siapa namamu", "nama kamu", "identitas kamu", "tentang dirimu", "informasi tentang dirimu", "ceritakan tentang dirimu", "apa itu tata ai", "apa arti ai", "apa itu ai", "jelaskan ai", "versi berapa", "versi tata", "kamu versi apa")
+        listOf("siapa kamu", "siapa nama kamu", "siapa namamu", "nama kamu", "identitas kamu", "tentang dirimu", "informasi tentang dirimu", "ceritakan tentang dirimu", "apa itu tata ai", "apa arti ai", "apa itu ai", "jelaskan ai", "versi berapa", "versi tata", "kamu versi apa", "apa kemampuanmu", "kemampuan kamu", "kamu bisa apa", "fitur apa yang kamu punya")
             .any { command.contains(it) }
 
     private fun buildIdentityDescription(): String {
@@ -950,7 +950,10 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val versionName = packageInfo.versionName ?: "versi belum ditentukan"
         @Suppress("DEPRECATION")
         val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) packageInfo.longVersionCode else packageInfo.versionCode.toLong()
-        return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya dapat membantu perintah dasar, percakapan lokal berpola, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. Saya tidak memakai API AI eksternal; kemampuan percakapan bebas saya masih terbatas dan terus dikembangkan. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
+        val capabilities = knowledgeStore.getAssistantCapabilities()
+            .filter { it.enabled }
+            .joinToString(" ") { it.displayName + ": " + it.description }
+        return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya tidak memakai API AI eksternal. Kemampuan saya saat ini: $capabilities Saya juga dapat membantu perintah dasar, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. Percakapan saya masih berbasis aturan dan pencocokan teks, bukan model bahasa generatif. Saya mengenali petunjuk emosi dari kata-kata, tetapi tidak bisa mengetahui perasaan seseorang secara pasti. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
     }
 
     private fun showAboutTata() {
@@ -958,9 +961,60 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         AlertDialog.Builder(this)
             .setTitle("Tentang Tata AI")
             .setMessage(description)
-            .setPositiveButton("Mengerti", null)
+            .setPositiveButton("Kemampuan & profil") { _, _ -> showCapabilityProfileManager() }
             .setNeutralButton("Bacakan") { _, _ -> speakAssistant(description) }
+            .setNegativeButton("Tutup", null)
             .show()
+    }
+
+    private fun showCapabilityProfileManager() {
+        val capabilities = knowledgeStore.getAssistantCapabilities()
+        if (capabilities.isEmpty()) {
+            AlertDialog.Builder(this).setMessage("Belum ada profil kemampuan.").setPositiveButton("Tutup", null).show()
+            return
+        }
+        val labels = capabilities.map { it.displayName + " • v" + it.version + if (it.enabled) "" else " • Nonaktif" }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Profil kemampuan Tata")
+            .setMessage("Pilih kemampuan untuk melihat atau memperbarui deskripsinya. Perubahan hanya disimpan setelah Anda menekan Simpan.")
+            .setItems(labels) { _, which -> editCapabilityDescription(capabilities[which]) }
+            .setNegativeButton("Tutup", null)
+            .show()
+    }
+
+    private fun editCapabilityDescription(capability: AssistantCapability) {
+        val editor = EditText(this).apply {
+            setText(capability.description)
+            textSize = 14f
+            minLines = 4
+            maxLines = 8
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Ubah " + capability.displayName)
+            .setMessage("Deskripsi ini menjadi bagian dari profil yang dapat Tata ceritakan. Simpan hanya jika Anda menyetujui perubahan.")
+            .setView(editor)
+            .setPositiveButton("Simpan", null)
+            .setNegativeButton("Batal", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val updated = editor.text.toString().trim()
+                if (updated.isBlank()) {
+                    editor.error = "Deskripsi tidak boleh kosong"
+                    return@setOnClickListener
+                }
+                runCatching { knowledgeStore.updateCapabilityDescription(capability.key, updated) }
+                    .onSuccess {
+                        dialog.dismiss()
+                        Toast.makeText(this, "Profil kemampuan diperbarui.", Toast.LENGTH_SHORT).show()
+                        showCapabilityProfileManager()
+                    }
+                    .onFailure { editor.error = it.message ?: "Tidak dapat menyimpan perubahan" }
+            }
+        }
+        dialog.show()
     }
 
     private fun openOtherAi(url: String, question: String, label: String) {

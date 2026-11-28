@@ -345,10 +345,16 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     @Synchronized
     fun updateLearningRecord(id: Long, question: String, correction: String, source: String) {
         require(question.isNotBlank() && correction.isNotBlank()) { "Pertanyaan dan koreksi wajib diisi." }
+        val previousStatus = readableDatabase.rawQuery(
+            "SELECT status FROM learning_records WHERE id=?", arrayOf(id.toString())
+        ).use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
         val values = ContentValues().apply {
             put("question", question.trim().take(2000))
             put("correction", correction.trim().take(6000))
             put("source", source.trim().take(1000))
+            if (previousStatus == "diterapkan" || previousStatus == "sudah_diuji") {
+                put("status", "perlu_ditinjau")
+            }
             put("updated_at", System.currentTimeMillis())
         }
         writableDatabase.update("learning_records", values, "id=?", arrayOf(id.toString()))

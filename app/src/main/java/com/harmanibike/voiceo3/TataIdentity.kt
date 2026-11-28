@@ -21,7 +21,8 @@ object TataIdentity {
             "jelaskan ai", "versi berapa", "versi tata", "kamu versi apa",
             "apa kemampuanmu", "kemampuan kamu", "kamu bisa apa", "fitur apa yang kamu punya"
         )
-        return phrases.any { text == it || text.startsWith("$it ") }
+        val padded = " $text "
+        return phrases.any { padded.contains(" $it ") }
     }
 
     fun answer(command: String, versionName: String = ""): String {

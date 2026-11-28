@@ -299,6 +299,42 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
         return records
     }
 
+    /**
+     * Menggabungkan catatan impor tanpa menimpa data lama. Duplikat identik dilewati;
+     * konflik tetap menjadi catatan terpisah berstatus perlu ditinjau.
+     */
+    @Synchronized
+    fun mergeLearningRecords(records: List<TransferLearningRecord>): Int {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val known = getLearningRecords()
+                .map { LearningLabTransfer.fingerprint(it.question, it.correction) }
+                .toMutableSet()
+            var inserted = 0
+            records.forEach { record ->
+                val fingerprint = LearningLabTransfer.fingerprint(record)
+                if (known.add(fingerprint)) {
+                    val now = System.currentTimeMillis()
+                    val values = ContentValues().apply {
+                        put("question", record.question.trim().take(2000))
+                        put("correction", record.correction.trim().take(6000))
+                        put("source", record.source.trim().take(1000))
+                        put("status", "perlu_ditinjau")
+                        put("created_at", now)
+                        put("updated_at", now)
+                    }
+                    db.insertOrThrow("learning_records", null, values)
+                    inserted++
+                }
+            }
+            db.setTransactionSuccessful()
+            return inserted
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     @Synchronized
     fun updateLearningRecord(id: Long, question: String, correction: String, source: String) {
         require(question.isNotBlank() && correction.isNotBlank()) { "Pertanyaan dan koreksi wajib diisi." }

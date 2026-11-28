@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "tools" / "corpus"))
 sys.path.insert(0, str(ROOT / "tools" / "model"))
 
 from train_tokenizer import CharacterBPE, SPECIAL_TOKENS
+from validate_corpus import validate_file
 from transformer_config import TransformerConfig
 from train_transformer import build_model_class
 
@@ -25,6 +26,9 @@ ALLOWED_LICENSES = {
 
 
 def load_test_sequences(corpus_path: Path, tokenizer_path: Path):
+    errors, _ = validate_file(corpus_path)
+    if errors:
+        raise ValueError("Korpus tidak lolos validasi: " + "; ".join(errors[:5]))
     tokenizer = CharacterBPE.load(tokenizer_path)
     vocabulary = list(SPECIAL_TOKENS) + list(tokenizer.alphabet)
     for left, right in tokenizer.merges:

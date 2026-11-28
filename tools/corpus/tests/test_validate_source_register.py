@@ -76,6 +76,24 @@ class SourceRegisterTests(unittest.TestCase):
         self.assertTrue(any("accessed_at" in item for item in errors))
         self.assertTrue(any("canonical_uri" in item for item in errors))
 
+    def test_rejects_http_url_without_hostname(self):
+        errors, _ = validate_register(self.write_csv([
+            row(canonical_uri="https:///material")
+        ]))
+        self.assertTrue(any("canonical_uri" in item for item in errors))
+
+    def test_rejects_embedded_url_credentials(self):
+        errors, _ = validate_register(self.write_csv([
+            row(license_evidence_uri="https://user:secret@example.org/license")
+        ]))
+        self.assertTrue(any("license_evidence_uri" in item for item in errors))
+
+    def test_rejects_malformed_port(self):
+        errors, _ = validate_register(self.write_csv([
+            row(canonical_uri="https://example.org:99999/material")
+        ]))
+        self.assertTrue(any("canonical_uri" in item for item in errors))
+
     def test_pending_source_can_record_unclear_rights(self):
         errors, stats = validate_register(self.write_csv([
             row(decision="pending", training_permission="unclear")

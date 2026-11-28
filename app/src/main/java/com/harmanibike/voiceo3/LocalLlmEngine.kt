@@ -65,10 +65,11 @@ class LocalLlmEngine {
     }
 
     fun unload() {
-        if (nativeLibraryAvailable) runCatching { nativeUnload() }
+        // Mark unavailable before waiting for native generation to finish.
         loaded = false
         activeModelPath = null
         synchronized(historyLock) { conversationHistory.clear() }
+        if (nativeLibraryAvailable) runCatching { nativeUnload() }
     }
 
     companion object {

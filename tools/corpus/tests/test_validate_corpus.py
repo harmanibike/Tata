@@ -35,7 +35,7 @@ class CorpusValidatorTests(unittest.TestCase):
     def test_rejects_unknown_license_and_unreviewed_privacy(self):
         record = sample_record()
         record["source"]["license"] = "unknown"
-        record["privacy_review"] = "pending"
+        record["privacy_review"] = "not_reviewed"
         errors = validate_record(record, 1)
         self.assertTrue(any("lisensi" in error for error in errors))
         self.assertTrue(any("privacy_review" in error for error in errors))

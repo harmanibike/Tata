@@ -78,3 +78,20 @@ Dokumentasi resmi llama.cpp menyediakan contoh Android dan jalur kompilasi NDK u
 - Model dilarang mengarang angka, sumber, kutipan, tanggal, atau kemampuan aplikasi, serta dilarang mengklaim telah melakukan pencarian atau tindakan yang belum dilakukan.
 - Router hanya menjalankan pencarian web jika pengguna memberi perintah eksplisit melalui pola **Cari/Telusuri di internet/web**. Pertanyaan terbuka yang tidak terjawab tidak otomatis dikirim keluar perangkat.
 - Ini adalah penguatan prompt dan pengelolaan konteks, bukan jaminan kebenaran model. Akurasi tetap bergantung pada model GGUF yang dipilih dan harus diuji pada perangkat nyata.
+## Jalur alternatif: Tata Generatif Hibrida tanpa GGUF
+
+Pengembangan tidak mewajibkan GGUF. Jalur hibrida dibagi menjadi tiga lapisan yang dapat berkembang terpisah:
+
+1. **Mesin kemampuan berbasis kode:** pemahaman maksud, penalaran deterministik, pengelolaan konteks sementara, dan penyusunan respons.
+2. **Mesin pengetahuan:** SQLite dan Learning Lab. Data baru hanya menjadi pengetahuan aktif setelah ditinjau dan disetujui; data ini tidak otomatis melatih bobot neural network.
+3. **Mesin generatif neural milik Tata (tahap riset berikutnya):** model yang arsitektur dan bobotnya dikembangkan serta dilatih sendiri. Pelatihan memerlukan korpus teks berizin, tokenizer, pipeline training, evaluasi, dan komputasi yang memadai. Ini belum tersedia di APK.
+
+### Implementasi awal generator berbasis kode
+- TataGenerativeEngine menyusun respons dari maksud dan bagian kalimat yang diberikan pengguna untuk permintaan membuat rencana, membandingkan pilihan, dan menimbang keputusan.
+- Generator berjalan di Kotlin, offline, tanpa API, tanpa GGUF, tanpa jaringan, dan tanpa penyimpanan percakapan ke database.
+- Generator tidak mengarang fakta. Untuk pertanyaan faktual yang tidak ditemukan di pengetahuan lokal, Tata menyatakan keterbatasannya dan meminta pengguna mengajarkan sumber melalui Learning Lab atau secara eksplisit meminta riset web.
+- Jika model lokal opsional tersedia dan aktif, model tersebut tetap dapat digunakan untuk generasi bahasa lebih luas. Namun generator berbasis kode tetap menjadi jalur tanpa model eksternal.
+- Pengujian JUnit memeriksa bahwa rencana memuat tujuan pengguna, perbandingan meminta opsi yang jelas, dan pertanyaan faktual biasa tidak dijawab dengan template yang menyesatkan.
+
+### Batasan yang harus dinyatakan
+Generator berbasis kode **bukan neural network dan belum setara ChatGPT**. Ia menghasilkan kalimat baru dengan menggabungkan struktur respons dan informasi yang benar-benar diberikan pengguna atau tersedia di pengetahuan lokal. Untuk menghasilkan bahasa yang fleksibel dan pengetahuan umum luas, tahap neural network milik Tata masih membutuhkan data pelatihan, proses training, dan pengujian tersendiri. Jangan menyebut tahap awal ini sebagai model bahasa yang sudah dilatih.

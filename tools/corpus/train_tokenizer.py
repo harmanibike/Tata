@@ -216,7 +216,8 @@ def load_training_texts(jsonl_path: Path) -> list[str]:
             if not isinstance(content, str) or not content.strip():
                 raise ValueError(f"Content kosong pada baris {line_number}")
             # Sertakan penanda peran agar model dapat mempelajari giliran dialog.
-            texts.append(message["role"] + ": " + content)
+            # Newline is an explicit turn boundary and is also used by generation prompts.
+            texts.append(message["role"] + ": " + content + "\n")
     return texts
 
 

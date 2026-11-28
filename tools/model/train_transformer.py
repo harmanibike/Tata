@@ -171,6 +171,10 @@ def clone_state_to_cpu(state):
     return {name: value.detach().cpu().clone() for name, value in state.items()}
 
 
+def early_stop_reached(patience: int, evaluations_without_improvement: int) -> bool:
+    return patience > 0 and evaluations_without_improvement >= patience
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", type=Path, required=True)
@@ -274,6 +278,8 @@ def main() -> int:
         if best_model_state is None:
             best_model_state = clone_state_to_cpu(model.state_dict())
             best_step = start_step
+            best_validation = math.inf
+            evaluations_without_improvement = 0
         if "python_rng_state" in checkpoint:
             rng.setstate(checkpoint["python_rng_state"])
         if "torch_rng_state" in checkpoint:
@@ -300,6 +306,7 @@ def main() -> int:
         optimizer.step()
 
         should_evaluate = step % args.eval_interval == 0 or step == start_step + args.steps
+        stop_early = False
         if should_evaluate:
             validation_loss = evaluate(
                 torch, model, validation_sequences, config, device
@@ -322,6 +329,9 @@ def main() -> int:
                 "perplexity": round(math.exp(min(validation_loss, 20)), 4),
                 "device": device,
             }, ensure_ascii=False), flush=True)
+            stop_early = early_stop_reached(
+                args.early_stopping_patience, evaluations_without_improvement
+            )
             if improved:
                 best_payload = {
                     "format": "tata-transformer-checkpoint",
@@ -344,7 +354,8 @@ def main() -> int:
                 }
                 atomic_save(torch, best_payload, best_checkpoint_path(args.output))
 
-        if step % args.checkpoint_interval == 0 or step == start_step + args.steps:
+        if (step % args.checkpoint_interval == 0
+                or step == start_step + args.steps or stop_early):
             payload = {
                 "format": "tata-transformer-checkpoint",
                 "format_version": 1,
@@ -373,8 +384,7 @@ def main() -> int:
             }
             atomic_save(torch, payload, args.output)
 
-        if (args.early_stopping_patience > 0 and should_evaluate
-                and evaluations_without_improvement >= args.early_stopping_patience):
+        if stop_early:
             print(json.dumps({"status": "early_stopping", "step": step,
                               "best_step": best_step,
                               "best_validation_loss": best_validation}, ensure_ascii=False), flush=True)

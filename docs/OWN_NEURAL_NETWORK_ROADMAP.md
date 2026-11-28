@@ -204,3 +204,7 @@ Antrean mencakup contoh dengan status privasi/kualitas pending serta kandidat pe
 
 
 Generator manifest kini juga memerlukan `--source-register` dan menolak sumber yang tidak terdaftar, belum approved, atau metadata judul/URI-nya tidak cocok. Manifest mencatat URI bukti izin, declared license, izin training, dan status penggunaan komersial untuk setiap sumber yang dipakai.
+
+## Audit jalur inferensi Android
+
+Penilaian struktur Android, format checkpoint, tokenizer, dan kandidat runtime dicatat di [`docs/ANDROID_NEURAL_INFERENCE_ASSESSMENT.md`](ANDROID_NEURAL_INFERENCE_ASSESSMENT.md). Runtime GGUF/llama.cpp yang sudah ada tetap jalur kompatibilitas terpisah; ia tidak memuat checkpoint PyTorch Tata secara langsung. Ekspor ONNX dan ONNX Runtime Android baru sebatas kandidat proof-of-concept, belum dipilih atau diimplementasikan. Integrasi menunggu ekspor valid, parity tokenizer, kesetaraan numerik, dan uji perangkat fisik.

@@ -259,7 +259,7 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Rencana teknis neural network Tata sudah didokumentasikan di [docs/OWN_NEURAL_NETWORK_ROADMAP.md](docs/OWN_NEURAL_NETWORK_ROADMAP.md).
 - Rencana ini menetapkan korpus berizin, perlindungan privasi, format JSONL, deduplikasi, pembagian train/validation/test, tokenizer Bahasa Indonesia, eksperimen Transformer kecil dari bobot acak, evaluasi, dan integrasi inferensi lokal.
 - Ini masih tahap spesifikasi. Belum ada model neural network Tata yang selesai dilatih atau tervalidasi; generator Kotlin saat ini tetap merupakan penyusun respons berbasis kode.
-- Tahap implementasi berikutnya adalah validator korpus dan manifest provenance. Data percakapan pribadi, memori pengguna, dan catatan Learning Lab tidak masuk ke dataset secara default.
+- Validator korpus, manifest provenance, pembagian dataset, prototipe tokenizer, dan spesifikasi Transformer awal sudah tersedia sebagai fondasi eksperimen. Data percakapan pribadi, memori pengguna, dan catatan Learning Lab tidak masuk ke dataset secara default.
 
 - Alat awal validasi korpus JSONL tersedia di `tools/corpus/validate_corpus.py`, dengan tes otomatis Python di `tools/corpus/tests` dan workflow CI tersendiri. Validator memeriksa struktur, lisensi yang diizinkan, status tinjauan privasi, role percakapan, indikasi email/nomor telepon/kredensial, ID duplikat, serta duplikasi percakapan.
 - Validator adalah pemeriksaan awal, bukan jaminan bahwa seluruh data bebas informasi pribadi atau bahwa lisensi sudah sah secara hukum. Setiap sumber tetap memerlukan pemeriksaan manusia dan bukti izin.
@@ -272,3 +272,17 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Tes otomatis meliputi round-trip teks Unicode Indonesia, determinisme, token tak dikenal, penyimpanan/pemuatan, batas ukuran kosakata, dan pemisahan data yang belum ditinjau/held-out.
 - Prototipe ini masih tokenizer karakter-BPE untuk eksperimen fondasi, bukan tokenizer produksi dan bukan model neural network. Korpus yang besar, berizin, dan ditinjau tetap diperlukan sebelum pelatihan model.
 - Petunjuk teknis dan tahap berikutnya ada di [docs/OWN_NEURAL_NETWORK_ROADMAP.md](docs/OWN_NEURAL_NETWORK_ROADMAP.md).
+
+
+## Pembagian dataset dan spesifikasi Transformer awal
+- Script `tools/corpus/split_corpus.py` membagi dataset secara deterministik menjadi train/validation/test dengan seed yang dapat dicatat.
+- Pembagian dilakukan berdasarkan `source_id`, bukan per pesan, agar contoh dari sumber yang sama tidak tersebar ke split berbeda. Minimal tiga sumber yang disetujui diperlukan; jika tidak cukup, proses ditolak daripada menghasilkan evaluasi palsu.
+- Hanya contoh yang lolos tinjauan privasi dan kualitas yang dibagi. Contoh pending tetap `unassigned`.
+- Script memvalidasi input dan menulis file keluaran secara atomik; file sumber tidak ditimpa.
+- Baseline arsitektur decoder-only Transformer kecil didokumentasikan di [docs/TRANSFORMER_V0_SPEC.md](docs/TRANSFORMER_V0_SPEC.md). Spesifikasi ini belum merupakan implementasi training atau model terlatih.
+- Tes CI mencakup determinisme split, pengelompokan sumber, perlindungan data pending, dan penulisan JSONL.
+- Contoh perintah setelah korpus memiliki sedikitnya tiga sumber yang telah ditinjau:
+```bash
+python tools/corpus/validate_corpus.py corpus.jsonl
+python tools/corpus/split_corpus.py corpus.jsonl --output corpus-split.jsonl --seed tata-v1
+```

@@ -58,9 +58,9 @@ def validate_record(record: Any, line_number: int) -> list[str]:
         if uri is not None and not isinstance(uri, str):
             errors.append(f"{prefix}: source.uri harus teks atau null")
 
-    if record.get("privacy_review") != "passed":
+    if record.get("privacy_review") not in {"pending", "passed"}:
         errors.append(f"{prefix}: privacy_review harus 'passed'")
-    if record.get("quality_review") not in {"pending", "passed"}:
+    if record.get("quality_review") not in {"pending", "passed", "rejected"}:
         errors.append(f"{prefix}: quality_review harus 'pending' atau 'passed'")
     if record.get("split", "unassigned") not in ALLOWED_SPLITS:
         errors.append(f"{prefix}: split tidak dikenal")

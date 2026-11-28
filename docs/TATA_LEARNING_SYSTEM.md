@@ -137,7 +137,7 @@ Mulai dari **audit Tahap A dan validasi implementasi awal Tahap B**. Jangan meng
 
 ## Paket pertukaran Learning Lab (implementasi awal)
 
-- Format file JSON khusus dengan identitas `tata-learning-lab` dan `schemaVersion: 1`.
+- Format file JSON khusus dengan identitas `tata-learning-lab` dan `schemaVersion: 2`.
 - Ekspor hanya memuat konteks pertanyaan, koreksi, dan sumber opsional dari Learning Lab. Riwayat percakapan, memori pribadi, pengetahuan aktif, dan model tidak disertakan.
 - Impor dibatasi maksimal 5 MB dan 5.000 catatan; setiap item divalidasi panjang dan kelengkapan teksnya.
 - Sidik jari SHA-256 dibuat dari pertanyaan dan koreksi yang dinormalisasi (huruf besar/kecil dan spasi). Sumber tidak mengubah identitas isi.
@@ -155,3 +155,7 @@ Mulai dari **audit Tahap A dan validasi implementasi awal Tahap B**. Jangan meng
 - Jika pertanyaannya sama tetapi jawabannya berbeda, Tata menolak penimpaan otomatis dan meminta pengguna menyelesaikan konflik dari pengelola pengetahuan.
 - Jika belum ada pertanyaan yang sama, pengguna harus mengonfirmasi penambahan. Status menjadi **Diterapkan**, bukan otomatis **Sudah diuji**.
 - Pengguna dapat menandai sudah diuji setelah mencoba jawaban. Mengedit catatan yang sudah diterapkan/diuji mengembalikannya ke **Perlu ditinjau**, karena koreksi terbaru belum tentu sama dengan pengetahuan aktif.
+
+- Setiap catatan ekspor membawa `knowledgeId` (SHA-256 identitas pertanyaan), `contentHash` (SHA-256 pertanyaan + koreksi), dan `createdAt` asal. Metadata ini tidak memuat ID akun/perangkat.
+- Paket membawa jumlah catatan dan `payloadHash` untuk mendeteksi perubahan atau kerusakan isi file. Ini pemeriksaan integritas, bukan tanda tangan digital atau bukti bahwa sumber tepercaya.
+- Waktu pembuatan asal dipertahankan saat impor; waktu pembaruan lokal tetap dicatat di perangkat penerima.

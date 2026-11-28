@@ -15,6 +15,8 @@
 - Rancangan integrasi mesin AI lokal berbasis llama.cpp, GGUF, Android NDK, dan JNI dicatat pada [docs/LOCAL_AI_ENGINE.md](docs/LOCAL_AI_ENGINE.md).
 - Mesin AI generatif belum aktif pada APK saat ini. Percakapan bebas yang tersedia masih memakai aturan lokal dan pengetahuan yang cocok; jangan menganggapnya sebagai LLM.
 - Model GGUF tidak dimasukkan ke APK. Model akan dipilih pengguna dan dijalankan di perangkat tanpa API AI eksternal.
+- Pengelola file model tersedia di **Pengaturan > Model AI lokal**: memilih file GGUF, memeriksa signature awal, menyalin ke penyimpanan privat, menampilkan ukuran, dan menghapus dengan konfirmasi.
+- Pengelola file belum menjalankan model. Native llama.cpp/JNI dan generasi jawaban lokal masih tahap berikutnya; aplikasi memberi keterangan ini secara terbuka.
 - Kompatibilitas `minSdk 26` harus dipertahankan; contoh Android upstream yang mensyaratkan API 33 tidak boleh dipakai mentah-mentah.
 
 ## Database dan arsitektur kemampuan
@@ -43,6 +45,8 @@
 - Menu **Privasi** menyediakan pengaturan penyimpanan riwayat, penghapusan seluruh riwayat percakapan, dan penghapusan seluruh pengetahuan. Penghapusan riwayat dan pengetahuan merupakan tindakan terpisah.
 
 ## Fitur yang tersedia
+- Pengelolaan file model GGUF lokal tersedia melalui **Pengaturan > Model AI lokal**. Impor memakai pemilih dokumen Android, memvalidasi magic header `GGUF`, menyalin file ke direktori privat aplikasi, dan menampilkan nama serta ukuran. Penghapusan memerlukan konfirmasi dan hanya menghapus file model yang dipilih. Ini belum merupakan fitur inferensi AI; model belum dapat dijalankan sampai native engine llama.cpp/JNI selesai diintegrasikan.
+
 - Profil kemampuan Tata disimpan pada tabel `assistant_capabilities` dan ditampilkan melalui **Pengaturan > Tentang Tata AI > Kemampuan & profil**. Deskripsi kemampuan dapat diubah pengguna; perubahan hanya tersimpan setelah tombol **Simpan** ditekan dan nomor versi kemampuan dinaikkan. Data ini adalah konfigurasi profil, terpisah dari pengetahuan yang dipelajari.
 - Kecerdasan emosional lokal mengenali petunjuk teks tentang sedih, senang/bahagia, marah/kesal, takut/cemas, kecewa, dan kesepian. Tata memberi respons empatik, pertanyaan lanjutan, dan pilihan untuk didengarkan atau mencari langkah berikutnya. Konteks emosi hanya dipakai sementara selama sesi percakapan dan tidak disimpan sebagai profil emosi pengguna.
 - Pengenalan emosi saat ini berdasarkan kata/kalimat yang diketik atau dikenali oleh speech-to-text Android. Tata tidak membaca ekspresi wajah atau mengukur emosi dari suara, tidak dapat memastikan perasaan seseorang, dan bukan alat diagnosis kesehatan mental. Jika ada ancaman keselamatan langsung, pengguna perlu menghubungi orang tepercaya atau layanan darurat setempat.

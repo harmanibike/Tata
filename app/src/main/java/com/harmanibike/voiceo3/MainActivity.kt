@@ -136,6 +136,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             elevation = dp(14).toFloat()
             setOnClickListener { toggleConversationMode() }
         }
+        listenButton = micButton
         panel.addView(micButton, LinearLayout.LayoutParams(dp(206), dp(206)).apply {
             topMargin = dp(10); bottomMargin = dp(20)
         })

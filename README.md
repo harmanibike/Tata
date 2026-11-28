@@ -260,3 +260,6 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Rencana ini menetapkan korpus berizin, perlindungan privasi, format JSONL, deduplikasi, pembagian train/validation/test, tokenizer Bahasa Indonesia, eksperimen Transformer kecil dari bobot acak, evaluasi, dan integrasi inferensi lokal.
 - Ini masih tahap spesifikasi. Belum ada model neural network Tata yang selesai dilatih atau tervalidasi; generator Kotlin saat ini tetap merupakan penyusun respons berbasis kode.
 - Tahap implementasi berikutnya adalah validator korpus dan manifest provenance. Data percakapan pribadi, memori pengguna, dan catatan Learning Lab tidak masuk ke dataset secara default.
+
+- Alat awal validasi korpus JSONL tersedia di `tools/corpus/validate_corpus.py`, dengan tes otomatis Python di `tools/corpus/tests` dan workflow CI tersendiri. Validator memeriksa struktur, lisensi yang diizinkan, status tinjauan privasi, role percakapan, indikasi email/nomor telepon/kredensial, ID duplikat, serta duplikasi percakapan.
+- Validator adalah pemeriksaan awal, bukan jaminan bahwa seluruh data bebas informasi pribadi atau bahwa lisensi sudah sah secara hukum. Setiap sumber tetap memerlukan pemeriksaan manusia dan bukti izin.

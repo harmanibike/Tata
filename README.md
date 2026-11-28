@@ -177,3 +177,10 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Menu menyediakan akses ke percakapan, mode suara, riwayat, pengetahuan, Learning Lab, model AI lokal, dan pengaturan.
 - Area bawah tidak lagi ditempati navbar; kolom percakapan dan input pesan menjadi lebih lega.
 - Lingkaran spektrum/equalizer tetap dipertahankan sebagai kontrol utama interaksi suara.
+
+
+## Pertukaran data Learning Lab secara manual
+- Buka **Learning Lab > File** untuk mengekspor catatan pembelajaran atau menggabungkan file dari perangkat lain.
+- File `tata-learning-lab.json` hanya berisi konteks, koreksi, dan sumber Learning Lab; tidak memuat percakapan, memori pribadi, pengetahuan aktif, atau model.
+- Impor memeriksa duplikat dan konflik sebelum meminta konfirmasi. Duplikat identik dilewati, sedangkan koreksi berbeda untuk pertanyaan yang sama disimpan sebagai catatan terpisah berstatus **Perlu ditinjau**.
+- Data yang sudah ada tidak ditimpa. Hasil impor tidak otomatis menjadi pengetahuan aktif dan tidak melatih bobot model.

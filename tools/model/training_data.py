@@ -11,10 +11,12 @@ from typing import Any
 
 try:
     from tools.corpus.train_tokenizer import CharacterBPE, SPECIAL_TOKENS
+    from tools.corpus.validate_corpus import validate_file
 except ModuleNotFoundError:
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "corpus"))
     from train_tokenizer import CharacterBPE, SPECIAL_TOKENS
+    from validate_corpus import validate_file
 
 
 def tokenizer_vocabulary(tokenizer: CharacterBPE) -> tuple[list[str], dict[str, int]]:
@@ -34,6 +36,9 @@ def load_reviewed_sequences(
 ) -> tuple[list[list[int]], dict[str, Any]]:
     if split not in {"train", "validation"}:
         raise ValueError("Trainer hanya boleh memuat split train atau validation")
+    errors, _ = validate_file(corpus_path)
+    if errors:
+        raise ValueError("Korpus tidak lolos validasi: " + "; ".join(errors[:5]))
     tokenizer = CharacterBPE.load(tokenizer_path)
     vocabulary, token_to_id = tokenizer_vocabulary(tokenizer)
     sequences: list[list[int]] = []

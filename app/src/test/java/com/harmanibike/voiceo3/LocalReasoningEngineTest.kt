@@ -100,6 +100,13 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun validatesGgufFileSignature() {
+        assertTrue(LocalModelStore.isGgufHeader(byteArrayOf(71, 71, 85, 70)))
+        assertEquals(false, LocalModelStore.isGgufHeader(byteArrayOf(71, 71, 85, 88)))
+        assertEquals(false, LocalModelStore.isGgufHeader(byteArrayOf(71, 71, 85)))
+    }
+
+    @Test
     fun ignoresNonMathQuestions() {
         assertEquals(null, engine.calculate("siapa nama kamu"))
     }

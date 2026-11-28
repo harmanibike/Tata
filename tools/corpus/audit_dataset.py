@@ -88,7 +88,8 @@ def near_duplicate_prompt_stats(records: list[dict], threshold: float = 0.82, ma
         grams = character_ngrams(prompt)
         if grams:
             items.append((grams, normalized_message_hash(record, "user"),
-                          normalized_message_hash(record, "assistant")))
+                          normalized_message_hash(record, "assistant"),
+                          record.get("example_id", "")))
     inverted = defaultdict(set)
     for index, (grams, _, _) in enumerate(items):
         for gram in grams:
@@ -111,13 +112,22 @@ def near_duplicate_prompt_stats(records: list[dict], threshold: float = 0.82, ma
     similar_pairs = 0
     conflicting_pairs = 0
     max_similarity = 0.0
+    review_candidates = []
     for left, right in candidate_pairs:
         score = cosine_similarity(items[left][0], items[right][0])
         max_similarity = max(max_similarity, score)
         if score >= threshold:
             similar_pairs += 1
-            if items[left][2] != items[right][2]:
+            answers_differ = items[left][2] != items[right][2]
+            if answers_differ:
                 conflicting_pairs += 1
+            review_candidates.append({
+                "example_id_a": items[left][3],
+                "example_id_b": items[right][3],
+                "similarity": round(score, 4),
+                "answers_differ": answers_differ,
+                "reason": "near_duplicate_prompt_with_different_answers" if answers_differ else "near_duplicate_prompt",
+            })
     return {
         "method": "character_trigram_cosine_lexical_heuristic",
         "threshold": threshold,
@@ -127,6 +137,7 @@ def near_duplicate_prompt_stats(records: list[dict], threshold: float = 0.82, ma
         "near_duplicate_prompt_pairs": similar_pairs,
         "near_duplicate_pairs_with_different_answers": conflicting_pairs,
         "maximum_candidate_similarity": round(max_similarity, 4),
+        "review_candidates": sorted(review_candidates, key=lambda item: (-item["similarity"], item["example_id_a"], item["example_id_b"])),
         "limitation": "Lexical similarity only; not semantic understanding, paraphrase verification, or proof of duplicate content.",
         "raw_text_included": False,
     }

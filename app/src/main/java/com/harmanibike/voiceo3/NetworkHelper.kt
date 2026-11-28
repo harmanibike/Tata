@@ -9,6 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 import java.net.HttpURLConnection
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import java.net.URLDecoder
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,6 +35,90 @@ class NetworkHelper(context: Context, private val knowledgeStore: KnowledgeStore
         val capabilities = manager.getNetworkCapabilities(network) ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
+
+    /**
+     * Pencarian web langsung tanpa API AI atau API key.
+     * Mengambil hasil DuckDuckGo HTML, lalu membaca maksimal tiga halaman publik.
+     */
+    suspend fun searchWeb(query: String): String? = withContext(Dispatchers.IO) {
+        if (!hasInternetConnection()) return@withContext null
+        val cleanQuery = query.trim().take(300)
+        if (cleanQuery.isBlank()) return@withContext null
+
+        try {
+            val searchDoc = Jsoup.connect("https://html.duckduckgo.com/html/")
+                .data("q", cleanQuery)
+                .userAgent("Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36")
+                .timeout(12_000)
+                .maxBodySize(1_500_000)
+                .get()
+
+            val results = searchDoc.select("a.result__a").mapNotNull { link ->
+                val title = link.text().trim()
+                val href = link.absUrl("href").ifBlank { link.attr("href") }
+                val resolved = resolveSearchUrl(href)
+                val snippet = link.parent()?.parent()?.selectFirst(".result__snippet")?.text()?.trim().orEmpty()
+                if (title.isBlank() || !resolved.startsWith("https://")) null
+                else WebResult(title, resolved, snippet)
+            }.distinctBy { it.url }.take(4)
+
+            if (results.isEmpty()) return@withContext "Saya belum menemukan hasil web yang dapat dibaca untuk: $cleanQuery. Coba gunakan kata kunci yang lebih spesifik."
+
+            val pages = results.take(3).map { result ->
+                val body = runCatching { readWebPage(result.url) }.getOrDefault("")
+                result.copy(content = body)
+            }
+            val usable = pages.filter { it.snippet.isNotBlank() || it.content.isNotBlank() }
+            if (usable.isEmpty()) {
+                return@withContext buildString {
+                    append("Saya menemukan hasil pencarian, tetapi halaman sumber tidak dapat dibaca otomatis.\n\n")
+                    results.forEachIndexed { i, item ->
+                        append(i + 1).append(". ").append(item.title).append("\n").append(item.url).append("\n")
+                    }
+                }
+            }
+
+            buildString {
+                append("Hasil pencarian web untuk: ").append(cleanQuery).append("\n")
+                append("Diambil langsung dari web; periksa tanggal dan konteks sumber sebelum mengambil keputusan.\n\n")
+                usable.forEachIndexed { i, item ->
+                    append(i + 1).append(". ").append(item.title).append("\n")
+                    if (item.snippet.isNotBlank()) append("Cuplikan: ").append(item.snippet.take(350)).append("\n")
+                    if (item.content.isNotBlank()) append("Isi halaman: ").append(item.content.take(1400)).append("\n")
+                    append("Sumber: ").append(item.url)
+                    if (i != usable.lastIndex) append("\n\n")
+                }
+            }.take(6000)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private data class WebResult(
+        val title: String,
+        val url: String,
+        val snippet: String,
+        val content: String = ""
+    )
+
+    private fun resolveSearchUrl(href: String): String {
+        if (href.startsWith("https://") && !href.contains("duckduckgo.com/l/")) return href
+        val query = runCatching { android.net.Uri.parse(href).getQueryParameter("uddg") }.getOrNull()
+        return query?.let { runCatching { URLDecoder.decode(it, "UTF-8") }.getOrDefault(it) }.orEmpty()
+    }
+
+    private fun readWebPage(pageUrl: String): String {
+        val doc: Document = Jsoup.connect(pageUrl)
+            .userAgent("Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36")
+            .timeout(10_000)
+            .maxBodySize(1_000_000)
+            .followRedirects(true)
+            .get()
+        doc.select("script, style, nav, footer, header, aside, form, noscript, iframe, svg").remove()
+        val main = doc.selectFirst("article, main, [role=main]") ?: doc.body()
+        return main?.text()?.replace(Regex("\\s+"), " ")?.trim()?.take(1800).orEmpty()
     }
 
     suspend fun getTodayNews(): String = withContext(Dispatchers.IO) {

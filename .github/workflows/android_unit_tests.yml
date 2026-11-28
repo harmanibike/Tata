@@ -6,6 +6,7 @@ on:
     paths:
       - 'app/**'
       - 'onnx-poc/**'
+      - 'tools/model/create_onnx_android_fixture.py'
       - '*.gradle.kts'
       - 'gradle.properties'
       - '.github/workflows/android_unit_tests.yml'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'app/**'
       - 'onnx-poc/**'
+      - 'tools/model/create_onnx_android_fixture.py'
       - '*.gradle.kts'
       - 'gradle.properties'
       - '.github/workflows/android_unit_tests.yml'
@@ -34,6 +36,17 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate synthetic ONNX identity fixture
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install onnx==1.19.1
+          python tools/model/create_onnx_android_fixture.py onnx-poc/src/androidTest/assets/tiny_identity.onnx
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -52,5 +65,15 @@ jobs:
       - name: Run Android unit tests
         run: gradle testDebugUnitTest :onnx-poc:testDebugUnitTest --no-daemon
 
-      - name: Build debug APK and isolated ONNX PoC AAR without publishing
+      - name: Run ONNX Runtime Android instrumentation test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: gradle :onnx-poc:connectedDebugAndroidTest --no-daemon
+
+      - name: Build debug APKs without publishing them
         run: gradle assembleDebug :onnx-poc:assembleDebug --no-daemon

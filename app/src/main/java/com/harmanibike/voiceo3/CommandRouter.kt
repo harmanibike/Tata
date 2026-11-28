@@ -79,17 +79,25 @@ class CommandRouter(
                     command.contains("kabar hari ini") || command.contains("headline")) {
                     networkHelper.getTodayNews()
                 } else {
+                    // Pertahankan respons sosial/emosional yang dikenali secara lokal.
                     val conversationalAnswer = offlineConversation.respond(rawCommand)
                     if (conversationalAnswer != null) conversationalAnswer
                     else {
-                        val webQuery = rawCommand.replace(
-                            Regex("(?i)^\\s*(tolong\\s+)?(cari|telusuri|search)\\s+(di\\s+)?(internet|web)\\s*(tentang|mengenai)?\\s*"),
-                            ""
-                        ).trim().ifBlank { rawCommand }
-                        val webAnswer = networkHelper.searchWeb(webQuery)
-                        if (!webAnswer.isNullOrBlank()) webAnswer
-                        else withContext(Dispatchers.IO) { localLlmEngine.generate(rawCommand) }
-                            ?: (UNKNOWN_QUERY_PREFIX + rawCommand)
+                        // Untuk pertanyaan terbuka, prioritaskan model generatif di perangkat.
+                        // Pencarian internet hanya menjadi cadangan jika model belum aktif/gagal.
+                        val localAnswer = withContext(Dispatchers.IO) {
+                            localLlmEngine.generate(rawCommand)
+                        }?.takeIf { it.isNotBlank() }
+                        if (localAnswer != null) localAnswer
+                        else {
+                            val webQuery = rawCommand.replace(
+                                Regex("(?i)^\\s*(tolong\\s+)?(cari|telusuri|search)\\s+(di\\s+)?(internet|web)\\s*(tentang|mengenai)?\\s*"),
+                                ""
+                            ).trim().ifBlank { rawCommand }
+                            val webAnswer = networkHelper.searchWeb(webQuery)
+                            if (!webAnswer.isNullOrBlank()) webAnswer
+                            else UNKNOWN_QUERY_PREFIX + rawCommand
+                        }
                     }
                 }
             }

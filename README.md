@@ -236,3 +236,9 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Konteks percakapan generatif dibatasi pada dua pasangan tanya-jawab terakhir dengan pemotongan panjang per pesan agar lebih sesuai untuk context window perangkat RAM rendah. Konteks hanya berada di memori aplikasi dan dibersihkan ketika model dilepas.
 - Perintah riset web harus diawali permintaan eksplisit seperti **“Cari di internet tentang …”** atau **“Telusuri web …”**. Pertanyaan biasa yang belum terjawab tidak otomatis dikirim ke internet; Tata menampilkan alur pilihan riset sementara.
 - Berita hari ini tetap memakai sumber RSS sebagai data berita, bukan API inferensi AI.
+
+
+### Pengamanan peninjauan Learning Lab
+- Detail catatan menampilkan pertanyaan, koreksi, sumber, dan status dengan pemisah baris yang benar agar mudah diperiksa.
+- Setiap perubahan pertanyaan, koreksi, atau sumber membatalkan status persetujuan/pengujian sebelumnya dan mengembalikan catatan ke **Perlu ditinjau**.
+- Catatan yang diedit harus diperiksa dan disetujui ulang sebelum dapat diterapkan sebagai pengetahuan aktif.

@@ -39,8 +39,8 @@ class TrainingDataTests(unittest.TestCase):
             "quality_review": quality,
             "split": split,
             "messages": [
-                {"role": "user", "content": "Halo Tata"},
-                {"role": "assistant", "content": "Halo, ada yang bisa dibantu?"},
+                {"role": "user", "content": "Halo Tata " + example_id},
+                {"role": "assistant", "content": "Jawaban untuk " + example_id},
             ],
         }
 

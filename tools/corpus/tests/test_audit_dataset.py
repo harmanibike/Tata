@@ -105,6 +105,18 @@ class DatasetAuditTests(unittest.TestCase):
         self.assertEqual(1, profile["groups_of_identical_answers_repeated_at_least_3_times"])
         self.assertTrue(any("jawaban identik" in warning for warning in report["warnings"]))
 
+    def test_identical_prompts_with_different_answers_are_flagged(self):
+        records = [
+            make_record("one", "src-one", "train", user_text="Apa itu model bahasa?", answer_text="Model statistik."),
+            make_record("two", "src-two", "validation", user_text="Apa itu model bahasa?", answer_text="Sistem pemroses bahasa."),
+            make_record("three", "src-three", "test", user_text="Bagaimana cara kerja model?", answer_text="Model memprediksi token."),
+        ]
+        report = audit_dataset(self.write_records(records))
+        profile = report["quality_profile"]
+        self.assertEqual(1, profile["groups_of_identical_prompts_repeated_at_least_2_times"])
+        self.assertEqual(1, profile["groups_of_identical_prompts_with_different_answers"])
+        self.assertIn("not semantic", profile["similarity_method"])
+
     def test_source_concentration_and_task_balance_are_reported(self):
         records = [
             make_record("one", "src-one", "train", task="qa"),

@@ -72,7 +72,7 @@ Setiap perubahan korpus menghasilkan manifest versi baru, jumlah contoh, hash fi
 - Ukuran kosakata awal 8.000 token adalah hipotesis eksperimen, bukan keputusan final; bandingkan dengan 4.000 dan 16.000 berdasarkan efisiensi token, kualitas ejaan, angka, imbuhan, nama, dan ukuran embedding.
 - Simpan tokenizer, konfigurasi normalisasi, versi korpus, dan hash dalam satu paket versi.
 - Uji kata berimbuhan, kata ulang, singkatan, nama lokal, angka rupiah, tanda baca, campuran Indonesia/Inggris, serta teks suara yang umum.
-- Tes awal mencakup round-trip Unicode, determinisme, token tidak dikenal, penyimpanan/pemuatan tokenizer, dan pemisahan data yang belum ditinjau atau held-out.
+- Tes awal mencakup round-trip Unicode, determinisme, token tidak dikenal, penyimpanan atomik, validasi urutan merge, simbol yang harus sudah tersedia, larangan token hasil merge duplikat, kecocokan ukuran vocabulary, dan pemisahan data yang belum ditinjau atau held-out. Loader pada tokenizer/training/evaluator juga menjalankan validasi korpus sebelum membaca data.
 - Jalankan smoke test setelah dataset sintetis ditinjau: `python tools/corpus/validate_corpus.py tools/corpus/examples/synthetic_sample.jsonl` lalu `python tools/corpus/train_tokenizer.py tools/corpus/examples/synthetic_sample.jsonl --output /tmp/tata-tokenizer.json`.
 
 ### Tahap 4 — eksperimen model pertama

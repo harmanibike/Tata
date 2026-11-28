@@ -53,8 +53,16 @@ def load_reviewed_sequences(
             if record.get("split") != split:
                 continue
             source = record.get("source")
-            if not isinstance(source, dict) or not source.get("source_id"):
-                raise ValueError(f"source_id tidak valid pada baris {line_number}")
+            allowed_licenses = {
+                "public_domain", "cc0", "cc_by", "cc_by_sa",
+                "owned_or_explicitly_permitted", "explicit_permission",
+            }
+            if (
+                not isinstance(source, dict)
+                or not source.get("source_id")
+                or source.get("license") not in allowed_licenses
+            ):
+                raise ValueError(f"source atau lisensi tidak valid pada baris {line_number}")
             messages = record.get("messages")
             if not isinstance(messages, list) or len(messages) < 2:
                 raise ValueError(f"messages tidak valid pada baris {line_number}")

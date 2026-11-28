@@ -40,6 +40,7 @@ jobs:
           if-no-files-found: error
 
   build-signed-release:
+    needs: build-debug
     runs-on: ubuntu-latest
     env:
       TATA_KEYSTORE_BASE64: ${{ secrets.TATA_KEYSTORE_BASE64 }}

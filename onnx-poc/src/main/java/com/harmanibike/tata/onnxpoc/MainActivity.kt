@@ -12,9 +12,9 @@ class MainActivity : Activity() {
 
         val status = try {
             val environment = OrtEnvironment.getEnvironment()
-            "ONNX Runtime berhasil dimuat.\n\nVersi runtime: \${environment.version}\n\nBelum ada model bahasa Tata yang dimuat. Aplikasi ini hanya untuk pengujian runtime ONNX."
+            "ONNX Runtime berhasil dimuat.\n\nVersi runtime: ${environment.version}\n\nBelum ada model bahasa Tata yang dimuat. Aplikasi ini hanya untuk pengujian runtime ONNX."
         } catch (error: Exception) {
-            "ONNX Runtime gagal dimuat.\n\n\${error.javaClass.simpleName}: \${error.message ?: "Tidak ada detail"}"
+            "ONNX Runtime gagal dimuat.\n\n${error.javaClass.simpleName}: ${error.message ?: "Tidak ada detail"}"
         }
 
         val message = TextView(this).apply {

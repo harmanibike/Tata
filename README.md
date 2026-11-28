@@ -263,3 +263,4 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 
 - Alat awal validasi korpus JSONL tersedia di `tools/corpus/validate_corpus.py`, dengan tes otomatis Python di `tools/corpus/tests` dan workflow CI tersendiri. Validator memeriksa struktur, lisensi yang diizinkan, status tinjauan privasi, role percakapan, indikasi email/nomor telepon/kredensial, ID duplikat, serta duplikasi percakapan.
 - Validator adalah pemeriksaan awal, bukan jaminan bahwa seluruh data bebas informasi pribadi atau bahwa lisensi sudah sah secara hukum. Setiap sumber tetap memerlukan pemeriksaan manusia dan bukti izin.
+- Generator manifest provenance tersedia di `tools/corpus/build_manifest.py`. Manifest mencatat hash korpus, jumlah contoh, sumber/lisensi, dan pembagian dataset tanpa menyalin isi percakapan. Manifest hanya dibuat setelah korpus lolos validator.

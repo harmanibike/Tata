@@ -584,6 +584,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             .setTitle("Pengetahuan Tata")
             .setItems(labels) { _, which -> showKnowledgeEditor(which) }
             .setPositiveButton("Tambah data", null)
+            .setNeutralButton("Riwayat", null)
             .setNegativeButton("Tutup", null)
 
         if (entries.isEmpty()) builder.setMessage("Belum ada data pengetahuan.")
@@ -593,8 +594,36 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 dialog.dismiss()
                 showKnowledgeEditor(null)
             }
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                dialog.dismiss()
+                showKnowledgeRevisionHistory()
+            }
         }
         dialog.show()
+    }
+
+    private fun showKnowledgeRevisionHistory() {
+        val revisions = knowledgeStore.getKnowledgeRevisions()
+        if (revisions.isEmpty()) {
+            AlertDialog.Builder(this).setTitle("Riwayat pengetahuan")
+                .setMessage("Belum ada perubahan yang tercatat. Riwayat mulai dibuat saat pengetahuan diedit atau dihapus pada versi ini.")
+                .setPositiveButton("Kembali") { _, _ -> showKnowledgeManager() }.show()
+            return
+        }
+        val labels = revisions.map { it.question + " — " + it.revisionType.replace("_", " ") }.toTypedArray()
+        AlertDialog.Builder(this).setTitle("Riwayat perubahan")
+            .setItems(labels) { _, which ->
+                val item = revisions[which]
+                AlertDialog.Builder(this).setTitle("Pulihkan versi ini?")
+                    .setMessage("Pertanyaan: " + item.question + "\n\nJawaban sebelumnya:\n" + item.answer + "\n\nVersi aktif saat ini akan tetap dicadangkan.")
+                    .setPositiveButton("Pulihkan") { _, _ ->
+                        val ok = knowledgeStore.restoreKnowledgeRevision(item.id)
+                        Toast.makeText(this, if (ok) "Versi dipulihkan." else "Versi tidak ditemukan.", Toast.LENGTH_LONG).show()
+                        showKnowledgeRevisionHistory()
+                    }
+                    .setNegativeButton("Batal", null).show()
+            }
+            .setPositiveButton("Selesai") { _, _ -> showKnowledgeManager() }.show()
     }
 
     private fun showKnowledgeEditor(index: Int?, initialQuestion: String = "", initialAnswer: String = "") {

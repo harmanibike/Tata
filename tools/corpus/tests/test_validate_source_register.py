@@ -106,6 +106,30 @@ class SourceRegisterTests(unittest.TestCase):
         self.assertEqual(0, stats["sources"])
         self.assertTrue(any("belum berisi sumber" in item for item in errors))
 
+    def test_rejects_duplicate_header_columns(self):
+        fields = FIELDS + ["title"]
+        errors, _ = validate_register(self.write_csv([row()], fields=fields))
+        self.assertTrue(any("kolom duplikat" in item for item in errors))
+
+    def test_rejects_extra_csv_cells(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        path = Path(temporary.name) / "sources.csv"
+        with path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(FIELDS)
+            writer.writerow([row()[field] for field in FIELDS] + ["unexpected"])
+        errors, _ = validate_register(path)
+        self.assertTrue(any("melebihi header" in item for item in errors))
+
+    def test_rejects_placeholder_privacy_review_for_approved_source(self):
+        errors, _ = validate_register(self.write_csv([row(privacy_screen="TODO")]))
+        self.assertTrue(any("privacy_screen" in item for item in errors))
+
+    def test_rejects_placeholder_reviewer_for_approved_source(self):
+        errors, _ = validate_register(self.write_csv([row(reviewer="unknown")]))
+        self.assertTrue(any("reviewer" in item for item in errors))
+
     def test_requires_all_columns(self):
         errors, _ = validate_register(self.write_csv([], fields=["source_id", "title"]))
         self.assertTrue(any("Kolom wajib tidak ada" in item for item in errors))

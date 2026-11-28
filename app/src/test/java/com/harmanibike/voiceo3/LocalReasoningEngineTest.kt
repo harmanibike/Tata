@@ -316,4 +316,29 @@ class LocalReasoningEngineTest {
         assertTrue(answer!!.contains("aplikasi pendidikan"))
         assertTrue(answer.contains("versi percobaan"))
     }
+
+    @Test
+    fun intentClassifierRecognizesIndonesianParaphrases() {
+        val classifier = TataIntentClassifier()
+        assertEquals(TataIntent.PLAN, classifier.classify("Bantu saya merencanakan belajar bahasa Inggris"))
+        assertEquals(TataIntent.PLAN, classifier.classify("Mulai dari mana untuk membuat aplikasi?"))
+        assertEquals(TataIntent.COMPARE, classifier.classify("Apa beda Android dengan iPhone?"))
+        assertEquals(TataIntent.COMPARE, classifier.classify("Lebih bagus mana, pilihan A atau B?"))
+        assertEquals(TataIntent.DECISION, classifier.classify("Saya harus memilih yang mana?"))
+        assertEquals(TataIntent.BRAINSTORM, classifier.classify("Ada ide untuk usaha kecil?"))
+        assertEquals(TataIntent.FOLLOW_UP, classifier.classify("Bagaimana selanjutnya?"))
+        assertEquals(TataIntent.UNKNOWN, classifier.classify("Siapa presiden Indonesia?"))
+    }
+
+    @Test
+    fun generativeEngineRespondsToParaphrasedPlanningAndBrainstormingRequests() {
+        val engine = TataGenerativeEngine()
+        val plan = engine.respond("Bantu saya merencanakan belajar bahasa Inggris")
+        assertNotNull(plan)
+        assertTrue(plan!!.contains("belajar bahasa Inggris"))
+
+        val ideas = TataGenerativeEngine().respond("Ada ide untuk usaha kecil?")
+        assertNotNull(ideas)
+        assertTrue(ideas!!.contains("usaha kecil"))
+    }
 }

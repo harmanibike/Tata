@@ -156,3 +156,5 @@ Audit dataset juga menghitung distribusi karakter per contoh. Jika file tokenize
 
 ### Dataset quality and balance diagnostics
 The dataset audit reports aggregate character/token lengths by split, task distribution per split, largest-source concentration, short user prompts, short assistant responses, long examples, and groups of identical answers repeated at least three times. These heuristics only flag material for human review; they do not establish semantic correctness or detect every near-duplicate. Raw conversation text is never included in the audit report. Training remains blocked until approved and properly split data exists.
+
+Exact normalized prompt hashes are compared across approved examples. Repeated prompts and conflicting answers are flagged for human review. This does not detect paraphrases or semantic similarity and must not be presented as a semantic duplicate detector.

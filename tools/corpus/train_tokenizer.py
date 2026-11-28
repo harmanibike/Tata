@@ -201,6 +201,7 @@ def load_training_texts(jsonl_path: Path, source_register_path: Path) -> list[st
                 approved[row["source_id"]] = {
                     "title": row["title"].strip(),
                     "uri": row["canonical_uri"].strip(),
+                    "license": row["declared_license"].strip().lower(),
                 }
     if not approved:
         raise ValueError("Register tidak memiliki sumber approved dengan izin training.")
@@ -228,6 +229,8 @@ def load_training_texts(jsonl_path: Path, source_register_path: Path) -> list[st
             raise ValueError(f"source_id {source_id} tidak ada dalam register approved pada baris {line_number}")
         if source.get("title") != registered["title"] or source.get("uri") != registered["uri"]:
             raise ValueError(f"Metadata source tidak cocok dengan register pada baris {line_number}")
+        if source.get("license") != registered["license"]:
+            raise ValueError(f"Lisensi korpus tidak cocok dengan register pada baris {line_number}")
         messages = record.get("messages", [])
         if not isinstance(messages, list) or len(messages) < 2:
             raise ValueError(f"Messages tidak valid pada baris {line_number}")

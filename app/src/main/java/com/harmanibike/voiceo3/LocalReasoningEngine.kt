@@ -77,10 +77,10 @@ class LocalReasoningEngine {
         val amount = match.groupValues[1].replace(',', '.').toDoubleOrNull() ?: return null
         val from = units[match.groupValues[2]] ?: return null
         val to = units[match.groupValues[3]] ?: return null
-        if (from.dimension != to.dimension) return "Satuan \${from.symbol} dan \${to.symbol} tidak sejenis, jadi tidak bisa dikonversi langsung."
+        if (from.dimension != to.dimension) return "Satuan ${from.symbol} dan ${to.symbol} tidak sejenis, jadi tidak bisa dikonversi langsung."
         val result = amount * from.factor / to.factor
         if (!result.isFinite()) return "Hasil konversi terlalu besar atau tidak dapat ditentukan."
-        return "\${formatNumber(amount)} \${from.symbol} = \${formatNumber(result)} \${to.symbol}."
+        return "${formatNumber(amount)} ${from.symbol} = ${formatNumber(result)} ${to.symbol}."
     }
 
     private fun calculateBusiness(text: String): String? {
@@ -91,7 +91,7 @@ class LocalReasoningEngine {
             val price = discount.groupValues[2].toDoubleId()
             if (percent !in 0.0..100.0 || price < 0) return "Persentase diskon harus 0–100% dan harga tidak boleh negatif."
             val saving = price * percent / 100.0
-            return "Diskon \${formatNumber(percent)}% dari Rp\${formatMoney(price)} = Rp\${formatMoney(saving)}. Harga setelah diskon: Rp\${formatMoney(price - saving)}."
+            return "Diskon ${formatNumber(percent)}% dari Rp${formatMoney(price)} = Rp${formatMoney(saving)}. Harga setelah diskon: Rp${formatMoney(price - saving)}."
         }
 
         val change = Regex("^(?:tolong\\s+)?(?:hitung\\s+)?(?:harga\\s+)?$n\\s+(naik|turun|meningkat|menurun)\\s+$n\\s*(?:%|persen)$").matchEntire(text)
@@ -105,7 +105,7 @@ class LocalReasoningEngine {
             val difference = price * percent / 100.0
             val up = direction == "naik" || direction == "meningkat"
             val result = if (up) price + difference else price - difference
-            return "Perubahan \${formatNumber(percent)}% dari Rp\${formatMoney(price)} adalah Rp\${formatMoney(difference)}. Harga baru: Rp\${formatMoney(result)}."
+            return "Perubahan ${formatNumber(percent)}% dari Rp${formatMoney(price)} adalah Rp${formatMoney(difference)}. Harga baru: Rp${formatMoney(result)}."
         }
 
         val profit = Regex("^(?:tolong\\s+)?(?:hitung\\s+)?(?:keuntungan|kerugian|laba|rugi)\\s+(?:dari\\s+)?(?:modal|beli)\\s+$n\\s+(?:jual|penjualan)\\s+$n$").matchEntire(text)
@@ -115,11 +115,11 @@ class LocalReasoningEngine {
         val selling = profit.groupValues[2].toDoubleId()
         if (cost < 0 || selling < 0) return "Modal dan harga jual tidak boleh negatif."
         val difference = selling - cost
-        if (cost == 0.0) return "Persentase keuntungan tidak dapat dihitung karena modal nol. Selisih nominal: Rp\${formatMoney(difference)}."
+        if (cost == 0.0) return "Persentase keuntungan tidak dapat dihitung karena modal nol. Selisih nominal: Rp${formatMoney(difference)}."
         val percent = kotlin.math.abs(difference) / cost * 100.0
         return when {
-            difference > 0 -> "Keuntungan Rp\${formatMoney(difference)} (\${formatNumber(percent)}% dari modal)."
-            difference < 0 -> "Kerugian Rp\${formatMoney(-difference)} (\${formatNumber(percent)}% dari modal)."
+            difference > 0 -> "Keuntungan Rp${formatMoney(difference)} (${formatNumber(percent)}% dari modal)."
+            difference < 0 -> "Kerugian Rp${formatMoney(-difference)} (${formatNumber(percent)}% dari modal)."
             else -> "Tidak untung dan tidak rugi. Harga jual sama dengan modal."
         }
     }

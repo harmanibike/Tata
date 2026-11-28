@@ -1,61 +1,71 @@
 # Rencana proof-of-concept ONNX Runtime Android Tata
 
-**Status: rencana teknis; dependency belum ditambahkan dan belum ada inferensi ONNX di aplikasi.**
+**Status: PoC Android terisolasi sudah dibuat; pengujian unit lulus pada commit `4b8bee1873370de486bce7a1a5f1f702d87d02c4`. Pengujian instrumentasi emulator belum memiliki hasil akhir yang terverifikasi. Belum ada integrasi ke aplikasi utama.**
 
 ## Keputusan sementara
 
-Kandidat runtime CPU Android adalah artefak Maven:
+Kandidat runtime CPU Android dipatok pada artefak Maven:
 
 ```kotlin
 implementation("com.microsoft.onnxruntime:onnxruntime-android:1.32.0")
 ```
 
-Versi 1.32.0 tercatat tersedia di Maven Central pada saat rencana ini ditulis dan metadata paket menyatakan lisensi MIT. Versi harus dipatok eksplisit; jangan memakai `latest.release` agar build dapat direproduksi.
+Versi ini digunakan dalam modul PoC terpisah. Ini belum merupakan keputusan runtime produksi.
 
 Sumber pemeriksaan:
 - Dokumentasi instalasi resmi ONNX Runtime: https://onnxruntime.ai/docs/install/
 - Paket Android di Maven Central: https://central.sonatype.com/artifact/com.microsoft.onnxruntime/onnxruntime-android
 
-Ini hanya kandidat untuk eksperimen. Jangan tambahkan dependency ke modul `:app` sebelum proof-of-concept terisolasi lulus.
+## Implementasi yang sudah ada
+
+- Modul aplikasi Android mandiri `:onnx-poc`, terpisah dari `:app`.
+- Dependency ONNX Runtime Android dipatok pada versi `1.32.0`.
+- `TataOnnxRuntimeProbe` membuka model dari file lokal dan menyediakan nama input/output serta eksekusi tensor.
+- Tidak ada izin `INTERNET` di manifest PoC.
+- Fixture ONNX Identity sintetis untuk menguji pemuatan dan eksekusi runtime.
+- Fixture Transformer Tata sintetis (bukan model produksi dan bukan hasil pelatihan corpus) dengan referensi logits dari PyTorch.
+- Instrumentation test menguji dua bentuk input dinamis, `1×4` dan `2×5`, lalu membandingkan logits Android dengan referensi PyTorch.
+- CI sudah melewati pembuatan fixture, instalasi NDK/CMake, dan Android unit tests pada commit yang disebutkan di atas.
 
 ## Batasan keselamatan dan ruang lingkup
 
-- Tidak mengubah `:app`, jalur GGUF/llama.cpp, chat engine, atau APK lama.
-- Buat modul Android library terpisah untuk PoC, atau gunakan project uji terpisah jika konfigurasi Gradle membuat modul baru terlalu invasif.
+- Tidak mengubah `:app`, jalur GGUF/llama.cpp, chat engine, atau APK utama.
 - Tidak menambahkan izin INTERNET, download model otomatis, telemetry, atau cloud inference.
-- Model ONNX dan tokenizer hanya dibaca dari file lokal yang dipasok oleh penguji.
-- Gunakan model sintetis kecil, bukan bobot produksi atau data pengguna.
-- Pertahankan `minSdk 26` dan ABI yang telah dikonfigurasi; kompatibilitas runtime tetap harus dibuktikan melalui build dan perangkat.
-- Jika dependency meningkatkan ukuran APK utama, itu alasan tambahan untuk mempertahankan isolasi.
+- Model ONNX dibaca dari file lokal yang disediakan penguji.
+- Gunakan model sintetis kecil untuk tes perangkat lunak; jangan menganggapnya mewakili kualitas model Tata.
+- Pertahankan `minSdk 26` pada PoC.
+- Jangan mengintegrasikan dependency atau mengganti runtime aplikasi utama sebelum semua gerbang uji lulus dan ada persetujuan.
 
-## Tahap uji
+## Tahap uji dan status
 
-1. **Dependency resolution:** pin versi, verifikasi AAR berhasil diunduh dan lisensinya tercatat.
-2. **Runtime initialization:** buat `OrtEnvironment`, `OrtSession.SessionOptions`, lalu tutup resource dengan benar.
-3. **Local model load:** buka ONNX dari file lokal; tes harus berjalan tanpa akses jaringan.
-4. **Tensor contract:** masukkan `input_ids` bertipe INT64 dengan shape `[batch, sequence]`; periksa output `logits` bertipe FLOAT dengan shape `[batch, sequence, vocab]`.
-5. **Numerical parity:** jalankan input deterministik yang sama pada PyTorch CPU, ONNX Runtime Python, dan ONNX Runtime Android; bandingkan logits memakai toleransi yang disepakati.
-6. **Dynamic shapes:** tes minimal batch 1 dan 2, serta sequence pendek dan lebih panjang, sesuai batas context model.
-7. **Offline assertion:** blokir jaringan pada perangkat/emulator saat memuat dan menjalankan model; tidak boleh ada request jaringan.
-8. **Resource measurement:** catat ukuran AAR/penambahan ukuran APK PoC, RAM puncak, waktu inisialisasi, latency inferensi, dan stabilitas.
-9. **Decision gate:** hanya setelah semua tes lulus, pertimbangkan adapter runtime terpisah untuk integrasi; tetap jangan mengganti engine chat tanpa uji regresi dan persetujuan.
+1. **Dependency resolution:** dependency sudah dideklarasikan dan proses build/unit test sudah berjalan di CI; ukuran final artefak masih perlu dicatat.
+2. **Runtime initialization:** ada implementasi pembukaan session; validasi emulator menunggu hasil instrumentasi.
+3. **Local model load:** ada tes model sintetis lokal; hasil emulator menunggu.
+4. **Tensor contract:** tes memeriksa input INT64 `input_ids` dan output `logits`; hasil instrumentasi menunggu.
+5. **Numerical parity:** tes membandingkan logits Android dengan golden output PyTorch untuk `1×4` dan `2×5`; belum boleh dinyatakan lulus sebelum CI selesai.
+6. **Dynamic shapes:** tercakup dalam tes instrumentasi yang sama; hasil menunggu.
+7. **Offline assertion:** manifest tidak meminta izin INTERNET; pengujian ini belum setara dengan audit jaringan menyeluruh pada perangkat.
+8. **Resource measurement:** ukuran APK, RAM puncak, waktu inisialisasi, latency inferensi, dan stabilitas belum diukur.
+9. **Physical-device gate:** belum diuji pada HP fisik.
+10. **Decision gate:** jangan integrasikan ke aplikasi utama sampai seluruh tes dan pengukuran selesai.
 
 ## Risiko yang harus diuji
 
-- Operator atau pola graph dari exporter PyTorch mungkin tidak didukung seperti yang diharapkan pada runtime Android.
+- Operator atau pola graph dari exporter PyTorch mungkin tidak didukung pada runtime Android.
 - Hasil numerik dapat berbeda karena implementasi kernel dan presisi.
 - Dynamic sequence, causal mask, dan dimensi vocabulary harus konsisten.
-- AAR membawa native libraries; ukuran dan ABI harus diverifikasi pada artefak nyata.
-- API Java/Kotlin mengelola resource native; session, tensor, result, dan environment harus ditutup sesuai lifecycle.
+- AAR membawa native libraries; ukuran dan ABI harus diverifikasi dari artefak nyata.
+- Resource native harus ditutup sesuai lifecycle.
 - Keberhasilan di emulator bukan bukti performa pada perangkat fisik.
 
 ## Kriteria lulus
 
-PoC dinyatakan lulus hanya jika model sintetis lokal dapat dimuat dan dijalankan di Android, bentuk/dtype input-output sesuai kontrak, hasil logits cocok dengan referensi dalam toleransi yang disepakati, tidak ada akses jaringan, dan pengukuran ukuran/RAM/latency tersedia. Jika salah satu gagal, jangan integrasikan runtime ke aplikasi utama.
+PoC dinyatakan lulus hanya jika model lokal dapat dimuat dan dijalankan di Android, bentuk/dtype input-output sesuai kontrak, logits cocok dengan referensi dalam toleransi, perilaku offline terverifikasi, dan pengukuran ukuran/RAM/latency tersedia. Jika salah satu gagal, jangan integrasikan runtime ke aplikasi utama.
 
 ## Kondisi yang belum terpenuhi
 
-- Belum ada model ONNX Tata produksi; ekspor saat ini bersifat eksperimental.
-- Belum ada uji ONNX Runtime Android.
-- Belum ada hasil perangkat fisik.
+- Belum ada model ONNX Tata produksi yang diekspor dari checkpoint hasil pelatihan nyata.
+- Hasil akhir instrumentasi emulator belum terverifikasi.
+- Belum ada hasil pengujian perangkat fisik.
+- Belum ada pengukuran ukuran, RAM, waktu inisialisasi, dan latency.
 - Belum ada keputusan akhir untuk runtime produksi.

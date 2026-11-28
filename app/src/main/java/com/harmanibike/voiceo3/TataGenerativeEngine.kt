@@ -130,7 +130,10 @@ class TataGenerativeEngine {
     }
 
     private fun composeIdeas(rawText: String): String {
-        val subject = extractSubject(rawText, listOf("beri ide untuk", "berikan ide untuk", "carikan ide untuk", "ide untuk"))
+        val subject = extractSubject(rawText, listOf(
+            "beri ide untuk", "berikan ide untuk", "carikan ide untuk",
+            "ada ide untuk", "punya ide untuk", "ide untuk"
+        ))
             .ifBlank { "topik tersebut" }
         return "Untuk $subject, berikut beberapa arah ide yang bisa dikembangkan: " +
             "1) selesaikan masalah kecil yang sering muncul, " +

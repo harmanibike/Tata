@@ -9,7 +9,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from train_tokenizer import CharacterBPE, SPECIAL_TOKENS
+try:
+    from tools.corpus.train_tokenizer import CharacterBPE, SPECIAL_TOKENS
+except ModuleNotFoundError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "corpus"))
+    from train_tokenizer import CharacterBPE, SPECIAL_TOKENS
 
 
 def tokenizer_vocabulary(tokenizer: CharacterBPE) -> tuple[list[str], dict[str, int]]:

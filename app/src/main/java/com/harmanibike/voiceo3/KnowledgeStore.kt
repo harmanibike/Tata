@@ -20,6 +20,15 @@ data class NewsSource(
     val enabled: Boolean
 )
 
+data class LearningRecord(
+    val id: Long,
+    val question: String,
+    val correction: String,
+    val source: String,
+    val status: String,
+    val createdAt: Long
+)
+
 data class AssistantCapability(
     val key: String,
     val displayName: String,
@@ -72,11 +81,28 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
             )""".trimIndent()
         )
         createDynamicCapabilityTables(db)
+        createLearningTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // Migrasi bersifat aditif: seluruh pengetahuan dan riwayat lama tetap dipertahankan.
         if (oldVersion < 2) createDynamicCapabilityTables(db)
+        if (oldVersion < 3) createLearningTable(db)
+    }
+
+    private fun createLearningTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS learning_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question TEXT NOT NULL,
+                correction TEXT NOT NULL,
+                source TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'perlu_ditinjau',
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )""".trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_learning_created ON learning_records(created_at DESC)")
     }
 
     private fun createDynamicCapabilityTables(db: SQLiteDatabase) {
@@ -241,6 +267,58 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     fun delete(index: Int) {
         val id = getIdAt(index) ?: return
         writableDatabase.delete("knowledge", "id=?", arrayOf(id.toString()))
+    }
+
+    /** Catatan koreksi hanya dibuat setelah pengguna menekan Simpan di Learning Lab. */
+    @Synchronized
+    fun addLearningRecord(question: String, correction: String, source: String = ""): Long {
+        require(question.isNotBlank() && correction.isNotBlank()) { "Pertanyaan dan koreksi wajib diisi." }
+        val now = System.currentTimeMillis()
+        val values = ContentValues().apply {
+            put("question", question.trim().take(2000))
+            put("correction", correction.trim().take(6000))
+            put("source", source.trim().take(1000))
+            put("status", "perlu_ditinjau")
+            put("created_at", now)
+            put("updated_at", now)
+        }
+        return writableDatabase.insertOrThrow("learning_records", null, values)
+    }
+
+    @Synchronized
+    fun getLearningRecords(): List<LearningRecord> {
+        val records = mutableListOf<LearningRecord>()
+        readableDatabase.rawQuery(
+            "SELECT id, question, correction, source, status, created_at FROM learning_records ORDER BY id DESC", null
+        ).use { cursor ->
+            while (cursor.moveToNext()) records += LearningRecord(
+                cursor.getLong(0), cursor.getString(1), cursor.getString(2),
+                cursor.getString(3), cursor.getString(4), cursor.getLong(5)
+            )
+        }
+        return records
+    }
+
+    @Synchronized
+    fun updateLearningStatus(id: Long, status: String) {
+        require(status in setOf("perlu_ditinjau", "diterima", "ditolak", "sudah_diuji"))
+        val values = ContentValues().apply {
+            put("status", status)
+            put("updated_at", System.currentTimeMillis())
+        }
+        writableDatabase.update("learning_records", values, "id=?", arrayOf(id.toString()))
+    }
+
+    @Synchronized
+    fun deleteLearningRecord(id: Long) {
+        writableDatabase.delete("learning_records", "id=?", arrayOf(id.toString()))
+    }
+
+    @Synchronized
+    fun getLearningRecordCount(): Int {
+        readableDatabase.rawQuery("SELECT COUNT(*) FROM learning_records", null).use { cursor ->
+            return if (cursor.moveToFirst()) cursor.getInt(0) else 0
+        }
     }
 
     @Synchronized
@@ -427,6 +505,6 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
 
     companion object {
         private const val DATABASE_NAME = "tata_ai.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
     }
 }

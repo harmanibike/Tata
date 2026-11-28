@@ -11,13 +11,13 @@
 - Compile/target SDK: 34
 - JDK: 17
 
-## Mesin AI generatif lokal (prioritas pengembangan)
-- Rancangan integrasi mesin AI lokal berbasis llama.cpp, GGUF, Android NDK, dan JNI dicatat pada [docs/LOCAL_AI_ENGINE.md](docs/LOCAL_AI_ENGINE.md).
-- Mesin AI generatif belum aktif pada APK saat ini. Percakapan bebas yang tersedia masih memakai aturan lokal dan pengetahuan yang cocok; jangan menganggapnya sebagai LLM.
-- Model GGUF tidak dimasukkan ke APK. Model akan dipilih pengguna dan dijalankan di perangkat tanpa API AI eksternal.
-- Pengelola file model tersedia di **Pengaturan > Model AI lokal**: memilih file GGUF, memeriksa signature awal, menyalin ke penyimpanan privat, menampilkan ukuran, dan menghapus dengan konfirmasi.
-- Pengelola file belum menjalankan model. Native llama.cpp/JNI dan generasi jawaban lokal masih tahap berikutnya; aplikasi memberi keterangan ini secara terbuka.
-- Kompatibilitas `minSdk 26` harus dipertahankan; contoh Android upstream yang mensyaratkan API 33 tidak boleh dipakai mentah-mentah.
+## Mesin AI generatif lokal
+- Tata memiliki bridge Kotlin/JNI ke `llama.cpp` untuk menjalankan model GGUF secara lokal pada Android `arm64-v8a`; rancangan teknis ada di [docs/LOCAL_AI_ENGINE.md](docs/LOCAL_AI_ENGINE.md).
+- Tidak ada API inferensi AI eksternal, API key, atau layanan AI berbayar. Prompt diproses di perangkat.
+- Model GGUF belum dibundel di APK. Pengguna mengelola model melalui **Pengaturan > Model AI lokal**; satu model dimuat pada satu waktu untuk menjaga RAM.
+- Model hanya dimuat setelah pengguna mengaktifkannya, dan dapat dilepas dari RAM atau dihapus dengan konfirmasi. Ukuran konteks dan thread dibatasi secara konservatif.
+- Build CI membuktikan kompilasi/packaging, bukan keberhasilan inferensi pada HP. Kualitas, RAM puncak, suhu, baterai, dan stabilitas masih perlu diuji pada perangkat fisik.
+- Kompatibilitas minimum Android API 26 harus dipertahankan.
 
 ## Database dan arsitektur kemampuan
 - Database lokal SQLite: `tata_ai.db`.
@@ -32,6 +32,9 @@
 
 ## Izin dan kendali data
 - Saat pertama kali dibuka, Tata meminta izin sebelum menyimpan riwayat percakapan ke database lokal.
+- Spesifikasi pembelajaran dengan persetujuan ada di [docs/TATA_LEARNING_SYSTEM.md](docs/TATA_LEARNING_SYSTEM.md). Data pengetahuan disimpan lokal secara default; persetujuan menyimpan, berbagi ke komunitas, dan menggunakan contoh untuk pelatihan model adalah tiga izin yang berbeda.
+- Informasi pencarian, koreksi, dan percakapan tidak otomatis menjadi data pengetahuan atau data pelatihan. Pengguna harus meninjau dan menyetujui setiap tindakan penyimpanan/kontribusi.
+- Learning Lab dan pelatihan model dari data kontribusi masih merupakan tahap pengembangan; dokumentasi ini tidak menyatakan fitur tersebut sudah tersedia di APK.
 - Jika izin ditolak, percakapan tetap tampil selama aplikasi berjalan tetapi tidak disimpan sebagai riwayat.
 - Pertanyaan yang belum dapat dijawab Tata ditampilkan sebagai sesi pencarian sementara. Pertanyaan tersebut dan pemberitahuan pencarian tidak ditulis ke tabel `knowledge` maupun `chat_messages`, walaupun izin penyimpanan riwayat chat sedang aktif.
 - Jika pengguna memilih pencarian internet atau AI lain, Tata membuka browser. Untuk ChatGPT/Gemini, pertanyaan disalin ke clipboard agar pengguna dapat menempelkannya sendiri. Tidak ada API AI yang dipanggil dan hasil pencarian tidak otomatis dipelajari atau disimpan.
@@ -148,11 +151,10 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Ini merupakan kemampuan script, bukan pengetahuan. Menambah operasi atau mengubah cara parser bekerja memerlukan perubahan kode dan build APK.
 
 
-## Mesin percakapan generatif lokal (tahap integrasi awal)
-- Tata kini memiliki bridge Kotlin/JNI ke `llama.cpp` yang dipatok pada commit upstream tertentu dan dikompilasi untuk Android `arm64-v8a`.
-- File model GGUF tetap dipilih dan diimpor sendiri melalui **Pengaturan > Model AI lokal**. Tidak ada model atau bobot AI yang dibundel ke APK.
-- Pengguna dapat mengaktifkan model secara manual; konteks awal dibatasi 1.024 token dan 2 thread untuk mengurangi tekanan RAM. Model tidak dimuat otomatis saat aplikasi dibuka.
-- Setelah model aktif, pertanyaan terbuka yang tidak dikenali pengetahuan, perintah, kalkulasi, atau pola percakapan lokal dapat dijawab oleh model di perangkat. Prompt tidak dikirim ke API atau server AI.
-- Model dapat dilepas dari RAM atau dihapus secara terpisah. Mengaktifkan model besar dapat menyebabkan lambat, panas, atau aplikasi ditutup oleh Android; gunakan GGUF kecil dan uji pada perangkat.
-- Tahap awal belum menyediakan streaming token; pembatalan dapat dilakukan dengan melepas model. Kecocokan file tidak dijamin hanya dari pemeriksaan header GGUF.
-- Build CI yang berhasil hanya membuktikan kompilasi dan packaging. Uji inferensi, stabilitas, konsumsi RAM, suhu, dan kualitas jawaban pada HP fisik tetap diperlukan.
+## Mesin percakapan generatif lokal (integrasi awal)
+- Tata memiliki bridge Kotlin/JNI ke `llama.cpp` yang dipatok pada commit upstream tertentu dan dikompilasi untuk Android `arm64-v8a`.
+- File model GGUF dikelola melalui **Pengaturan > Model AI lokal**. Tidak ada model atau bobot AI pihak ketiga yang dibundel ke APK saat ini.
+- Pengguna mengaktifkan model secara manual; konteks awal dibatasi 1.024 token dan 2 thread. Model tidak dimuat otomatis saat aplikasi dibuka.
+- Saat aktif, pertanyaan terbuka dapat diteruskan ke model lokal setelah jalur perintah, pengetahuan, kalkulasi, dan percakapan khusus diperiksa.
+- Model dapat dilepas dari RAM atau dihapus secara terpisah. Model besar berpotensi membuat perangkat lambat, panas, atau kehabisan RAM.
+- Uji inferensi, stabilitas, konsumsi RAM, suhu, dan kualitas jawaban pada HP fisik tetap diperlukan; CI hanya membuktikan kompilasi dan packaging.

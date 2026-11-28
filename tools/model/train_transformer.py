@@ -290,6 +290,7 @@ def main() -> int:
     model.train()
     train_loss_sum = 0.0
     train_loss_count = 0
+    stopped_early = False
     for step in range(start_step + 1, start_step + args.steps + 1):
         inputs, targets = batch_from_sequences(
             torch, train_sequences, args.batch_size, config.context_length, device, rng
@@ -359,7 +360,8 @@ def main() -> int:
                                  "batch_size": args.batch_size,
                                  "device": device,
                                  "initialization": "random",
-                                 "pretrained_weights": False},
+                                 "pretrained_weights": False,
+                                 "early_stopping_patience": args.early_stopping_patience},
                 }
                 atomic_save(torch, best_payload, best_checkpoint_path(args.output))
 
@@ -389,18 +391,21 @@ def main() -> int:
                     "device": device,
                     "initialization": "random",
                     "pretrained_weights": False,
+                    "early_stopping_patience": args.early_stopping_patience,
                 },
             }
             atomic_save(torch, payload, args.output)
 
         if stop_early:
+            stopped_early = True
             print(json.dumps({"status": "early_stopping", "step": step,
                               "best_step": best_step,
                               "best_validation_loss": best_validation}, ensure_ascii=False), flush=True)
             break
 
     print(json.dumps({
-        "status": "training_finished",
+        "status": "early_stopped" if stopped_early else "training_finished",
+        "steps_completed": step,
         "checkpoint": str(args.output),
         "best_checkpoint": str(best_checkpoint_path(args.output)),
         "best_step": best_step,

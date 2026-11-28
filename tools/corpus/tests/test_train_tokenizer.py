@@ -59,11 +59,17 @@ class CharacterBPETests(unittest.TestCase):
                 ],
             }
             pending = {**base, "example_id": "pending-1", "quality_review": "pending",
-                       "source": {"source_id": "sumber-2", "title": "Sumber uji", "license": "cc0"}}
+                       "source": {"source_id": "sumber-2", "title": "Sumber uji", "license": "cc0"},
+                       "messages": [{"role": "user", "content": "teks pending"},
+                                    {"role": "assistant", "content": "jawaban pending"}]}
             held_out = {**base, "example_id": "test-1", "split": "test",
-                        "source": {"source_id": "sumber-3", "title": "Sumber uji", "license": "cc0"}}
+                        "source": {"source_id": "sumber-3", "title": "Sumber uji", "license": "cc0"},
+                        "messages": [{"role": "user", "content": "teks test"},
+                                     {"role": "assistant", "content": "jawaban test"}]}
             unassigned = {**base, "example_id": "unassigned-1", "split": "unassigned",
-                          "source": {"source_id": "sumber-4", "title": "Sumber uji", "license": "cc0"}}
+                          "source": {"source_id": "sumber-4", "title": "Sumber uji", "license": "cc0"},
+                          "messages": [{"role": "user", "content": "teks belum dibagi"},
+                                       {"role": "assistant", "content": "jawaban belum dibagi"}]}
             path.write_text(
                 "\n".join(json.dumps(item) for item in [base, pending, held_out, unassigned]),
                 encoding="utf-8",

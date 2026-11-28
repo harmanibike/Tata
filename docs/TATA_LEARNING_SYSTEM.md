@@ -102,7 +102,7 @@ Implementasi awal di APK:
 Pekerjaan lanjutan:
 - Hubungkan koreksi langsung dari percakapan dengan pratinjau sebelum penyimpanan.
 - [x] Tambahkan edit catatan dan filter status di Learning Lab; perubahan tetap lokal dan tidak mengaktifkan pengetahuan otomatis.
-- Tambahkan ekspor/impor paket koreksi lokal dengan pratinjau, validasi, dan konfirmasi sebelum mengganti atau menambah catatan.
+- [x] Tambahkan ekspor/impor paket koreksi lokal dengan pratinjau, validasi, dan konfirmasi sebelum menggabungkan catatan.
 - Tambahkan uji regresi untuk memastikan koreksi tidak merusak pengetahuan lain serta pengujian migrasi/penyimpanan pada perangkat.
 
 ### Tahap C — kontribusi komunitas opsional
@@ -133,3 +133,16 @@ Pekerjaan lanjutan:
 ## Keputusan awal
 
 Mulai dari **audit Tahap A dan validasi implementasi awal Tahap B**. Jangan mengaktifkan sinkronisasi komunitas atau pelatihan dari data pengguna secara otomatis. Pertahankan aplikasi yang sekarang tetap berfungsi; perubahan skema database harus aditif dan disertai migrasi serta pengujian agar data lama tidak hilang.
+
+
+## Paket pertukaran Learning Lab (implementasi awal)
+
+- Format file JSON khusus dengan identitas `tata-learning-lab` dan `schemaVersion: 1`.
+- Ekspor hanya memuat konteks pertanyaan, koreksi, dan sumber opsional dari Learning Lab. Riwayat percakapan, memori pribadi, pengetahuan aktif, dan model tidak disertakan.
+- Impor dibatasi maksimal 5 MB dan 5.000 catatan; setiap item divalidasi panjang dan kelengkapan teksnya.
+- Sidik jari SHA-256 dibuat dari pertanyaan dan koreksi yang dinormalisasi (huruf besar/kecil dan spasi). Sumber tidak mengubah identitas isi.
+- Duplikat identik dilewati. Pertanyaan yang sama dengan koreksi berbeda diperlakukan sebagai konflik dan disimpan sebagai catatan terpisah, bukan menimpa catatan lama.
+- Semua catatan hasil impor selalu berstatus **Perlu ditinjau**, sekalipun catatan sumber sebelumnya sudah diterima atau diuji. Penerima harus memeriksa ulang.
+- Penggabungan memerlukan pratinjau dan konfirmasi. Data lama tidak dihapus dan tidak ada data yang otomatis menjadi pengetahuan aktif.
+- Pendeteksian konflik saat ini memakai pertanyaan yang sama setelah normalisasi teks; belum mendeteksi pertanyaan parafrasa/semakna secara semantik.
+- Pengujian unit mencakup duplikat identik, konflik koreksi, serta perlindungan agar data lama tidak berubah. Uji database Android dan uji alur pemilih file di perangkat masih diperlukan.

@@ -146,3 +146,13 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Pengujian otomatis JUnit mencakup operasi dasar, prioritas operasi, tanda kurung, pangkat, persentase, konversi satuan lintas kategori, penolakan satuan yang tidak sejenis, pembagian dengan nol, dan pertanyaan non-matematika. GitHub Actions menjalankan `testDebugUnitTest` sebelum membuat APK Debug.
 - Contoh: "berapa 125 tambah 75", "hitung (20 dikali 5) dibagi 2", "berapa 2 pangkat 3", "berapa 10 persen dari 200", "berapa 2 km ke meter", dan "ubah 500 gram ke kilogram", "hitung diskon 10 persen dari 150000", "modal 100000 jual 125000", dan "100000 naik 10 persen".
 - Ini merupakan kemampuan script, bukan pengetahuan. Menambah operasi atau mengubah cara parser bekerja memerlukan perubahan kode dan build APK.
+
+
+## Mesin percakapan generatif lokal (tahap integrasi awal)
+- Tata kini memiliki bridge Kotlin/JNI ke `llama.cpp` yang dipatok pada commit upstream tertentu dan dikompilasi untuk Android `arm64-v8a`.
+- File model GGUF tetap dipilih dan diimpor sendiri melalui **Pengaturan > Model AI lokal**. Tidak ada model atau bobot AI yang dibundel ke APK.
+- Pengguna dapat mengaktifkan model secara manual; konteks awal dibatasi 1.024 token dan 2 thread untuk mengurangi tekanan RAM. Model tidak dimuat otomatis saat aplikasi dibuka.
+- Setelah model aktif, pertanyaan terbuka yang tidak dikenali pengetahuan, perintah, kalkulasi, atau pola percakapan lokal dapat dijawab oleh model di perangkat. Prompt tidak dikirim ke API atau server AI.
+- Model dapat dilepas dari RAM atau dihapus secara terpisah. Mengaktifkan model besar dapat menyebabkan lambat, panas, atau aplikasi ditutup oleh Android; gunakan GGUF kecil dan uji pada perangkat.
+- Tahap awal belum menyediakan streaming token; pembatalan dapat dilakukan dengan melepas model. Kecocokan file tidak dijamin hanya dari pemeriksaan header GGUF.
+- Build CI yang berhasil hanya membuktikan kompilasi dan packaging. Uji inferensi, stabilitas, konsumsi RAM, suhu, dan kualitas jawaban pada HP fisik tetap diperlukan.

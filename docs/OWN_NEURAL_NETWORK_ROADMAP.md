@@ -73,7 +73,7 @@ Setiap perubahan korpus menghasilkan manifest versi baru, jumlah contoh, hash fi
 - Simpan tokenizer, konfigurasi normalisasi, versi korpus, dan hash dalam satu paket versi. Penanda peran dan newline dipertahankan sebagai batas giliran yang sama pada tokenizer, training, prompt generasi, dan evaluator.
 - Uji kata berimbuhan, kata ulang, singkatan, nama lokal, angka rupiah, tanda baca, campuran Indonesia/Inggris, serta teks suara yang umum.
 - Tes awal mencakup round-trip Unicode, determinisme, token tidak dikenal, penyimpanan atomik, validasi urutan merge, simbol yang harus sudah tersedia, larangan token hasil merge duplikat, kecocokan ukuran vocabulary, dan pemisahan data yang belum ditinjau atau held-out. Loader pada tokenizer/training/evaluator juga menjalankan validasi korpus sebelum membaca data.
-- Jalankan smoke test setelah dataset sintetis ditinjau: `python tools/corpus/validate_corpus.py tools/corpus/examples/synthetic_sample.jsonl` lalu `python tools/corpus/train_tokenizer.py tools/corpus/examples/synthetic_sample.jsonl --output /tmp/tata-tokenizer.json`.
+- Jalankan smoke test setelah dataset sintetis ditinjau: `python tools/corpus/validate_corpus.py tools/corpus/examples/synthetic_sample.jsonl` lalu `python tools/corpus/train_tokenizer.py tools/corpus/examples/synthetic_sample.jsonl --source-register docs/dataset_source_register.csv --output /tmp/tata-tokenizer.json`.
 
 ### Tahap 4 — eksperimen model pertama
 - Arsitektur riset awal: decoder-only Transformer kecil yang dilatih dari bobot acak, bukan fine-tuning bobot model lain.
@@ -188,3 +188,16 @@ python tools/corpus/build_review_queue.py corpus.jsonl --output review-queue.jso
 ```
 
 Antrean mencakup contoh dengan status privasi/kualitas pending serta kandidat pertanyaan mirip dari audit leksikal. Untuk setiap item tersedia ID, sumber, lisensi, split, alasan, dan tautan ID ke contoh terkait; teks mentah tidak diekspor. Buka korpus lokal berdasarkan `example_id`, periksa sumber dan konteks, lalu isi file keputusan berdasarkan template sebelum menjalankan `review_corpus.py`.
+
+
+### Gerbang izin sumber terhubung ke tokenizer dan trainer
+
+- Register sumber CSV berada di `docs/dataset_source_register.csv`; format dan kolomnya dijelaskan di `docs/DATASET_SOURCE_REGISTER_TEMPLATE.md`.
+- Validasi register dapat dijalankan dengan `python tools/corpus/validate_source_register.py docs/dataset_source_register.csv`. Template kosong memang akan gagal karena belum ada sumber yang ditinjau.
+- Tokenizer kini memerlukan argumen `--source-register` dan hanya mengambil contoh train yang lolos review serta berasal dari `source_id` berstatus approved dengan `training_permission=yes`.
+- Loader Transformer juga memerlukan path register; setiap sumber contoh train/validation harus ditemukan dalam register approved. Judul dan URI kanonis pada JSONL harus cocok dengan register.
+- Hash register dicatat pada metadata dataset dan diperiksa saat melanjutkan checkpoint. Perubahan izin atau isi register membuat resume ditolak agar checkpoint tidak dilanjutkan dengan provenance berbeda.
+- Perintah tokenizer dan training harus selalu menyertakan register:
+  `python tools/corpus/train_tokenizer.py <corpus.jsonl> --source-register <sources.csv> --output <tokenizer.json>`
+  `python tools/model/train_transformer.py --corpus <corpus.jsonl> --tokenizer <tokenizer.json> --source-register <sources.csv> --output <checkpoint.pt>`
+- Pemeriksaan ini adalah gerbang teknis berbasis metadata. Ia tidak membuktikan secara hukum bahwa dokumen izin benar atau lisensi ditafsirkan tepat; bukti tetap harus diperiksa manusia.

@@ -16,7 +16,7 @@ class LocalLlmEngine {
         get() = nativeLibraryAvailable
 
     val isLoaded: Boolean
-        get() = loaded && runCatching { nativeIsLoaded() }.getOrDefault(false)
+        get() = loaded
 
     fun loadModel(path: String, contextSize: Int = 1024, threads: Int = 2): String {
         check(nativeLibraryAvailable) { "Mesin AI lokal belum tersedia pada APK ini." }

@@ -38,10 +38,10 @@ class LocalLlmEngine {
             if (conversationHistory.isEmpty()) {
                 question
             } else {
-                val previous = conversationHistory.joinToString("\\n") { (user, assistant) ->
-                    "Pengguna: $user\\nTata: $assistant"
+                val previous = conversationHistory.joinToString("\n") { (user, assistant) ->
+                    "Pengguna: $user\nTata: $assistant"
                 }
-                "Konteks percakapan sementara:\\n$previous\\n\\nPertanyaan pengguna sekarang: $question"
+                "Konteks percakapan sementara:\n$previous\n\nPertanyaan pengguna sekarang: $question"
             }
         }
         val answer = nativeGenerate(contextualPrompt.take(1800), maxTokens.coerceIn(16, 256))

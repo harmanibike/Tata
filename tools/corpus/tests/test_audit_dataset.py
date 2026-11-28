@@ -6,7 +6,7 @@ from pathlib import Path
 from audit_dataset import audit_dataset
 
 
-def make_record(example_id, source_id, split, quality="passed"):
+def make_record(example_id, source_id, split, quality="passed", user_text=None, answer_text=None, task="instruction_response"):
     return {
         "schema_version": 1,
         "example_id": example_id,
@@ -17,10 +17,10 @@ def make_record(example_id, source_id, split, quality="passed"):
             "uri": None,
         },
         "language": "id",
-        "task": "instruction_response",
+        "task": task,
         "messages": [
-            {"role": "user", "content": f"Pertanyaan {example_id}?"},
-            {"role": "assistant", "content": f"Jawaban contoh {example_id}."},
+            {"role": "user", "content": user_text or f"Pertanyaan {example_id}?"},
+            {"role": "assistant", "content": answer_text or f"Jawaban contoh {example_id}."},
         ],
         "privacy_review": "passed",
         "quality_review": quality,
@@ -68,7 +68,6 @@ class DatasetAuditTests(unittest.TestCase):
         self.assertEqual("blocked", report["status"])
         self.assertEqual(0, report["approved_examples"])
 
-
     def test_length_statistics_and_tokenizer_metrics_are_aggregated(self):
         from train_tokenizer import CharacterBPE
         records = [
@@ -80,7 +79,7 @@ class DatasetAuditTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         tokenizer_path = Path(temporary.name) / "tokenizer.json"
         tokenizer = CharacterBPE.train(
-            ["user: Pertanyaan contoh?\\n", "assistant: Jawaban contoh.\\n"],
+            ["user: Pertanyaan contoh?\n", "assistant: Jawaban contoh.\n"],
             vocab_size=64,
             min_frequency=1,
         )
@@ -92,6 +91,39 @@ class DatasetAuditTests(unittest.TestCase):
         self.assertEqual(1, report["length_analysis"]["tokens_per_example"]["train"]["count"])
         self.assertIsNotNone(report["length_analysis"]["characters_per_example"]["train"]["median"])
         self.assertNotIn("Pertanyaan one", json.dumps(report))
+
+    def test_quality_profile_flags_short_and_repeated_answers(self):
+        records = [
+            make_record("one", "src-one", "train", user_text="Hai", answer_text="Ya"),
+            make_record("two", "src-two", "validation", user_text="Halo", answer_text="Ya"),
+            make_record("three", "src-three", "test", user_text="Pagi", answer_text="Ya"),
+        ]
+        report = audit_dataset(self.write_records(records))
+        profile = report["quality_profile"]
+        self.assertEqual(3, profile["short_user_examples_under_10_chars"])
+        self.assertEqual(3, profile["short_assistant_examples_under_20_chars"])
+        self.assertEqual(1, profile["groups_of_identical_answers_repeated_at_least_3_times"])
+        self.assertTrue(any("jawaban identik" in warning for warning in report["warnings"]))
+
+    def test_source_concentration_and_task_balance_are_reported(self):
+        records = [
+            make_record("one", "src-one", "train", task="qa"),
+            make_record("two", "src-one", "train", task="qa"),
+            make_record("three", "src-two", "validation", task="reasoning"),
+            make_record("four", "src-three", "test", task="summarization"),
+        ]
+        report = audit_dataset(self.write_records(records))
+        self.assertEqual(0.5, report["source_balance"]["largest_source_share"])
+        self.assertEqual({"qa": 2}, report["quality_profile"]["task_counts_by_split"]["train"])
+
+    def test_invalid_context_length_rejected(self):
+        path = self.write_records([
+            make_record("one", "src-one", "train"),
+            make_record("two", "src-two", "validation"),
+            make_record("three", "src-three", "test"),
+        ])
+        with self.assertRaises(ValueError):
+            audit_dataset(path, context_length=1)
 
     def test_invalid_corpus_is_reported_as_invalid(self):
         path = self.write_records([{"schema_version": 1}])

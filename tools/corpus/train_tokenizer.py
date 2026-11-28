@@ -12,6 +12,10 @@ from pathlib import Path
 from typing import Iterable
 
 SPECIAL_TOKENS = ["<pad>", "<unk>", "<bos>", "<eos>"]
+ALLOWED_LICENSES = {
+    "public_domain", "cc0", "cc_by", "cc_by_sa",
+    "owned_or_explicitly_permitted", "explicit_permission",
+}
 
 
 class CharacterBPE:
@@ -144,11 +148,24 @@ def load_training_texts(jsonl_path: Path) -> list[str]:
         # Unassigned data must be split and reviewed before any tokenizer training.
         if record.get("split") != "train":
             continue
-        for message in record.get("messages", []):
+        source = record.get("source")
+        if (
+            not isinstance(source, dict)
+            or not source.get("source_id")
+            or source.get("license") not in ALLOWED_LICENSES
+        ):
+            raise ValueError(f"Sumber/lisensi tidak valid pada baris {line_number}")
+        messages = record.get("messages", [])
+        if not isinstance(messages, list) or len(messages) < 2:
+            raise ValueError(f"Messages tidak valid pada baris {line_number}")
+        for message in messages:
+            if not isinstance(message, dict) or message.get("role") not in {"user", "assistant"}:
+                raise ValueError(f"Role tidak valid pada baris {line_number}")
             content = message.get("content")
-            if isinstance(content, str) and content:
-                # Sertakan penanda peran agar model dapat mempelajari giliran dialog.
-                texts.append(message["role"] + ": " + content)
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError(f"Content kosong pada baris {line_number}")
+            # Sertakan penanda peran agar model dapat mempelajari giliran dialog.
+            texts.append(message["role"] + ": " + content)
     return texts
 
 

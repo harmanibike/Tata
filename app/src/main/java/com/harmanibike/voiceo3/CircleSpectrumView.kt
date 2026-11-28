@@ -60,14 +60,6 @@ class CircleSpectrumView(context: Context) : View(context) {
         }
         canvas.drawCircle(cx, cy, base * (2.0f + pulse * 0.22f), halo)
 
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 2.2f
-        paint.color = Color.argb(95, 137, 105, 245)
-        canvas.drawCircle(cx, cy, base * 1.72f, paint)
-        paint.strokeWidth = 1.6f
-        paint.color = Color.argb(75, 104, 190, 255)
-        canvas.drawCircle(cx, cy, base * 1.48f, paint)
-
         val bars = 64
         for (i in 0 until bars) {
             val angle = (2.0 * PI * i / bars - PI / 2.0).toFloat()

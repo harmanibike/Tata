@@ -38,6 +38,7 @@ class FakeFunctional:
 
 
 class FakeTorch:
+    long = int
     no_grad = FakeNoGrad
     class nn:
         functional = FakeFunctional

@@ -37,6 +37,9 @@
 - Menu **Privasi** menyediakan pengaturan penyimpanan riwayat, penghapusan seluruh riwayat percakapan, dan penghapusan seluruh pengetahuan. Penghapusan riwayat dan pengetahuan merupakan tindakan terpisah.
 
 ## Fitur yang tersedia
+- Identitas Tata tersedia melalui **Pengaturan > Tentang Tata AI** dan pertanyaan suara/teks seperti “Siapa kamu?” atau “Versi berapa?”. Tata menjelaskan bahwa AI berarti *Artificial Intelligence* atau kecerdasan buatan, serta membaca versionName dan versionCode langsung dari metadata APK yang sedang berjalan.
+- Deskripsi diri menjelaskan platform Android/Kotlin, kemampuan offline dan online, batas percakapan lokal non-generatif, kebijakan tanpa API AI eksternal, serta prinsip bahwa pengetahuan tidak disimpan tanpa izin.
+- Setelah ringkasan teks tempelan, pengguna dapat memilih **Tanya isi teks**. Tata mencari hingga tiga kalimat berdasarkan kecocokan kata dari teks yang masih berada di memori sesi Activity. Ini pencarian sederhana, bukan penalaran generatif atau pemeriksaan fakta; teks dan pertanyaan lanjutan tidak disimpan ke database dan hilang saat sesi Activity berakhir.
 - Pengenalan suara Android dengan preferensi bahasa Indonesia (`id-ID`) dan preferensi offline; ketersediaannya bergantung pada layanan dan paket bahasa di perangkat.
 - Text-to-Speech bahasa Indonesia dengan pemilihan otomatis suara berbasis jaringan saat online dan suara lokal saat offline, jika mesin TTS Android menyediakan kedua jenis suara.
 - Karakter suara perempuan muda dipilih berdasarkan metadata suara yang disediakan mesin TTS; jika metadata gender tidak tersedia, Tata memilih suara Indonesia dengan kualitas tertinggi yang tersedia. Pitch dan tempo disetel lembut.

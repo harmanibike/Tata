@@ -519,62 +519,126 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun showLearningRecordDetail(record: LearningRecord) {
-        val statusLabel = when (record.status) { "diterima" -> "Diterima untuk ditinjau sebagai pengetahuan"; "diterapkan" -> "Sudah menjadi pengetahuan aktif"; "ditolak" -> "Ditolak"; "sudah_diuji" -> "Sudah diuji"; else -> "Perlu ditinjau" }
+        val statusLabel = when (record.status) {
+            "perlu_ditinjau" -> "Menunggu pemeriksaan"
+            "diterima" -> "Disetujui, belum diaktifkan"
+            "diterapkan" -> "Sudah menjadi pengetahuan aktif"
+            "ditolak" -> "Ditolak"
+            "sudah_diuji" -> "Sudah diuji"
+            else -> record.status
+        }
         val message = buildString {
-            append("Konteks:\n").append(record.question)
-            append("\n\nKoreksi:\n").append(record.correction)
-            if (record.source.isNotBlank()) append("\n\nSumber:\n").append(record.source)
-            append("\n\nStatus: ").append(statusLabel)
-            append(if (record.status == "diterapkan" || record.status == "sudah_diuji") "\n\nStatus pengetahuan: ${if (record.status == "diterapkan") "sudah aktif" else "sudah diuji"}." else "\n\nCatatan ini masih terpisah dari pengetahuan aktif Tata.")
+            append("PERTANYAAN / KONTEKS\\n").append(record.question)
+            append("\\n\\nKOREKSI YANG AKAN DIPERIKSA\\n").append(record.correction)
+            if (record.source.isNotBlank()) append("\\n\\nSUMBER / REFERENSI\\n").append(record.source)
+            append("\\n\\nSTATUS: ").append(statusLabel)
+            if (record.status == "perlu_ditinjau") {
+                append("\\n\\nPeriksa isi dan sumbernya sebelum menyetujui. Persetujuan belum otomatis mengaktifkan pengetahuan.")
+            } else if (record.status == "diterima") {
+                append("\\n\\nKoreksi sudah disetujui, tetapi belum digunakan untuk menjawab. Pilih Aktifkan jika sudah yakin.")
+            } else if (record.status == "diterapkan" || record.status == "sudah_diuji") {
+                append("\\n\\nKoreksi sudah diterapkan ke pengetahuan lokal Tata.")
+            }
         }
         val options = arrayOf("Edit catatan") + when (record.status) {
-            "perlu_ditinjau" -> arrayOf("Terima sebagai pengetahuan", "Tandai ditolak", "Hapus catatan")
-            "diterima" -> arrayOf("Masukkan ke pengetahuan Tata", "Tandai sudah diuji", "Hapus catatan")
+            "perlu_ditinjau" -> arrayOf("Tinjau dan konfirmasi persetujuan", "Tolak koreksi", "Hapus catatan")
+            "diterima" -> arrayOf("Aktifkan ke pengetahuan Tata", "Tandai sudah diuji", "Kembalikan untuk ditinjau", "Hapus catatan")
             "diterapkan" -> arrayOf("Tandai sudah diuji", "Kembalikan untuk ditinjau", "Hapus catatan")
-            "sudah_diuji" -> arrayOf("Masukkan ke pengetahuan Tata", "Kembalikan untuk ditinjau", "Hapus catatan")
+            "sudah_diuji" -> arrayOf("Aktifkan ke pengetahuan Tata", "Kembalikan untuk ditinjau", "Hapus catatan")
             "ditolak" -> arrayOf("Kembalikan untuk ditinjau", "Hapus catatan")
             else -> arrayOf("Kembalikan untuk ditinjau", "Hapus catatan")
         }
-        AlertDialog.Builder(this).setTitle("Detail pembelajaran").setMessage(message)
+        AlertDialog.Builder(this).setTitle("Tinjau Learning Lab").setMessage(message)
             .setItems(options) { _, which ->
                 when (options[which]) {
                     "Edit catatan" -> showLearningRecordEditor(record.question, editingRecord = record)
-                    "Terima sebagai pengetahuan" -> { knowledgeStore.updateLearningStatus(record.id, "diterima"); Toast.makeText(this, "Catatan diterima untuk ditinjau.", Toast.LENGTH_SHORT).show() }
-                    "Tandai ditolak" -> knowledgeStore.updateLearningStatus(record.id, "ditolak")
-                    "Tandai sudah diuji" -> knowledgeStore.updateLearningStatus(record.id, "sudah_diuji")
-                    "Kembalikan untuk ditinjau" -> knowledgeStore.updateLearningStatus(record.id, "perlu_ditinjau")
-                    "Masukkan ke pengetahuan Tata" -> {
-                        val matches = knowledgeStore.findKnowledgeByQuestion(record.question)
-                        val exact = matches.any {
-                            it.answer.trim().replace(Regex("\\s+"), " ")
-                                .equals(record.correction.trim().replace(Regex("\\s+"), " "), ignoreCase = true)
-                        }
-                        when {
-                            exact -> {
-                                knowledgeStore.updateLearningStatus(record.id, "diterapkan")
-                                Toast.makeText(this, "Jawaban yang sama sudah ada. Catatan ditandai sebagai pengetahuan aktif.", Toast.LENGTH_LONG).show()
-                            }
-                            matches.isNotEmpty() -> AlertDialog.Builder(this)
-                                .setTitle("Ada pengetahuan dengan pertanyaan sama")
-                                .setMessage("Jawaban aktif yang sudah ada berbeda dengan koreksi ini. Tata tidak akan menimpa atau menambahkan jawaban yang berpotensi membingungkan. Periksa dan selesaikan konflik dari menu Pengetahuan terlebih dahulu.")
-                                .setPositiveButton("Mengerti", null).show()
-                            else -> AlertDialog.Builder(this)
-                                .setTitle("Tambahkan ke pengetahuan aktif?")
-                                .setMessage("Koreksi ini akan menjadi jawaban yang dapat digunakan Tata secara offline. Pastikan isi dan sumbernya benar. Setelah ditambahkan, status menjadi 'Diterapkan', bukan otomatis 'Sudah diuji'.")
-                                .setPositiveButton("Tambahkan") { _, _ ->
-                                    knowledgeStore.add(record.question, emptyList(), record.correction)
-                                    knowledgeStore.updateLearningStatus(record.id, "diterapkan")
-                                    Toast.makeText(this, "Pengetahuan aktif ditambahkan. Silakan uji jawaban Tata.", Toast.LENGTH_SHORT).show()
-                                }.setNegativeButton("Batal", null).show()
-                        }
-                    }
+                    "Tinjau dan konfirmasi persetujuan" -> AlertDialog.Builder(this)
+                        .setTitle("Konfirmasi persetujuan")
+                        .setMessage("Apakah Anda sudah memeriksa pertanyaan, koreksi, dan sumbernya? Jika disetujui, catatan berpindah ke status Diterima. Catatan belum aktif sampai Anda memilih Aktifkan.")
+                        .setPositiveButton("Ya, setujui") { _, _ ->
+                            knowledgeStore.updateLearningStatus(record.id, "diterima")
+                            Toast.makeText(this, "Koreksi disetujui. Periksa kembali sebelum mengaktifkannya.", Toast.LENGTH_LONG).show()
+                            showLearningLab("diterima")
+                        }.setNegativeButton("Periksa lagi", null).show()
+                    "Tolak koreksi" -> AlertDialog.Builder(this)
+                        .setTitle("Konfirmasi penolakan")
+                        .setMessage("Tolak catatan koreksi ini? Catatan akan tetap tersimpan di Learning Lab dengan status Ditolak.")
+                        .setPositiveButton("Ya, tolak") { _, _ ->
+                            knowledgeStore.updateLearningStatus(record.id, "ditolak")
+                            Toast.makeText(this, "Koreksi ditolak.", Toast.LENGTH_SHORT).show()
+                            showLearningLab("ditolak")
+                        }.setNegativeButton("Batal", null).show()
+                    "Tandai sudah diuji" -> AlertDialog.Builder(this)
+                        .setTitle("Konfirmasi pengujian")
+                        .setMessage("Tandai catatan ini sudah diuji? Gunakan status ini setelah Anda benar-benar mencoba pertanyaan tersebut di percakapan Tata.")
+                        .setPositiveButton("Ya, sudah diuji") { _, _ ->
+                            knowledgeStore.updateLearningStatus(record.id, "sudah_diuji")
+                            Toast.makeText(this, "Status diperbarui menjadi Sudah diuji.", Toast.LENGTH_SHORT).show()
+                            showLearningLab("sudah_diuji")
+                        }.setNegativeButton("Batal", null).show()
+                    "Kembalikan untuk ditinjau" -> AlertDialog.Builder(this)
+                        .setTitle("Kembalikan catatan?")
+                        .setMessage("Catatan akan kembali ke antrean Perlu ditinjau.")
+                        .setPositiveButton("Kembalikan") { _, _ ->
+                            knowledgeStore.updateLearningStatus(record.id, "perlu_ditinjau")
+                            Toast.makeText(this, "Catatan dikembalikan untuk ditinjau.", Toast.LENGTH_SHORT).show()
+                            showLearningLab("perlu_ditinjau")
+                        }.setNegativeButton("Batal", null).show()
+                    "Aktifkan ke pengetahuan Tata" -> confirmApplyLearningRecord(record)
                     "Hapus catatan" -> AlertDialog.Builder(this).setTitle("Hapus catatan pembelajaran?")
                         .setMessage("Catatan lokal ini akan dihapus. Pengetahuan aktif tidak terpengaruh.")
-                        .setPositiveButton("Hapus") { _, _ -> knowledgeStore.deleteLearningRecord(record.id) }
+                        .setPositiveButton("Hapus") { _, _ ->
+                            knowledgeStore.deleteLearningRecord(record.id)
+                            Toast.makeText(this, "Catatan dihapus.", Toast.LENGTH_SHORT).show()
+                            showLearningLab()
+                        }
                         .setNegativeButton("Batal", null).show()
                 }
             }.setNegativeButton("Tutup", null).show()
     }
+
+    private fun confirmApplyLearningRecord(record: LearningRecord) {
+        val matches = knowledgeStore.findKnowledgeByQuestion(record.question)
+        val normalizedCorrection = record.correction.trim().replace(Regex("\\s+"), " ")
+        val exact = matches.any {
+            it.answer.trim().replace(Regex("\\s+"), " ")
+                .equals(normalizedCorrection, ignoreCase = true)
+        }
+        if (exact) {
+            knowledgeStore.updateLearningStatus(record.id, "diterapkan")
+            Toast.makeText(this, "Jawaban yang sama sudah aktif. Catatan ditandai Diterapkan.", Toast.LENGTH_LONG).show()
+            showLearningLab("diterapkan")
+            return
+        }
+        if (matches.isNotEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Perlu menyelesaikan konflik")
+                .setMessage("Sudah ada pengetahuan aktif dengan pertanyaan yang sama, tetapi jawabannya berbeda. Tata tidak akan menimpa jawaban lama secara otomatis. Buka menu Pengetahuan untuk memeriksa dan menyelesaikan konflik.")
+                .setPositiveButton("Buka Pengetahuan") { _, _ -> showKnowledgeManager() }
+                .setNegativeButton("Nanti", null).show()
+            return
+        }
+        val confirmation = buildString {
+            append("Pertanyaan:\\n").append(record.question)
+            append("\\n\\nJawaban yang akan diaktifkan:\\n").append(record.correction)
+            if (record.source.isNotBlank()) append("\\n\\nSumber:\\n").append(record.source)
+            append("\\n\\nSetelah dikonfirmasi, Tata dapat menggunakan jawaban ini secara offline. Ini tidak melatih bobot model AI.")
+        }
+        AlertDialog.Builder(this).setTitle("Konfirmasi aktivasi pengetahuan")
+            .setMessage(confirmation)
+            .setPositiveButton("Konfirmasi & aktifkan") { _, _ ->
+                runCatching {
+                    knowledgeStore.add(record.question, emptyList(), record.correction)
+                    knowledgeStore.updateLearningStatus(record.id, "diterapkan")
+                }.onSuccess {
+                    Toast.makeText(this, "Pengetahuan berhasil diaktifkan. Silakan uji jawaban Tata.", Toast.LENGTH_LONG).show()
+                    showLearningLab("diterapkan")
+                }.onFailure {
+                    Toast.makeText(this, "Gagal mengaktifkan pengetahuan: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+            }.setNegativeButton("Periksa lagi", null).show()
+    }
+
     private fun showKnowledgeManager() {
         val entries = knowledgeStore.getAll()
         val labels = entries.map { entry ->

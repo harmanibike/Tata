@@ -76,7 +76,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         buildInterface()
         requestAudioPermission()
         setupSpeechRecognizer()
-        appendLog("Tata", "Halo, saya Tata. Tekan Bicara untuk memberi perintah. Ucapkan bantuan untuk melihat kemampuan saya.")
+        appendLog("Tata", "Halo, saya Tata AI versi ${packageManager.getPackageInfo(packageName, 0).versionName}. AI adalah Artificial Intelligence atau kecerdasan buatan. Tekan lingkaran spektrum untuk mulai berbicara, atau ketik pesan. Ucapkan bantuan untuk melihat kemampuan saya.")
         requestChatStorageConsentIfNeeded()
     }
 
@@ -942,7 +942,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun isIdentityQuestion(command: String): Boolean =
-        listOf("siapa kamu", "siapa nama kamu", "siapa namamu", "nama kamu", "identitas kamu", "tentang dirimu", "informasi tentang dirimu", "versi berapa", "versi tata", "kamu versi apa")
+        listOf("siapa kamu", "siapa nama kamu", "siapa namamu", "nama kamu", "identitas kamu", "tentang dirimu", "informasi tentang dirimu", "ceritakan tentang dirimu", "apa itu tata ai", "apa arti ai", "apa itu ai", "jelaskan ai", "versi berapa", "versi tata", "kamu versi apa")
             .any { command.contains(it) }
 
     private fun buildIdentityDescription(): String {

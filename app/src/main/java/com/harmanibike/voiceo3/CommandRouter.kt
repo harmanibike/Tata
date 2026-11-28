@@ -18,6 +18,8 @@ class CommandRouter(
     private val knowledgeStore: KnowledgeStore,
     private val networkHelper: NetworkHelper
 ) {
+    private val offlineConversation = OfflineConversationEngine()
+
     suspend fun handle(rawCommand: String): String = withContext(Dispatchers.Main) {
         val command = rawCommand.lowercase(Locale("id", "ID")).trim()
         when {
@@ -74,7 +76,8 @@ class CommandRouter(
                     command.contains("kabar hari ini") || command.contains("headline")) {
                     networkHelper.getTodayNews()
                 } else {
-                    "Maaf, saya belum memahami perintah tersebut. Bisa diulangi dengan cara lain?"
+                    offlineConversation.respond(rawCommand)
+                        ?: "Saya belum memahami maksudnya. Kamu bisa bertanya dengan kalimat lain, meminta bantuan, atau mengajari saya melalui menu Pengetahuan. Saya tidak akan menyimpan hal baru tanpa izinmu."
                 }
             }
         }

@@ -56,4 +56,4 @@ python tools/corpus/validate_source_register.py docs/dataset_source_register.csv
 
 Validator memeriksa kolom wajib, ID sumber unik, URL bukti, tanggal akses, nilai izin, dan menolak keputusan `approved` jika `training_permission` bukan `yes` atau bukti/alasan persetujuan kosong. Register kosong sengaja dinyatakan belum siap.
 
-**Batas penting:** validator register ini berdiri sendiri dan belum otomatis mencocokkan setiap `source_id` pada JSONL dengan register saat tokenizer/trainer dijalankan. Sebelum training, reviewer tetap wajib melakukan pencocokan manual; jangan menganggap status `passed` dari validator JSONL sebagai bukti izin sumber. Integrasi pemeriksaan silang register ↔ korpus menjadi pekerjaan teknis berikutnya.
+**Pemeriksaan silang otomatis:** tokenizer dan pemuat data training memeriksa setiap `source_id` terhadap register yang disetujui, termasuk izin `training_permission=yes`, kecocokan judul/URI, dan kecocokan lisensi sumber. Hash register dicatat dalam metadata training dan diperiksa kembali saat melanjutkan checkpoint. Pemeriksaan otomatis ini tidak menggantikan peninjauan manusia atas keabsahan izin dan kualitas isi sumber.

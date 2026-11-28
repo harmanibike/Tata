@@ -54,7 +54,7 @@ class ReviewQueueTests(unittest.TestCase):
         queue = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual(2, len(queue["items"]))
         self.assertTrue(all(x["related_examples"] for x in queue["items"]))
-        self.assertTrue(all("near_duplicate_prompt" in x["reasons"] for x in queue["items"]))
+        self.assertTrue(all(any(reason.startswith("near_duplicate_prompt") for reason in x["reasons"]) for x in queue["items"]))
 
     def test_refuses_to_overwrite_queue(self):
         source, output = self.setup_corpus([make_record("one", "src-one")])

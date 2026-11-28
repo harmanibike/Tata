@@ -34,21 +34,22 @@
 
 ## Fitur yang tersedia
 - Pengenalan suara Android dengan preferensi bahasa Indonesia (`id-ID`) dan preferensi offline; ketersediaannya bergantung pada layanan dan paket bahasa di perangkat.
-- Text-to-Speech bahasa Indonesia dengan pilihan suara yang tersedia dari mesin Android, penyimpanan pilihan suara, serta karakter bicara lebih lembut.
+- Text-to-Speech bahasa Indonesia dengan pemilihan otomatis suara berbasis jaringan saat online dan suara lokal saat offline, jika mesin TTS Android menyediakan kedua jenis suara.
+- Karakter suara perempuan muda dipilih berdasarkan metadata suara yang disediakan mesin TTS; jika metadata gender tidak tersedia, Tata memilih suara Indonesia dengan kualitas tertinggi yang tersedia. Pitch dan tempo disetel lembut.
+- Suara online pada tahap ini memakai voice network-enabled dari mesin TTS Android (misalnya Google Speech Services jika tersedia), bukan layanan AI TTS cloud khusus. Kualitas, ketersediaan, dan karakter suara bergantung pada mesin TTS serta paket suara yang terpasang di HP.
 - Tombol Bicara, input teks, dan percakapan.
 - Perintah sapaan, identitas Tata, bantuan fitur, jam, tanggal, dan persentase baterai.
 - Perintah membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, aplikasi peta, browser, Galeri, dan aplikasi catatan yang tersedia.
 - Pengetahuan lokal yang dapat dikelola melalui tombol **Pengetahuan Tata**: tambah, edit, dan hapus pertanyaan, kata kunci, serta jawaban.
 - Membaca berita hari ini secara online melalui RSS dari sumber aktif di database. Tata menampilkan judul, ringkasan singkat, sumber, waktu terbit, dan tautan artikel, lalu membacakannya melalui Text-to-Speech Android.
 
-## Mengatur suara Tata
-1. Buka aplikasi Tata AI.
-2. Tekan **Suara**.
-3. Pilih salah satu suara bahasa Indonesia yang tersedia dari mesin Text-to-Speech Android.
-4. Tata menyimpan pilihan tersebut dan menggunakannya kembali saat aplikasi dibuka.
-5. Jika tidak ada pilihan suara bahasa Indonesia, buka pengaturan Text-to-Speech Android untuk memasang atau mengunduh data suara jika tersedia.
-
-Karakter bawaan menggunakan pitch sedikit lebih tinggi dan kecepatan bicara sedikit lebih pelan. Kesan suara perempuan muda tetap bergantung pada variasi suara yang disediakan mesin TTS HP.
+## Suara natural online dan fallback offline
+- Saat koneksi internet tervalidasi tersedia, Tata memilih suara Bahasa Indonesia bertipe network dari mesin TTS Android jika tersedia.
+- Saat offline, Tata memilih suara Bahasa Indonesia lokal yang tidak memerlukan jaringan.
+- Jika suara network tidak tersedia atau gagal dipilih, Tata memakai suara lokal sebagai fallback.
+- Pemilihan karakter perempuan muda memakai metadata nama/fitur suara jika mesin TTS menyediakannya; jika tidak, pemilihan berdasarkan kualitas suara terbaik dan tidak dapat menjamin gender.
+- Buka **Pengaturan > Suara Tata** untuk melihat dan mencoba suara Bahasa Indonesia yang tersedia. Paket suara tambahan dapat dipasang melalui pengaturan Text-to-Speech Android.
+- Pitch sedikit lebih tinggi dan tempo sedikit lebih pelan diterapkan sebagai penyesuaian ringan. Suara AI cloud khusus belum diintegrasikan; itu memerlukan penyedia TTS, endpoint layanan, dan kredensial API tersendiri.
 
 ## Cadangan pengetahuan
 - Tombol **Cadangan** membuka pilihan ekspor atau impor JSON.

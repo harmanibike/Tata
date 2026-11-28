@@ -4,6 +4,8 @@
 
 Dokumen ini menjadi panduan pengumpulan data orisinal/berizin. Angka target adalah target pilot internal, bukan klaim bahwa dataset sudah tersedia atau cukup untuk asisten umum.
 
+Untuk pemeriksaan setiap sumber sebelum diterima, ikuti [Checklist Penerimaan Sumber Data](CORPUS_SOURCE_INTAKE_CHECKLIST.md). Checklist ini melengkapi register dan validator; bukan pengganti pemeriksaan manusia.
+
 ## 1. Tujuan pilot
 
 Buktikan pipeline data → tokenizer → training kecil → evaluasi tertahan dengan data yang dapat diaudit. Pilot tidak ditujukan untuk menghasilkan asisten setara model besar.

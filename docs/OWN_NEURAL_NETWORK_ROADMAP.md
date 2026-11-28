@@ -114,3 +114,8 @@ Validator korpus JSONL tersedia di `tools/corpus/validate_corpus.py`; generator 
 ### Implementasi mesin training awal
 
 Loop pelatihan lokal tersedia di `tools/model/train_transformer.py`, dengan loader data terpisah `tools/model/training_data.py`. Loader hanya mengizinkan split train/validation dan contoh yang lulus tinjauan privasi serta kualitas; split test tidak dapat dimuat. Model decoder-only dibuat dari bobot acak dan dilatih dengan next-token cross-entropy, AdamW, gradient clipping, validasi loss/perplexity, serta checkpoint atomik. Hash train/validation/tokenizer dicatat dan diperiksa saat resume. Ukuran vocabulary diambil dari tokenizer aktual dan hitungan parameter runtime dicocokkan dengan estimator. Implementasi membutuhkan PyTorch 2.x di komputer lokal; CI tidak menjalankan training. Belum ada korpus produksi yang lolos review dan belum ada bobot model terlatih. Langkah berikutnya adalah uji unit/CI, memperoleh sumber data berizin, lalu menjalankan eksperimen kecil pada komputer pelatihan.
+
+
+## Evaluasi model
+
+Evaluator held-out tersedia di `tools/model/evaluate_transformer.py`, dengan test set yang terpisah dari training dan validation. Rubrik penilaian manual ada di `docs/MODEL_EVALUATION_RUBRIC.md`. Perplexity tidak cukup untuk menyatakan model layak; evaluasi manusia, audit privasi/keamanan, dan pengujian perangkat target wajib dilakukan sebelum integrasi Android.

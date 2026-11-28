@@ -1,0 +1,106 @@
+# Fondasi Neural Network Tata AI (Rencana Teknis)
+
+**Status: rancangan dan spesifikasi awal; belum ada neural network Tata yang selesai dilatih.**
+
+Dokumen ini memisahkan generator berbasis aturan yang sudah ada dari model neural network yang kelak dilatih sendiri. Tidak boleh menyebut generator Kotlin sebagai model yang belajar atau sebagai neural network.
+
+## Prinsip tetap
+- Tidak memakai API inferensi AI, API key, layanan AI berbayar, atau server AI cloud.
+- Model akhir ditujukan untuk inferensi lokal/offline. Proses pelatihan dilakukan pada komputer lokal yang memadai, bukan dipaksakan ke HP Android.
+- Tidak menjadikan GGUF atau bobot model pihak ketiga sebagai model final Tata. GGUF yang sudah ada tetap jalur kompatibilitas opsional dan terpisah.
+- Kode aplikasi menentukan kemampuan; korpus dan bobot model menentukan pola bahasa yang dipelajari; basis pengetahuan aktif tetap terpisah.
+- Data percakapan pribadi dan memori pengguna dikecualikan dari korpus secara default. Tidak boleh mengambil chat atau Learning Lab sebagai data pelatihan tanpa izin pelatihan yang spesifik, terpisah, dan dapat dicabut.
+- Setiap sumber data harus memiliki asal-usul, lisensi/izin, tanggal perolehan, dan aturan penggunaan yang dapat diaudit.
+
+## Tahapan pengembangan
+
+### Tahap 0 — tata kelola data (sebelum mengumpulkan korpus)
+1. Gunakan hanya teks domain publik yang lisensinya mengizinkan penggunaan untuk pelatihan, materi milik sendiri, atau kontribusi dengan izin eksplisit.
+2. Catat URL/nama sumber, pemilik, lisensi, tanggal akses, bahasa, dan batas penggunaan.
+3. Buang data pribadi, nomor telepon, alamat, kredensial, dan identitas yang tidak diperlukan.
+4. Sediakan daftar sumber yang dilarang dan mekanisme menghapus sumber beserta turunan dataset-nya.
+5. Pisahkan izin untuk menyimpan koreksi sebagai pengetahuan, membagikan kontribusi, dan menggunakan contoh untuk pelatihan. Ketiganya tidak saling menggantikan.
+
+### Tahap 1 — format korpus dan validasi
+Format sumber kanonis adalah JSONL UTF-8, satu objek JSON per baris. Contoh skema konseptual:
+
+```json
+{
+  "schema_version": 1,
+  "example_id": "id-stabil-universal",
+  "source": {
+    "source_id": "sumber-001",
+    "title": "Materi milik sendiri",
+    "license": "owned_or_explicitly_permitted",
+    "uri": null,
+    "accessed_at": "2026-11-28"
+  },
+  "language": "id",
+  "task": "instruction_response",
+  "messages": [
+    {"role": "user", "content": "Jelaskan ..."},
+    {"role": "assistant", "content": " ... "}
+  ],
+  "privacy_review": "passed",
+  "quality_review": "pending",
+  "split": "unassigned"
+}
+```
+
+Nilai contoh di atas hanya contoh struktur, bukan data pelatihan yang sudah dikumpulkan. Validator wajib menolak:
+- JSON rusak, baris kosong, role tidak dikenal, isi kosong, dan contoh terlalu panjang;
+- sumber tanpa lisensi/izin yang jelas;
+- data yang mengandung rahasia atau informasi pribadi yang tidak relevan;
+- duplikat persis maupun duplikat nyaris sama;
+- contoh yang melanggar kebijakan keselamatan atau memuat instruksi berbahaya tanpa konteks mitigasi.
+
+Setiap perubahan korpus menghasilkan manifest versi baru, jumlah contoh, hash file, daftar sumber, dan laporan validasi.
+
+### Tahap 2 — pembersihan dan pembagian dataset
+- Normalisasi Unicode dan spasi tanpa mengubah makna atau ejaan istilah.
+- Deteksi bahasa; dataset tahap awal fokus Bahasa Indonesia.
+- Dedup dilakukan sebelum pembagian data agar contoh serupa tidak bocor ke train dan test.
+- Pembagian awal yang dapat diuji: 90% train, 5% validation, 5% test. Pembagian harus deterministik berdasarkan example_id dan sumber/kelompok, bukan acak ulang setiap run.
+- Test set dikunci; jangan digunakan untuk menyetel model.
+- Simpan provenance setiap contoh agar hasil dapat ditelusuri ke sumbernya.
+
+### Tahap 3 — tokenizer Bahasa Indonesia
+- Mulai dengan eksperimen tokenizer subword BPE atau Unigram yang dilatih dari korpus berizin Tata sendiri.
+- Ukuran kosakata awal 8.000 token adalah hipotesis eksperimen, bukan keputusan final; bandingkan dengan 4.000 dan 16.000 berdasarkan efisiensi token, kualitas ejaan, angka, imbuhan, nama, dan ukuran embedding.
+- Simpan tokenizer, konfigurasi normalisasi, versi korpus, dan hash dalam satu paket versi.
+- Uji kata berimbuhan, kata ulang, singkatan, nama lokal, angka rupiah, tanda baca, campuran Indonesia/Inggris, serta teks suara yang umum.
+
+### Tahap 4 — eksperimen model pertama
+- Arsitektur riset awal: decoder-only Transformer kecil yang dilatih dari bobot acak, bukan fine-tuning bobot model lain.
+- Mulai dari model sangat kecil untuk membuktikan pipeline end-to-end; skala parameter ditentukan setelah ukuran korpus dan kemampuan perangkat pelatihan diketahui.
+- Catat parameter model, jumlah layer, hidden size, attention heads, context length, optimizer, learning rate, batch size, seed, jumlah token pelatihan, dan perangkat.
+- Model kecil pertama hanya membuktikan pipeline dan kemampuan dasar memprediksi token. Jangan mengharapkan kemampuan asisten umum setara model besar.
+- Pelatihan memerlukan komputer dengan RAM/VRAM dan ruang penyimpanan memadai. HP Android target bukan perangkat pelatihan.
+
+### Tahap 5 — evaluasi sebelum integrasi Android
+Wajib melaporkan:
+- validation loss dan perplexity;
+- kualitas jawaban pada kumpulan pertanyaan Bahasa Indonesia yang ditahan;
+- kepatuhan instruksi, relevansi, konsistensi, dan kemampuan mengatakan tidak tahu;
+- halusinasi fakta, kebocoran data, bias, dan keluaran berbahaya;
+- ukuran bobot, ukuran tokenizer, waktu inferensi, RAM puncak, panas, dan baterai pada perangkat target.
+
+Tidak ada klaim model siap digunakan sebelum melewati evaluasi dan uji perangkat fisik.
+
+### Tahap 6 — format bobot dan runtime lokal
+- Bobot Tata harus memiliki format paket dan versi milik proyek, dengan manifest berisi arsitektur, tokenizer hash, versi korpus, konfigurasi, quantization, checksum, dan lisensi sumber.
+- Model tidak harus dibundel dalam APK; impor lokal melalui pemilih file dapat mengurangi ukuran APK dan memberi pengguna kendali.
+- Runtime Android akan dipilih setelah model pertama terbukti. Runtime komputasi bukan model pihak ketiga, tetapi setiap dependensi harus ditinjau lisensi, ukuran, ABI, dan dukungan Android.
+- Sediakan pemeriksaan checksum, batas ukuran, validasi arsitektur, ruang penyimpanan, pembatalan impor, dan penghapusan aman.
+- Model yang tidak kompatibel tidak boleh dimuat atau menimpa model aktif.
+
+## Gerbang persetujuan
+1. Data: sumber dan izin tervalidasi.
+2. Korpus: lolos privasi, deduplikasi, dan pemeriksaan kualitas.
+3. Tokenizer: evaluasi tokenisasi selesai.
+4. Model: konfigurasi dan pelatihan tercatat.
+5. Evaluasi: test set dan uji keselamatan selesai.
+6. Android: inferensi offline diuji pada perangkat fisik.
+
+## Langkah implementasi berikutnya
+Mulai dari validator korpus JSONL dan laporan provenance, sebelum mengumpulkan atau melatih data. Dengan demikian, data yang tidak berizin atau mengandung informasi pribadi tidak masuk ke pipeline sejak awal.

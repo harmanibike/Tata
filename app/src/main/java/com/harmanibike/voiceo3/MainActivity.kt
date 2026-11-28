@@ -858,12 +858,12 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             sentences.size <= 3 -> sentences.joinToString(" ")
             else -> sentences.take(3).joinToString(" ")
         }.let { if (it.length > 1100) it.take(1097).trimEnd() + "..." else it }
-        val result = "Ringkasan awal dari teks yang Anda tempel (diproses lokal, bukan verifikasi fakta):\\n$summary\\n\\nCatatan: Tata belum memeriksa kebenaran sumber atau membandingkan sumber lain. Teks dan ringkasan ini tidak disimpan ke database."
+        val result = "Ringkasan awal dari teks yang Anda tempel (diproses lokal, bukan verifikasi fakta):\n$summary\n\nCatatan: Tata belum memeriksa kebenaran sumber atau membandingkan sumber lain. Teks dan ringkasan ini tidak disimpan ke database."
         appendLog("Anda", "Memberikan teks hasil pencarian untuk diringkas.", persist = false)
         appendLog("Tata AI", result, persist = false)
         AlertDialog.Builder(this)
             .setTitle("Ringkasan sementara")
-            .setMessage("Pertanyaan: $question\\n\\n$summary\\n\\nCatatan: ini ringkasan awal berdasarkan bagian teks yang ditempel, bukan verifikasi fakta. Tidak disimpan ke database.")
+            .setMessage("Pertanyaan: $question\n\n$summary\n\nCatatan: ini ringkasan awal berdasarkan bagian teks yang ditempel, bukan verifikasi fakta. Tidak disimpan ke database.")
             .setPositiveButton("Mengerti", null)
             .show()
         speakAssistant("Berikut ringkasan awal dari teks yang Anda tempel. $summary. Perlu diingat, saya belum memverifikasi kebenaran sumbernya dan tidak menyimpan teks ini.")

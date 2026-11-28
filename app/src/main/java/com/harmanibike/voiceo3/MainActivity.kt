@@ -822,7 +822,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val dialog = AlertDialog.Builder(this)
             .setTitle("Model AI lokal")
             .setMessage(
-                "Impor file model GGUF ke penyimpanan privat Tata. File tidak dikirim ke internet dan tidak dimasukkan ke APK.\n\n" +
+                "Impor file model GGUF ke penyimpanan privat Tata. File tidak dikirim ke internet dan tidak dimasukkan ke APK.\n" +
+                    "Ruang kosong saat ini: ${formatModelSize(localModelStore.availableBytes())}. Tata menjaga minimal 256 MB tetap kosong saat impor.\n\n" +
                     if (models.isEmpty()) "Belum ada model yang diimpor." else "Model tersimpan: ${models.size}.\nPilih model untuk melihat opsi penghapusan.\n\nCatatan: mesin inferensi lokal belum diaktifkan; tahap ini baru menyiapkan pengelolaan file model."
             )
             .setItems(labels) { _, which ->

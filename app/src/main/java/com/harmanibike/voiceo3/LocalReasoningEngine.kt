@@ -11,7 +11,17 @@ import java.util.Locale
  */
 class LocalReasoningEngine {
     fun calculate(rawText: String): String? {
-        var expression = rawText.lowercase(Locale("id", "ID")).trim()
+        val normalizedText = rawText.lowercase(Locale("id", "ID")).trim()
+        val percentMatch = Regex(
+            "^(?:tolong\\s+)?(?:hitung|berapa|coba hitung)?\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(?:%|persen)\\s+dari\\s+([0-9]+(?:[.,][0-9]+)?)$"
+        ).matchEntire(normalizedText)
+        if (percentMatch != null) {
+            val percentage = percentMatch.groupValues[1].replace(',', '.').toDouble()
+            val base = percentMatch.groupValues[2].replace(',', '.').toDouble()
+            return formatResult(percentage / 100.0 * base)
+        }
+
+        var expression = normalizedText
         expression = expression
             .replace(Regex("^(tolong\\s+)?(hitung|berapa|hasil dari|coba hitung)\\s*"), "")
             .replace(Regex("\\bditambah\\b|\\btambah\\b|\\bplus\\b"), "+")
@@ -33,14 +43,19 @@ class LocalReasoningEngine {
             val parser = ExpressionParser(expression)
             val result = parser.parse()
             if (!result.isFinite()) return "Hasil perhitungan terlalu besar atau tidak dapat ditentukan."
-            val symbols = DecimalFormatSymbols(Locale("id", "ID"))
-            val formatter = DecimalFormat("#,##0.########", symbols)
-            "Hasil perhitungannya adalah ${formatter.format(result)}."
+            formatResult(result)
         } catch (_: ArithmeticException) {
             "Perhitungan tidak dapat dilakukan karena ada pembagian dengan nol."
         } catch (_: IllegalArgumentException) {
             null
         }
+    }
+
+    private fun formatResult(value: Double): String {
+        if (!value.isFinite()) return "Hasil perhitungan terlalu besar atau tidak dapat ditentukan."
+        val symbols = DecimalFormatSymbols(Locale("id", "ID"))
+        val formatter = DecimalFormat("#,##0.########", symbols)
+        return "Hasil perhitungannya adalah ${formatter.format(value)}."
     }
 
     private class ExpressionParser(private val input: String) {
@@ -66,13 +81,13 @@ class LocalReasoningEngine {
         }
 
         private fun parseTerm(): Double {
-            var value = parsePower()
+            var value = parseUnary()
             while (true) {
                 skipSpaces()
                 value = when {
-                    consume('*') -> value * parsePower()
+                    consume('*') -> value * parseUnary()
                     consume('/') -> {
-                        val divisor = parsePower()
+                        val divisor = parseUnary()
                         if (divisor == 0.0) throw ArithmeticException("Pembagian dengan nol")
                         value / divisor
                     }
@@ -82,10 +97,10 @@ class LocalReasoningEngine {
         }
 
         private fun parsePower(): Double {
-            val base = parseUnary()
+            val base = parsePrimary()
             skipSpaces()
             return if (consume('^')) {
-                Math.pow(base, parsePower())
+                Math.pow(base, parseUnary())
             } else base
         }
 
@@ -94,7 +109,7 @@ class LocalReasoningEngine {
             return when {
                 consume('+') -> parseUnary()
                 consume('-') -> -parseUnary()
-                else -> parsePrimary()
+                else -> parsePower()
             }
         }
 

@@ -16,7 +16,8 @@ import java.util.Locale
 class CommandRouter(
     private val context: Context,
     private val knowledgeStore: KnowledgeStore,
-    private val networkHelper: NetworkHelper
+    private val networkHelper: NetworkHelper,
+    private val localLlmEngine: LocalLlmEngine
 ) {
     private val offlineConversation = OfflineConversationEngine()
     private val localReasoning = LocalReasoningEngine()
@@ -79,6 +80,7 @@ class CommandRouter(
                     networkHelper.getTodayNews()
                 } else {
                     offlineConversation.respond(rawCommand)
+                        ?: withContext(Dispatchers.IO) { localLlmEngine.generate(rawCommand) }
                         ?: (UNKNOWN_QUERY_PREFIX + rawCommand)
                 }
             }

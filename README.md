@@ -254,3 +254,9 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Hanya pengetahuan aktif yang telah disetujui dan diterapkan yang dicari sebagai jawaban. Catatan Learning Lab berstatus menunggu/ditolak tidak dipakai sebagai fakta.
 - Klasifikasi dan pencarian ini adalah fondasi berbasis kode, bukan pemahaman neural network.
 - Jawaban dari beberapa catatan pengetahuan aktif dapat digabungkan secara terbatas sambil mempertahankan pertanyaan sumber dan jawaban aslinya. Catatan Learning Lab yang belum disetujui tidak dipakai sebagai fakta.
+
+## Fondasi neural network Tata yang dilatih sendiri
+- Rencana teknis neural network Tata sudah didokumentasikan di [docs/OWN_NEURAL_NETWORK_ROADMAP.md](docs/OWN_NEURAL_NETWORK_ROADMAP.md).
+- Rencana ini menetapkan korpus berizin, perlindungan privasi, format JSONL, deduplikasi, pembagian train/validation/test, tokenizer Bahasa Indonesia, eksperimen Transformer kecil dari bobot acak, evaluasi, dan integrasi inferensi lokal.
+- Ini masih tahap spesifikasi. Belum ada model neural network Tata yang selesai dilatih atau tervalidasi; generator Kotlin saat ini tetap merupakan penyusun respons berbasis kode.
+- Tahap implementasi berikutnya adalah validator korpus dan manifest provenance. Data percakapan pribadi, memori pengguna, dan catatan Learning Lab tidak masuk ke dataset secara default.

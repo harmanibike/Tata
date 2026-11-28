@@ -71,7 +71,12 @@ jobs:
       - name: Run Android unit tests
         run: gradle testDebugUnitTest :onnx-poc:testDebugUnitTest --no-daemon
 
+      # Build before emulator boot so an emulator hang cannot block APK verification.
+      - name: Build debug APKs without publishing them
+        run: gradle assembleDebug :onnx-poc:assembleDebug --no-daemon
+
       - name: Run ONNX Runtime Android instrumentation test
+        timeout-minutes: 15
         uses: reactivecircus/android-emulator-runner@v2
         env:
           # GitHub hosted runner may lack KVM; explicitly permit Android Emulator TCG fallback.
@@ -83,6 +88,3 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: gradle :onnx-poc:connectedDebugAndroidTest --no-daemon
-
-      - name: Build debug APKs without publishing them
-        run: gradle assembleDebug :onnx-poc:assembleDebug --no-daemon

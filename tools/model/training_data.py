@@ -81,6 +81,7 @@ def load_reviewed_sequences(
                 role_tokens = tokenizer.encode(message["role"] + ": ")
                 ids.extend(token_to_id.get(token, unknown_id) for token in role_tokens)
                 ids.extend(token_to_id.get(token, unknown_id) for token in tokenizer.encode(content))
+                ids.extend(token_to_id.get(token, unknown_id) for token in tokenizer.encode("\n"))
             ids.append(eos_id)
             if len(ids) >= 3:
                 sequences.append(ids)

@@ -186,3 +186,5 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Data yang sudah ada tidak ditimpa. Hasil impor tidak otomatis menjadi pengetahuan aktif dan tidak melatih bobot model.
 
 - Saat koreksi diterapkan ke pengetahuan aktif, Tata mendeteksi pertanyaan yang sama terlebih dahulu. Jawaban berbeda tidak menimpa data lama; koreksi baru harus ditinjau. Status **Diterapkan** terpisah dari **Sudah diuji**.
+
+- Format pertukaran Learning Lab versi 2 menyertakan identitas pertanyaan, hash isi, waktu pembuatan asal, jumlah catatan, dan hash payload untuk pemeriksaan integritas tanpa ID akun/perangkat.

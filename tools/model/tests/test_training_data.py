@@ -44,7 +44,7 @@ class TrainingDataTests(unittest.TestCase):
                     "owner": "Tata",
                     "canonical_uri": "https://example.org/" + source_id,
                     "accessed_at": "2026-11-28",
-                    "declared_license": "Izin eksplisit",
+                    "declared_license": "cc0",
                     "license_evidence_uri": "https://example.org/permission/" + source_id,
                     "training_permission": permission,
                     "commercial_use": "unclear",
@@ -144,6 +144,13 @@ class TrainingDataTests(unittest.TestCase):
         self.write_register(["source-train"], permission="unclear")
         self.write_records([self.record("blocked", "train", source_id="source-train")])
         with self.assertRaisesRegex(ValueError, "training_permission bukan yes"):
+            self.load("train")
+
+    def test_source_license_must_match_register(self):
+        record = self.record("license-mismatch", "train", source_id="source-train")
+        record["source"]["license"] = "cc_by"
+        self.write_records([record])
+        with self.assertRaisesRegex(ValueError, "Lisensi korpus tidak cocok"):
             self.load("train")
 
     def test_source_metadata_must_match_register(self):

@@ -219,4 +219,18 @@ class LocalReasoningEngineTest {
     fun ignoresNonMathQuestions() {
         assertEquals(null, engine.calculate("siapa nama kamu"))
     }
+
+    @Test
+    fun webSearchRequiresAnExplicitRequest() {
+        assertTrue(ResearchIntent.isExplicitWebSearch("Cari di internet tentang sejarah Kediri"))
+        assertTrue(ResearchIntent.isExplicitWebSearch("Tolong telusuri web harga sepeda"))
+        assertFalse(ResearchIntent.isExplicitWebSearch("Jelaskan sejarah Kediri"))
+        assertFalse(ResearchIntent.isExplicitWebSearch("Apa itu kecerdasan buatan"))
+    }
+
+    @Test
+    fun webSearchPrefixIsRemovedFromQuery() {
+        assertEquals("sejarah Kediri", ResearchIntent.cleanQuery("Cari di internet tentang sejarah Kediri"))
+        assertEquals("harga sepeda", ResearchIntent.cleanQuery("tolong telusuri web harga sepeda"))
+    }
 }

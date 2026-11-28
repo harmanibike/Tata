@@ -8,11 +8,23 @@ import java.io.File
 import java.nio.FloatBuffer
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class TataOnnxRuntimeDeviceTest {
+
+    @Test
+    fun appDoesNotRequestInternetPermission() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val packageInfo = context.packageManager.getPackageInfo(
+            context.packageName,
+            android.content.pm.PackageManager.GET_PERMISSIONS
+        )
+        val requested = packageInfo.requestedPermissions.orEmpty().toSet()
+        assertFalse("PoC must not request INTERNET permission", requested.contains("android.permission.INTERNET"))
+    }
 
     @Test
     fun opensLocalSyntheticModelAndRunsIdentityInferenceOffline() {
@@ -27,19 +39,16 @@ class TataOnnxRuntimeDeviceTest {
             assertEquals(setOf("input"), probe.inputNames)
             assertEquals(setOf("output"), probe.outputNames)
 
-            val tensor = OnnxTensor.createTensor(
+            OnnxTensor.createTensor(
                 environment,
                 FloatBuffer.wrap(floatArrayOf(1.25f, -3.5f)),
                 longArrayOf(1, 2)
-            )
-            tensor.use {
-                environment.createSession(modelFile.absolutePath).use { session ->
-                    session.run(mapOf("input" to tensor)).use { result ->
-                        @Suppress("UNCHECKED_CAST")
-                        val output = result[0].value as Array<FloatArray>
-                        assertEquals(1, output.size)
-                        assertArrayEquals(floatArrayOf(1.25f, -3.5f), output[0], 0.00001f)
-                    }
+            ).use { tensor ->
+                probe.run(mapOf("input" to tensor)).use { result ->
+                    @Suppress("UNCHECKED_CAST")
+                    val output = result[0].value as Array<FloatArray>
+                    assertEquals(1, output.size)
+                    assertArrayEquals(floatArrayOf(1.25f, -3.5f), output[0], 0.00001f)
                 }
             }
         }

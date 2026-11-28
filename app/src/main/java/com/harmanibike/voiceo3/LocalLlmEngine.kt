@@ -8,6 +8,10 @@ class LocalLlmEngine {
     @Volatile
     private var loaded = false
 
+    @Volatile
+    var activeModelPath: String? = null
+        private set
+
     val isAvailable: Boolean
         get() = nativeLibraryAvailable
 
@@ -18,6 +22,7 @@ class LocalLlmEngine {
         check(nativeLibraryAvailable) { "Mesin AI lokal belum tersedia pada APK ini." }
         val result = nativeLoadModel(path, contextSize.coerceIn(512, 2048), threads.coerceIn(1, 4))
         loaded = result == "OK"
+        activeModelPath = if (loaded) path else null
         return result
     }
 
@@ -33,6 +38,7 @@ class LocalLlmEngine {
     fun unload() {
         if (nativeLibraryAvailable) runCatching { nativeUnload() }
         loaded = false
+        activeModelPath = null
     }
 
     companion object {

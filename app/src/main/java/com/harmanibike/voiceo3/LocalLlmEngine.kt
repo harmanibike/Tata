@@ -33,18 +33,20 @@ class LocalLlmEngine {
 
     fun generate(prompt: String, maxTokens: Int = 160): String? {
         if (!isLoaded || prompt.isBlank()) return null
-        val question = prompt.trim().take(900)
+        val question = prompt.trim().take(700)
         val contextualPrompt = synchronized(historyLock) {
-            if (conversationHistory.isEmpty()) {
-                question
+            val recent = conversationHistory.toList().takeLast(2)
+            if (recent.isEmpty()) {
+                "Pertanyaan pengguna: $question"
             } else {
-                val previous = conversationHistory.joinToString("\n") { (user, assistant) ->
-                    "Pengguna: $user\nTata: $assistant"
+                val previous = recent.joinToString("\n") { pair ->
+                    "Pengguna: " + pair.first.take(180) + "\nTata: " + pair.second.take(260)
                 }
-                "Konteks percakapan sementara:\n$previous\n\nPertanyaan pengguna sekarang: $question"
+                "Riwayat percakapan relevan (gunakan hanya jika berkaitan):\n" + previous +
+                    "\n\nPertanyaan terbaru pengguna: " + question
             }
         }
-        val answer = nativeGenerate(contextualPrompt.take(1800), maxTokens.coerceIn(16, 256))
+        val answer = nativeGenerate(contextualPrompt.take(1400), maxTokens.coerceIn(32, 220))
         if (!answer.isNullOrBlank() &&
             !answer.startsWith("Pertanyaan terlalu panjang") &&
             !answer.startsWith("Model belum") &&

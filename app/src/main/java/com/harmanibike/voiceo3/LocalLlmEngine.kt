@@ -28,7 +28,7 @@ class LocalLlmEngine {
 
     fun generate(prompt: String, maxTokens: Int = 160): String? {
         if (!isLoaded || prompt.isBlank()) return null
-        return nativeGenerate(prompt.take(6000), maxTokens.coerceIn(16, 256))
+        return nativeGenerate(prompt.take(1800), maxTokens.coerceIn(16, 256))
     }
 
     fun cancel() {

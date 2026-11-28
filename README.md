@@ -197,3 +197,11 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Hasil web bukan jaminan kebenaran. Situs dapat memblokir pengambilan otomatis, mengubah struktur HTML, atau menyajikan informasi usang; pengguna perlu memeriksa sumber dan tanggalnya.
 - Jika pencarian gagal atau offline, Tata melanjutkan ke model AI lokal (jika aktif), lalu menawarkan pencarian eksternal secara manual.
 - Pencarian web mengonsumsi data internet dan belum melakukan penyimpanan otomatis ke pengetahuan Tata.
+
+
+### Riwayat revisi pengetahuan
+- Versi database 4 menambahkan tabel `knowledge_revisions` secara aditif; catatan pengetahuan yang sudah ada tidak dihapus saat migrasi.
+- Saat pengetahuan diedit atau dihapus, versi sebelumnya disimpan terlebih dahulu. Perubahan yang tidak mengubah isi tidak membuat revisi kosong.
+- Menu `Pengetahuan Tata` menyediakan `Riwayat` untuk melihat snapshot dan memulihkan versi lama setelah konfirmasi.
+- Pemulihan menyimpan versi aktif sebelum menggantinya; jika data sebelumnya telah dihapus, pemulihan membuat kembali entri pengetahuan. Catatan revisi tetap dipertahankan.
+- Riwayat ini mulai merekam perubahan sejak fitur tersedia; tidak dapat merekonstruksi perubahan sebelum fitur dipasang.

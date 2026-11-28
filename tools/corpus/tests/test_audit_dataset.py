@@ -34,7 +34,7 @@ class DatasetAuditTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         path = Path(temporary.name) / "corpus.jsonl"
         path.write_text(
-            "".join(json.dumps(item, ensure_ascii=False) + "\\n" for item in records),
+            "".join(json.dumps(item, ensure_ascii=False) + "\n" for item in records),
             encoding="utf-8",
         )
         return path

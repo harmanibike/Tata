@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="512" android:viewportHeight="512">
+    <!-- Telinga luar -->
+    <path android:fillColor="#777777" android:pathData="M86,235 C68,157 80,69 119,45 C151,26 213,90 251,151 L261,175 L251,220 Z"/>
+    <path android:fillColor="#777777" android:pathData="M426,235 C444,157 432,69 393,45 C361,26 299,90 261,151 L251,175 L261,220 Z"/>
+    <!-- Telinga dalam -->
+    <path android:fillColor="#D6C7B7" android:pathData="M112,187 C105,125 111,80 128,69 C150,75 188,119 222,169 L194,204 Z"/>
+    <path android:fillColor="#D6C7B7" android:pathData="M400,187 C407,125 401,80 384,69 C362,75 324,119 290,169 L318,204 Z"/>
+    <path android:fillColor="#F5F2EE" android:pathData="M126,151 L153,115 L211,181 L187,190 Z M386,151 L359,115 L301,181 L325,190 Z"/>
+    <!-- Kepala dan pipi -->
+    <path android:fillColor="#A3A3A3" android:pathData="M87,248 C87,155 158,111 256,111 C354,111 425,155 425,248 C425,350 353,411 256,411 C159,411 87,350 87,248 Z"/>
+    <!-- belang dahi -->
+    <path android:fillColor="#686868" android:pathData="M224,119 C212,157 220,188 240,219 C246,228 252,225 253,214 C255,179 247,145 256,114 Z M267,114 C276,145 268,179 270,214 C271,225 277,228 283,219 C303,188 311,157 299,119 Z"/>
+    <!-- belang pipi -->
+    <path android:fillColor="#777777" android:pathData="M95,250 C133,228 163,226 190,237 C159,246 129,264 91,284 Z M417,250 C379,228 349,226 322,237 C353,246 383,264 421,284 Z"/>
+    <!-- mata -->
+    <ellipse android:fillColor="#FFFFFF" android:cx="183" android:cy="257" android:rx="52" android:ry="58"/>
+    <ellipse android:fillColor="#FFFFFF" android:cx="329" android:cy="257" android:rx="52" android:ry="58"/>
+    <ellipse android:fillColor="#5A382A" android:cx="183" android:cy="260" android:rx="39" android:ry="45"/>
+    <ellipse android:fillColor="#5A382A" android:cx="329" android:cy="260" android:rx="39" android:ry="45"/>
+    <ellipse android:fillColor="#D8C7A8" android:cx="183" android:cy="260" android:rx="28" android:ry="33"/>
+    <ellipse android:fillColor="#D8C7A8" android:cx="329" android:cy="260" android:rx="28" android:ry="33"/>
+    <ellipse android:fillColor="#4A2D22" android:cx="183" android:cy="262" android:rx="22" android:ry="28"/>
+    <ellipse android:fillColor="#4A2D22" android:cx="329" android:cy="262" android:rx="22" android:ry="28"/>
+    <circle android:fillColor="#FFFFFF" android:cx="168" android:cy="238" android:r="10"/>
+    <circle android:fillColor="#FFFFFF" android:cx="314" android:cy="238" android:r="10"/>
+    <!-- moncong putih -->
+    <path android:fillColor="#FFFFFF" android:pathData="M256,236 C239,266 217,286 188,302 C158,319 137,336 145,357 C163,391 218,400 256,375 C294,400 349,391 367,357 C375,336 354,319 324,302 C295,286 273,266 256,236 Z"/>
+    <path android:fillColor="#252525" android:pathData="M237,304 C237,291 275,291 275,304 C275,318 263,326 256,326 C249,326 237,318 237,304 Z"/>
+    <path android:fillColor="#B78378" android:pathData="M244,304 C251,299 261,299 268,304 C264,313 248,313 244,304 Z"/>
+    <!-- senyum -->
+    <path android:fillColor="#00000000" android:strokeColor="#292929" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M256,326 C252,350 226,360 204,347 M256,326 C260,350 286,360 308,347"/>
+    <!-- kumis -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="3" android:strokeLineCap="round" android:pathData="M147,322 C104,306 76,305 44,315 M145,340 C102,337 76,345 53,360 M365,322 C408,306 436,305 468,315 M367,340 C410,337 436,345 459,360"/>
+</vector>

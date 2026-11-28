@@ -24,10 +24,10 @@ class TataOnnxExportTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         self.config = TransformerConfig(
-            vocab_size=6, hidden_size=8, num_layers=1, num_heads=2,
+            vocab_size=8, hidden_size=8, num_layers=1, num_heads=2,
             intermediate_size=16, context_length=8, tie_embeddings=True,
         )
-        tokenizer = CharacterBPE(["a", "b"], [])
+        tokenizer = CharacterBPE(["a", "b", "c", "d"], [])
         self.tokenizer_path = self.root / "tokenizer.json"
         tokenizer.save(self.tokenizer_path)
         model = build_model_class(torch)(self.config)
@@ -57,7 +57,7 @@ class TataOnnxExportTests(unittest.TestCase):
         manifest_path = Path(result["manifest"])
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(manifest["status"], "experimental_not_android_validated")
-        self.assertEqual(manifest["tokenizer"]["vocab_size"], 6)
+        self.assertEqual(manifest["tokenizer"]["vocab_size"], 8)
         self.assertEqual(manifest["tokenizer"]["id_to_token"][:4], ["<pad>", "<unk>", "<bos>", "<eos>"])
         self.assertEqual(manifest["provenance"]["initialization"], "random")
         self.assertFalse(manifest["provenance"]["pretrained_weights"])

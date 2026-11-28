@@ -1,5 +1,6 @@
 package com.harmanibike.tata.onnxpoc
 
+import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import java.io.File
@@ -19,6 +20,9 @@ class TataOnnxRuntimeProbe private constructor(
 
     val outputNames: Set<String>
         get() = session.outputNames
+
+    /** Runs caller-supplied tensors against the already-open local model. */
+    fun run(inputs: Map<String, OnnxTensor>): OrtSession.Result = session.run(inputs)
 
     override fun close() {
         session.close()

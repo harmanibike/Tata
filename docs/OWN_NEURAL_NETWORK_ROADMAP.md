@@ -178,3 +178,13 @@ python tools/corpus/review_corpus.py corpus.jsonl --decisions review-decisions.j
 File keputusan menggunakan objek `decisions` berisi `example_id`, `action`, dan `reviewer`; aksi `correct` juga wajib menyertakan array `messages` yang telah diperbaiki. Output yang sudah ada tidak pernah ditimpa dan file sumber tidak diubah. Persetujuan kualitas hanya diizinkan jika tinjauan privasi berstatus `passed`. Penolakan memberi status kualitas `rejected`, yang tidak dapat masuk loader training. Koreksi mengembalikan privasi dan kualitas ke `pending` serta split ke `unassigned`; setelah itu contoh harus ditinjau ulang dan dibagi ulang. Status pending dapat disimpan oleh validator, tetapi tidak dapat masuk tokenizer atau training karena loader hanya menerima status passed. Catatan riwayat menyimpan reviewer dan jenis keputusan, bukan teks pribadi atau komentar bebas.
 
 Contoh template keputusan ada di `tools/corpus/examples/review_decisions.example.json`. Untuk koreksi, gunakan `"action": "correct"` dan sertakan `"messages": [{"role":"user","content":"..."},{"role":"assistant","content":"..."}]`. Untuk penolakan gunakan `"action": "reject"`. Ganti ID contoh dan identitas reviewer dengan nilai yang benar; jangan menaruh data pribadi dalam metadata reviewer.
+
+
+### Membuat antrean tinjauan lokal
+Sebelum menerapkan keputusan, buat daftar ID yang perlu diperiksa tanpa menyalin isi percakapan:
+
+```bash
+python tools/corpus/build_review_queue.py corpus.jsonl --output review-queue.json
+```
+
+Antrean mencakup contoh dengan status privasi/kualitas pending serta kandidat pertanyaan mirip dari audit leksikal. Untuk setiap item tersedia ID, sumber, lisensi, split, alasan, dan tautan ID ke contoh terkait; teks mentah tidak diekspor. Buka korpus lokal berdasarkan `example_id`, periksa sumber dan konteks, lalu isi file keputusan berdasarkan template sebelum menjalankan `review_corpus.py`.

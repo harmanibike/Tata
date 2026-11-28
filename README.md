@@ -301,7 +301,8 @@ python tools/corpus/split_corpus.py corpus.jsonl --output corpus-split.jsonl --s
 - `tools/model/training_data.py` hanya memuat contoh yang lolos tinjauan privasi dan kualitas dari split `train` atau `validation`. Split `test` sengaja tidak dapat diminta melalui loader.
 - `tools/model/train_transformer.py` adalah loop training lokal PyTorch 2.x: decoder-only causal self-attention, pre-LayerNorm, GELU, next-token cross-entropy, AdamW, gradient clipping, evaluasi validation loss/perplexity, dan checkpoint atomik.
 - Vocabulary model mengikuti ukuran tokenizer aktual; proses training menolak bila hitungan parameter implementasi tidak cocok dengan estimator konfigurasi.
-- Checkpoint mencatat hash korpus/tokenizer, konfigurasi, seed, optimizer, dan status RNG untuk melanjutkan training. Perubahan korpus validation atau tokenizer mencegah resume yang tidak konsisten.
+- Checkpoint `tata-v0.pt` menyimpan kondisi terakhir untuk resume, termasuk hash korpus/tokenizer, konfigurasi, optimizer, dan status RNG. File `tata-v0.best.pt` terpisah menyimpan bobot dengan validation loss terbaik; keduanya ditulis atomik. Checkpoint resume juga membawa salinan bobot terbaik agar riwayat best tetap tersedia setelah training dilanjutkan.
+- Trainer menghentikan proses jika train loss atau validation loss menjadi NaN/Infinity. Laporan akhir mencatat step dan validation loss terbaik. Evaluator menerima file checkpoint terbaik dengan cara yang sama; gunakan file `.best.pt` untuk menilai kandidat model, bukan otomatis menganggap checkpoint terakhir paling baik.
 - Mesin ini belum dijalankan pada korpus Tata yang sah dan cukup. Tidak ada bobot model terlatih yang dihasilkan. Jangan memakai fixture sintetis berstatus pending.
 - PyTorch dipasang secara lokal pada komputer pelatihan sesuai CPU/CUDA; tidak ada panggilan API atau pengunduhan model pretrained. Training tidak ditujukan untuk HP Android 4 GB.
 

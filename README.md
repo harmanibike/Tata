@@ -128,11 +128,11 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 
 ## Kemampuan permanen: penalaran hitung lokal
 - Tata memiliki mesin perhitungan aritmetika yang ditanam dalam source code Kotlin dan menjadi bagian dari APK.
-- Mendukung operasi tambah, kurang, kali, bagi, pangkat, tanda kurung, bilangan desimal, persentase dari suatu nilai, serta konversi satuan panjang (mm, cm, m, km), massa (mg, g, kg), volume (ml, l), dan waktu (detik, menit, jam, hari) (contoh: "berapa 10 persen dari 200" atau "hitung 25% dari 50"); perintah dapat menggunakan kata seperti "tambah", "dikurangi", "dikali", dan "dibagi".
+- Mendukung operasi tambah, kurang, kali, bagi, pangkat, tanda kurung, bilangan desimal, persentase dari suatu nilai, diskon, keuntungan/kerugian berdasarkan modal dan harga jual, kenaikan/penurunan harga dalam persen, serta konversi satuan panjang (mm, cm, m, km), massa (mg, g, kg), volume (ml, l), dan waktu (detik, menit, jam, hari) (contoh: "berapa 10 persen dari 200" atau "hitung 25% dari 50"); perintah dapat menggunakan kata seperti "tambah", "dikurangi", "dikali", dan "dibagi".
 - Mesin memakai parser aritmetika terbatas, bukan `eval` atau eksekusi kode bebas.
 - Perhitungan berjalan di perangkat tanpa API, jaringan, atau penyimpanan ke database.
 - Jika ekspresi tidak dapat dikenali, Tata tidak menebak hasil dan mengembalikan pertanyaan ke alur percakapan/riset yang sudah ada.
 - Parser mengikuti prioritas operasi matematika, termasuk tanda negatif dan pangkat, serta menangani pembagian dengan nol tanpa menebak hasil.
 - Pengujian otomatis JUnit mencakup operasi dasar, prioritas operasi, tanda kurung, pangkat, persentase, konversi satuan lintas kategori, penolakan satuan yang tidak sejenis, pembagian dengan nol, dan pertanyaan non-matematika. GitHub Actions menjalankan `testDebugUnitTest` sebelum membuat APK Debug.
-- Contoh: "berapa 125 tambah 75", "hitung (20 dikali 5) dibagi 2", "berapa 2 pangkat 3", "berapa 10 persen dari 200", "berapa 2 km ke meter", dan "ubah 500 gram ke kilogram".
+- Contoh: "berapa 125 tambah 75", "hitung (20 dikali 5) dibagi 2", "berapa 2 pangkat 3", "berapa 10 persen dari 200", "berapa 2 km ke meter", dan "ubah 500 gram ke kilogram", "hitung diskon 10 persen dari 150000", "modal 100000 jual 125000", dan "100000 naik 10 persen".
 - Ini merupakan kemampuan script, bukan pengetahuan. Menambah operasi atau mengubah cara parser bekerja memerlukan perubahan kode dan build APK.

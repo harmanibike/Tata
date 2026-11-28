@@ -328,7 +328,7 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
                         put("correction", record.correction.trim().take(6000))
                         put("source", record.source.trim().take(1000))
                         put("status", "perlu_ditinjau")
-                        put("created_at", now)
+                        put("created_at", record.createdAt.takeIf { it > 0L } ?: now)
                         put("updated_at", now)
                     }
                     db.insertOrThrow("learning_records", null, values)

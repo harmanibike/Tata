@@ -6,6 +6,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.view.View
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -40,7 +41,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var knowledgeStore: KnowledgeStore
     private lateinit var logView: LinearLayout
     private lateinit var messageInput: EditText
-    private lateinit var listenButton: Button
+    private lateinit var listenButton: CircleSpectrumView
     private lateinit var conversationStatusView: TextView
     private var ttsReady = false
     private var recognizerReady = false
@@ -129,16 +130,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         conversationStatusView = stateLabel
         panel.addView(stateLabel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(6) })
 
-        val micButton = Button(this).apply {
-            text = "🎙"
-            textSize = 42f
-            isAllCaps = false
-            setTextColor(white)
-            background = android.graphics.drawable.GradientDrawable(
-                android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
-                intArrayOf(Color.rgb(109, 42, 238), Color.rgb(66, 38, 202), Color.rgb(188, 85, 255))
-            ).apply { shape = android.graphics.drawable.GradientDrawable.OVAL; setStroke(dp(5), Color.rgb(221, 195, 255)) }
-            elevation = dp(14).toFloat()
+        val micButton = CircleSpectrumView(this).apply {
+            contentDescription = "Spektrum suara Tata. Ketuk untuk mulai atau menghentikan obrolan."
+            elevation = dp(8).toFloat()
             setOnClickListener { toggleConversationMode() }
         }
         listenButton = micButton
@@ -156,7 +150,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setPadding(dp(2), dp(4), dp(2), dp(8))
         }
         scroll.addView(logView)
-        panel.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { minimumHeight = dp(90) })
+        scroll.minimumHeight = dp(90)
+        panel.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
         val controlRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -606,7 +601,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     updateListenButton("MENDENGARKAN...")
                 }
                 override fun onBeginningOfSpeech() = Unit
-                override fun onRmsChanged(rmsdB: Float) = Unit
+                override fun onRmsChanged(rmsdB: Float) {
+                    if (::listenButton.isInitialized) listenButton.setAmplitude(((rmsdB + 2f) / 12f).coerceIn(0f, 1f))
+                }
                 override fun onBufferReceived(buffer: ByteArray?) = Unit
                 override fun onEndOfSpeech() { updateListenButton("MEMPROSES...") }
                 override fun onError(error: Int) {
@@ -649,7 +646,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             if (activityDestroyed) return@runOnUiThread
             if (::conversationStatusView.isInitialized) conversationStatusView.text = label
             if (::listenButton.isInitialized) {
-                listenButton.text = if (label.contains("Hentikan", ignoreCase = true)) "■" else "🎙"
+                listenButton.setActive(label.contains("MENDENGARKAN", ignoreCase = true))
+                if (!label.contains("MENDENGARKAN", ignoreCase = true)) listenButton.setAmplitude(0f)
             }
         }
     }

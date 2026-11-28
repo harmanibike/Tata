@@ -101,7 +101,10 @@ def validate_register(path: Path) -> tuple[list[str], dict]:
                     blockers = []
                     if (row.get("training_permission") or "").strip().lower() != "yes":
                         blockers.append("training_permission bukan yes")
-                    if not is_inspectable_http_url((row.get("license_evidence_uri") or "").strip()):
+                    evidence_uri = (row.get("license_evidence_uri") or "").strip()
+                    if not evidence_uri:
+                        blockers.append("bukti lisensi/izin tidak ada")
+                    elif not is_inspectable_http_url(evidence_uri):
                         blockers.append("bukti lisensi/izin tidak valid")
                     if not is_meaningful(row.get("decision_notes")):
                         blockers.append("decision_notes wajib menjelaskan dasar persetujuan")

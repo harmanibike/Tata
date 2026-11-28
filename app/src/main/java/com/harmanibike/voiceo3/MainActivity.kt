@@ -479,7 +479,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 "sudah_diuji" -> "Sudah diuji"
                 else -> "Perlu ditinjau"
             }
-            "${record.question.take(58)}\\n$status"
+            "${record.question.take(58)}\n$status"
         }.toTypedArray()
         val dialog = AlertDialog.Builder(this)
             .setTitle("Learning Lab · $filterLabel (${records.size}/${allRecords.size})")

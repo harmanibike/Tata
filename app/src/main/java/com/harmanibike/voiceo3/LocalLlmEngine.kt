@@ -1,5 +1,7 @@
 package com.harmanibike.voiceo3
 
+import java.util.ArrayDeque
+
 /**
  * JNI facade for the optional on-device language model.
  * Calls must run on Dispatchers.IO. No prompt or model data is sent over a network.
@@ -7,6 +9,9 @@ package com.harmanibike.voiceo3
 class LocalLlmEngine {
     @Volatile
     private var loaded = false
+
+    private val historyLock = Any()
+    private val conversationHistory = ArrayDeque<Pair<String, String>>()
 
     @Volatile
     var activeModelPath: String? = null
@@ -28,7 +33,31 @@ class LocalLlmEngine {
 
     fun generate(prompt: String, maxTokens: Int = 160): String? {
         if (!isLoaded || prompt.isBlank()) return null
-        return nativeGenerate(prompt.take(1800), maxTokens.coerceIn(16, 256))
+        val question = prompt.trim().take(900)
+        val contextualPrompt = synchronized(historyLock) {
+            if (conversationHistory.isEmpty()) {
+                question
+            } else {
+                val previous = conversationHistory.joinToString("\\n") { (user, assistant) ->
+                    "Pengguna: $user\\nTata: $assistant"
+                }
+                "Konteks percakapan sementara:\\n$previous\\n\\nPertanyaan pengguna sekarang: $question"
+            }
+        }
+        val answer = nativeGenerate(contextualPrompt.take(1800), maxTokens.coerceIn(16, 256))
+        if (!answer.isNullOrBlank() &&
+            !answer.startsWith("Pertanyaan terlalu panjang") &&
+            !answer.startsWith("Model belum") &&
+            !answer.startsWith("Model gagal") &&
+            !answer.startsWith("Generasi dihentikan") &&
+            !answer.startsWith("Prompt tidak") &&
+            !answer.startsWith("Tokenisasi")) {
+            synchronized(historyLock) {
+                conversationHistory.addLast(question to answer.take(600))
+                while (conversationHistory.size > 3) conversationHistory.removeFirst()
+            }
+        }
+        return answer
     }
 
     fun cancel() {
@@ -39,6 +68,7 @@ class LocalLlmEngine {
         if (nativeLibraryAvailable) runCatching { nativeUnload() }
         loaded = false
         activeModelPath = null
+        synchronized(historyLock) { conversationHistory.clear() }
     }
 
     companion object {

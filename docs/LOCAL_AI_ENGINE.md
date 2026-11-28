@@ -29,14 +29,21 @@ Dokumentasi resmi llama.cpp menyediakan contoh Android dan jalur kompilasi NDK u
 - Penghapusan model memerlukan konfirmasi dan hanya menghapus file model yang dipilih, bukan pengetahuan atau riwayat chat.
 - Tidak ada pengiriman prompt ke jaringan. Koneksi internet hanya boleh dipakai jika pengguna secara terpisah memilih riset web atau mengunduh model.
 
+## Status implementasi
+- Selesai: pengelola file GGUF lokal melalui **Pengaturan > Model AI lokal**. File dipilih melalui pemilih dokumen Android, signature awal `GGUF` divalidasi, lalu file disalin ke penyimpanan privat aplikasi.
+- Selesai: daftar nama dan ukuran model, nama file aman, impor sementara lalu rename atomik, serta penghapusan file model dengan konfirmasi.
+- Selesai: model tidak otomatis dimuat, tidak dikirim ke server, tidak dimasukkan ke APK, dan penghapusan model tidak menghapus pengetahuan/riwayat.
+- Belum selesai: validasi metadata GGUF penuh, native library llama.cpp, bridge JNI, token streaming/cancel, dan inferensi generatif. Menu pengelola model secara eksplisit memberi tahu bahwa model belum dijalankan.
+
 ## Tahapan implementasi
-1. Audit kompatibilitas NDK/JNI dan tentukan versi llama.cpp yang dipatok (pinned), bukan mengambil branch bergerak saat setiap build.
-2. Buat native library arm64-v8a dan bridge JNI dengan lifecycle aman: init, load, generate token, cancel, unload, destroy.
-3. Buat pengelola model GGUF: pilih file, validasi header, simpan URI/path yang aman, tampilkan ukuran dan status.
-4. Buat UI pengaturan AI lokal: model belum dipasang / siap / sedang memuat / aktif / gagal; sediakan uji respons.
-5. Integrasikan ke CommandRouter sebagai jalur percakapan generatif setelah perintah khusus, pengetahuan lokal, dan kalkulasi deterministik.
-6. Uji model dan pemakaian RAM di Redmi 14C; optimalkan konteks, jumlah thread, dan panjang jawaban.
-7. Jalankan unit test, build debug, dan signed release sebelum menaikkan versionCode.
+1. [Selesai] Fondasi pengelola model GGUF privat dan uji signature file.
+2. Audit kompatibilitas NDK/JNI dan tentukan versi llama.cpp yang dipatok (pinned), bukan mengambil branch bergerak saat setiap build.
+3. Buat native library arm64-v8a dan bridge JNI dengan lifecycle aman: init, load, generate token, cancel, unload, destroy.
+4. Tambahkan pembaca metadata GGUF dan validasi arsitektur/tokenizer sebelum model diaktifkan.
+5. Buat UI status model: belum dipasang / siap / sedang memuat / aktif / gagal; sediakan uji respons.
+6. Integrasikan ke CommandRouter sebagai jalur percakapan generatif setelah perintah khusus, pengetahuan lokal, dan kalkulasi deterministik.
+7. Uji model dan pemakaian RAM di Redmi 14C; optimalkan konteks, jumlah thread, dan panjang jawaban.
+8. Jalankan unit test, build debug, dan signed release sebelum menaikkan versionCode.
 
 ## Kriteria selesai
 - Pertanyaan bebas berbahasa Indonesia menghasilkan jawaban dari model lokal tanpa API.

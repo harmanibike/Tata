@@ -11,6 +11,12 @@
 - Compile/target SDK: 34
 - JDK: 17
 
+## Mesin AI generatif lokal (prioritas pengembangan)
+- Rancangan integrasi mesin AI lokal berbasis llama.cpp, GGUF, Android NDK, dan JNI dicatat pada [docs/LOCAL_AI_ENGINE.md](docs/LOCAL_AI_ENGINE.md).
+- Mesin AI generatif belum aktif pada APK saat ini. Percakapan bebas yang tersedia masih memakai aturan lokal dan pengetahuan yang cocok; jangan menganggapnya sebagai LLM.
+- Model GGUF tidak dimasukkan ke APK. Model akan dipilih pengguna dan dijalankan di perangkat tanpa API AI eksternal.
+- Kompatibilitas `minSdk 26` harus dipertahankan; contoh Android upstream yang mensyaratkan API 33 tidak boleh dipakai mentah-mentah.
+
 ## Database dan arsitektur kemampuan
 - Database lokal SQLite: `tata_ai.db`.
 - Versi skema database saat ini: 2.

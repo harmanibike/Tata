@@ -103,4 +103,4 @@ Tidak ada klaim model siap digunakan sebelum melewati evaluasi dan uji perangkat
 6. Android: inferensi offline diuji pada perangkat fisik.
 
 ## Langkah implementasi berikutnya
-Mulai dari validator korpus JSONL dan laporan provenance, sebelum mengumpulkan atau melatih data. Dengan demikian, data yang tidak berizin atau mengandung informasi pribadi tidak masuk ke pipeline sejak awal.
+Validator korpus JSONL awal sudah dibuat di `tools/corpus/validate_corpus.py` dan diuji lewat workflow CI Python. Langkah selanjutnya adalah memperluas manifest provenance, membuat laporan sumber dan lisensi, lalu menyiapkan dataset contoh sintetis/non-pribadi untuk menguji pipeline tanpa memasukkan percakapan pengguna.

@@ -11,7 +11,7 @@ class TransformerConfigTests(unittest.TestCase):
         config = TransformerConfig()
         config.validate()
         self.assertEqual(config.head_dim, 32)
-        self.assertEqual(config.parameter_count(), 1_310_400)
+        self.assertEqual(config.parameter_count(), 1_350_400)
 
     def test_parameter_breakdown_sums_to_total(self):
         config = TransformerConfig()

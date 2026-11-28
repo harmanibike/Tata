@@ -44,3 +44,16 @@ Data percakapan pengguna, riwayat chat, dan Learning Lab tetap dikecualikan seca
 ## Status saat ini
 
 Repositori saat ini hanya menyediakan fixture sintetis delapan contoh untuk pengujian perangkat lunak. Semua contoh fixture masih berstatus tinjauan kualitas `pending`, belum terbagi ke train/validation/test, dan tidak boleh digunakan untuk melatih model. Jangan mengisi kekosongan dataset dengan mengubah fixture tersebut menjadi data produksi.
+
+
+## Register CSV dan pemeriksaan otomatis
+
+Isi file `docs/dataset_source_register.csv` (satu baris per sumber), lalu jalankan:
+
+```bash
+python tools/corpus/validate_source_register.py docs/dataset_source_register.csv
+```
+
+Validator memeriksa kolom wajib, ID sumber unik, URL bukti, tanggal akses, nilai izin, dan menolak keputusan `approved` jika `training_permission` bukan `yes` atau bukti/alasan persetujuan kosong. Register kosong sengaja dinyatakan belum siap.
+
+**Batas penting:** validator register ini berdiri sendiri dan belum otomatis mencocokkan setiap `source_id` pada JSONL dengan register saat tokenizer/trainer dijalankan. Sebelum training, reviewer tetap wajib melakukan pencocokan manual; jangan menganggap status `passed` dari validator JSONL sebagai bukti izin sumber. Integrasi pemeriksaan silang register ↔ korpus menjadi pekerjaan teknis berikutnya.

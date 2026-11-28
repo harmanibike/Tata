@@ -131,6 +131,19 @@ class DatasetAuditTests(unittest.TestCase):
         self.assertFalse(near["raw_text_included"])
         self.assertNotIn("merawat sepeda", json.dumps(report))
 
+    def test_near_duplicate_review_queue_contains_ids_not_raw_text(self):
+        records = [
+            make_record("bike-a", "src-one", "train", user_text="Bagaimana cara merawat sepeda gunung?", answer_text="Periksa rem dan rantai."),
+            make_record("bike-b", "src-two", "validation", user_text="Bagaimana cara merawat sepeda gunung", answer_text="Cek tekanan ban."),
+            make_record("other", "src-three", "test", user_text="Apa manfaat membaca buku?", answer_text="Menambah wawasan."),
+        ]
+        report = audit_dataset(self.write_records(records))
+        candidates = report["quality_profile"]["near_duplicate_prompt_analysis"]["review_candidates"]
+        self.assertTrue(candidates)
+        self.assertEqual({"bike-a", "bike-b"}, {candidates[0]["example_id_a"], candidates[0]["example_id_b"]})
+        self.assertTrue(candidates[0]["answers_differ"])
+        self.assertNotIn("merawat sepeda", json.dumps(candidates))
+
     def test_near_duplicate_analysis_excludes_unreviewed_examples(self):
         records = [
             make_record("one", "src-one", "train", user_text="Pertanyaan yang sama persis."),

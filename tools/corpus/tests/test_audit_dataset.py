@@ -117,6 +117,30 @@ class DatasetAuditTests(unittest.TestCase):
         self.assertEqual(1, profile["groups_of_identical_prompts_with_different_answers"])
         self.assertIn("not semantic", profile["similarity_method"])
 
+
+    def test_near_duplicate_prompt_detector_flags_typo_variants_without_text_leak(self):
+        records = [
+            make_record("one", "src-one", "train", user_text="Bagaimana cara merawat sepeda gunung?", answer_text="Periksa rantai dan rem."),
+            make_record("two", "src-two", "validation", user_text="Bagaimana cara merawat sepeda gunung", answer_text="Bersihkan dan lumasi rantai."),
+            make_record("three", "src-three", "test", user_text="Apa manfaat olahraga pagi?", answer_text="Menjaga kebugaran."),
+        ]
+        report = audit_dataset(self.write_records(records))
+        near = report["quality_profile"]["near_duplicate_prompt_analysis"]
+        self.assertGreaterEqual(near["near_duplicate_prompt_pairs"], 1)
+        self.assertGreaterEqual(near["near_duplicate_pairs_with_different_answers"], 1)
+        self.assertFalse(near["raw_text_included"])
+        self.assertNotIn("merawat sepeda", json.dumps(report))
+
+    def test_near_duplicate_analysis_excludes_unreviewed_examples(self):
+        records = [
+            make_record("one", "src-one", "train", user_text="Pertanyaan yang sama persis."),
+            make_record("two", "src-two", "validation", quality="pending", user_text="Pertanyaan yang sama persis."),
+            make_record("three", "src-three", "test", user_text="Pertanyaan lain."),
+        ]
+        report = audit_dataset(self.write_records(records))
+        near = report["quality_profile"]["near_duplicate_prompt_analysis"]
+        self.assertEqual(0, near["near_duplicate_prompt_pairs"])
+
     def test_source_concentration_and_task_balance_are_reported(self):
         records = [
             make_record("one", "src-one", "train", task="qa"),

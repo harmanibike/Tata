@@ -7,6 +7,10 @@ import json
 from train_tokenizer import CharacterBPE, load_training_texts
 
 
+def tokenizer_vocabulary_for_test(tokenizer):
+    return list(tokenizer.vocab)
+
+
 class CharacterBPETests(unittest.TestCase):
     def test_round_trip_indonesian_text(self):
         texts = [
@@ -40,6 +44,34 @@ class CharacterBPETests(unittest.TestCase):
     def test_rejects_too_small_vocabulary(self):
         with self.assertRaises(ValueError):
             CharacterBPE.train(["Indonesia"], vocab_size=4)
+
+    def test_merge_vocabulary_contains_only_unique_tokens(self):
+        tokenizer = CharacterBPE.train(
+            ["kata kata kata", "kata-kata kata"], vocab_size=64, min_frequency=1
+        )
+        self.assertEqual(len(tokenizer.vocab), len(tokenizer_vocabulary_for_test(tokenizer)))
+        payload = tokenizer.to_dict()
+        restored = CharacterBPE.from_dict(payload)
+        self.assertEqual(tokenizer.to_dict(), restored.to_dict())
+
+    def test_rejects_duplicate_alphabet_entries(self):
+        payload = CharacterBPE.train(["tata"], vocab_size=32).to_dict()
+        payload["alphabet"].append(payload["alphabet"][0])
+        with self.assertRaises(ValueError):
+            CharacterBPE.from_dict(payload)
+
+    def test_rejects_merge_using_unknown_symbol(self):
+        payload = CharacterBPE.train(["tata"], vocab_size=32).to_dict()
+        payload["merges"] = [["tidak-ada", "t"]]
+        payload["vocab_size"] = len(set(payload["special_tokens"] + payload["alphabet"])) + 1
+        with self.assertRaises(ValueError):
+            CharacterBPE.from_dict(payload)
+
+    def test_rejects_incorrect_declared_vocabulary_size(self):
+        payload = CharacterBPE.train(["tata"], vocab_size=32).to_dict()
+        payload["vocab_size"] += 1
+        with self.assertRaises(ValueError):
+            CharacterBPE.from_dict(payload)
 
     def test_training_loader_excludes_unreviewed_and_held_out_records(self):
         with tempfile.TemporaryDirectory() as directory:

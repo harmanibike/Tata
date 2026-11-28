@@ -268,7 +268,9 @@ def main() -> int:
             logits.reshape(-1, config.vocab_size), targets.reshape(-1)
         )
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        if not math.isfinite(float(gradient_norm)):
+            raise RuntimeError(f"Gradient norm tidak finite pada step {step}; training dihentikan")
         optimizer.step()
 
         should_evaluate = step % args.eval_interval == 0 or step == start_step + args.steps

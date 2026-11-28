@@ -64,7 +64,7 @@ def load_test_sequences(corpus_path: Path, tokenizer_path: Path):
                 content = message.get("content")
                 if not isinstance(content, str) or not content.strip():
                     raise ValueError(f"Content kosong pada baris {line_number}")
-                for token in tokenizer.encode(message["role"] + ": " + content):
+                for token in tokenizer.encode(message["role"] + ": " + content + "\n"):
                     ids.append(token_to_id.get(token, unknown_id))
             ids.append(token_to_id["<eos>"])
             if len(ids) > 1:

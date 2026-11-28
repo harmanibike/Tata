@@ -48,6 +48,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var connectionStatusView: TextView
     private lateinit var connectivityManager: ConnectivityManager
     private var networkCallbackRegistered = false
+    private var activityDestroyed = false
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) { refreshConnectionStatus() }
         override fun onLost(network: Network) { refreshConnectionStatus() }
@@ -551,53 +552,68 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun setupSpeechRecognizer() {
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            appendLog("Sistem", "Layanan pengenalan suara tidak tersedia di perangkat.")
-            listenButton.isEnabled = false
-            return
-        }
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-        recognizerReady = true
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                listenButton.text = "MENDENGARKAN..."
+        try {
+            if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+                appendLog("Sistem", "Layanan pengenalan suara tidak tersedia di perangkat.")
+                listenButton.isEnabled = false
+                return
             }
-            override fun onBeginningOfSpeech() = Unit
-            override fun onRmsChanged(rmsdB: Float) = Unit
-            override fun onBufferReceived(buffer: ByteArray?) = Unit
-            override fun onEndOfSpeech() { listenButton.text = "MEMPROSES..." }
-            override fun onError(error: Int) {
-                listenButton.text = if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis"
-                val message = when (error) {
-                    SpeechRecognizer.ERROR_NO_MATCH -> "Ucapan tidak dikenali. Coba bicara lebih jelas."
-                    SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
-                        "Pengenalan suara gagal. Pastikan paket bahasa Indonesia offline sudah diunduh."
-                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Izin mikrofon belum diberikan."
-                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Pengenal suara sedang sibuk. Coba lagi."
-                    else -> "Terjadi kendala pengenalan suara (kode $error)."
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+            speechRecognizer.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    updateListenButton("MENDENGARKAN...")
                 }
-                if (conversationModeActive) {
-                    conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 900)
-                } else appendLog("Sistem", message)
-            }
-            override fun onResults(results: Bundle?) {
-                listenButton.text = if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis"
-                val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    ?.firstOrNull().orEmpty()
-                if (spoken.isNotBlank()) processCommand(spoken)
-            }
-            override fun onPartialResults(partialResults: Bundle?) = Unit
-            override fun onEvent(eventType: Int, params: Bundle?) = Unit
-        })
+                override fun onBeginningOfSpeech() = Unit
+                override fun onRmsChanged(rmsdB: Float) = Unit
+                override fun onBufferReceived(buffer: ByteArray?) = Unit
+                override fun onEndOfSpeech() { updateListenButton("MEMPROSES...") }
+                override fun onError(error: Int) {
+                    updateListenButton(if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis")
+                    val message = when (error) {
+                        SpeechRecognizer.ERROR_NO_MATCH -> "Ucapan tidak dikenali. Coba bicara lebih jelas."
+                        SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
+                            "Pengenalan suara gagal. Periksa koneksi atau unduh paket bahasa Indonesia offline."
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Izin mikrofon belum diberikan."
+                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Pengenal suara sedang sibuk. Coba lagi."
+                        else -> "Terjadi kendala pengenalan suara (kode $error)."
+                    }
+                    if (conversationModeActive && !activityDestroyed) {
+                        conversationHandler.postDelayed({ if (conversationModeActive && !activityDestroyed) startListening() }, 1200)
+                    } else if (!activityDestroyed) appendLog("Sistem", message)
+                }
+                override fun onResults(results: Bundle?) {
+                    updateListenButton(if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis")
+                    val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        ?.firstOrNull().orEmpty()
+                    if (spoken.isNotBlank() && !activityDestroyed) processCommand(spoken)
+                    else if (conversationModeActive && !activityDestroyed) {
+                        conversationHandler.postDelayed({ if (conversationModeActive && !activityDestroyed) startListening() }, 500)
+                    }
+                }
+                override fun onPartialResults(partialResults: Bundle?) = Unit
+                override fun onEvent(eventType: Int, params: Bundle?) = Unit
+            })
+            recognizerReady = true
+        } catch (error: Exception) {
+            recognizerReady = false
+            updateListenButton("Mikrofon tidak tersedia")
+            appendLog("Sistem", "Gagal menyiapkan pengenal suara: ${error.localizedMessage ?: "kesalahan perangkat"}")
+        }
+    }
+
+    private fun updateListenButton(label: String) {
+        if (!activityDestroyed && ::listenButton.isInitialized) {
+            runOnUiThread { if (!activityDestroyed && ::listenButton.isInitialized) listenButton.text = label }
+        }
     }
 
     private fun toggleConversationMode() {
         if (conversationModeActive) {
             conversationModeActive = false
             conversationHandler.removeCallbacksAndMessages(null)
-            if (recognizerReady) speechRecognizer.cancel()
+            if (recognizerReady) runCatching { speechRecognizer.cancel() }
             if (::textToSpeech.isInitialized) textToSpeech.stop()
-            listenButton.text = "▶  Mulai ngobrol otomatis"
+            updateListenButton("▶  Mulai ngobrol otomatis")
             appendLog("Tata", "Mode ngobrol dihentikan.")
             return
         }
@@ -610,12 +626,13 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             return
         }
         conversationModeActive = true
-        listenButton.text = "■  Hentikan ngobrol"
+        updateListenButton("■  Hentikan ngobrol")
         appendLog("Tata", "Mode ngobrol aktif. Silakan bicara. Katakan Tata berhenti untuk mengakhiri.")
         speakAssistant("Halo, saya Tata. Saya siap ngobrol. Silakan bicara.")
     }
 
-    private fun startListening() {        if (!recognizerReady) return
+    private fun startListening() {
+        if (!recognizerReady || activityDestroyed) return
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestAudioPermission()
             return
@@ -630,7 +647,12 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
         }
         runCatching { speechRecognizer.startListening(intent) }
-            .onFailure { appendLog("Sistem", "Tidak dapat memulai mikrofon: ${it.localizedMessage}") }
+            .onFailure {
+                appendLog("Sistem", "Tidak dapat memulai mikrofon: ${it.localizedMessage ?: "layanan suara bermasalah"}.")
+                if (conversationModeActive) {
+                    conversationHandler.postDelayed({ if (conversationModeActive && !activityDestroyed) startListening() }, 1500)
+                }
+            }
     }
 
     private fun speakAssistant(message: String) {
@@ -651,9 +673,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             appendLog("Anda", spoken)
             conversationModeActive = false
             conversationHandler.removeCallbacksAndMessages(null)
-            if (recognizerReady) speechRecognizer.cancel()
+            if (recognizerReady) runCatching { speechRecognizer.cancel() }
             speakAssistant("Baik, mode ngobrol saya hentikan. Sampai nanti.")
-            listenButton.text = "▶  Mulai ngobrol otomatis"
+            updateListenButton("▶  Mulai ngobrol otomatis")
             return
         }
         appendLog("Anda", spoken)
@@ -903,9 +925,13 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     override fun onDestroy() {
+        activityDestroyed = true
+        conversationModeActive = false
+        conversationHandler.removeCallbacksAndMessages(null)
         if (recognizerReady) {
-            speechRecognizer.cancel()
-            speechRecognizer.destroy()
+            runCatching { speechRecognizer.cancel() }
+            runCatching { speechRecognizer.destroy() }
+            recognizerReady = false
         }
         if (::textToSpeech.isInitialized) {
             textToSpeech.stop()

@@ -101,3 +101,7 @@ Generator berbasis kode **bukan neural network dan belum setara ChatGPT**. Ia me
 - `KnowledgeMatcher` memberi peringkat berdasarkan kecocokan kata yang konservatif, mengabaikan kata umum, dan menolak kecocokan lemah. `KnowledgeStore.search()` hanya mengambil pengetahuan aktif yang sudah disetujui/diterapkan; catatan Learning Lab yang masih menunggu atau ditolak tidak ikut dijadikan jawaban.
 - Pencarian lokal dapat mengembalikan beberapa entri relevan untuk pengembangan sintesis berikutnya. Pada tahap ini jawaban pengetahuan yang cocok tetap diambil dari entri aktif, bukan dibuat dengan menambahkan fakta yang tidak ada.
 - Unit test mencakup variasi kalimat, tindak lanjut, pencocokan pengetahuan yang kuat, serta penolakan tabrakan kata umum.
+### Penggabungan jawaban berbasis pengetahuan yang disetujui
+- `KnowledgeAnswerComposer` menggabungkan maksimal tiga entri aktif yang relevan dan berbeda, dengan tetap menampilkan pertanyaan sumber serta jawaban asli.
+- Jika hanya satu entri cocok, Tata mengembalikan jawaban aslinya tanpa menambahkan klaim. Jika tidak ada bukti yang cukup, generator tidak boleh mengarang jawaban faktual.
+- Router mengambil hasil melalui `KnowledgeStore.searchRelevant`; tabel Learning Lab yang masih menunggu persetujuan atau ditolak tidak menjadi sumber jawaban.

@@ -18,11 +18,9 @@ jobs:
       - name: Checkout Tata
         uses: actions/checkout@v4
 
-      - name: Install Android SDK and NDK
-        uses: android-actions/setup-android@v3
-
       - name: Install pinned NDK and CMake
         run: |
+          yes | sdkmanager --licenses >/dev/null
           sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
           echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
 

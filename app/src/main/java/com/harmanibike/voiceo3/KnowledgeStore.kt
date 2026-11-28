@@ -13,6 +13,8 @@ data class KnowledgeEntry(
     val answer: String
 )
 
+data class KnowledgeRevision(val id: Long, val knowledgeId: Long, val question: String, val keywords: String, val answer: String, val revisionType: String, val createdAt: Long)
+
 data class NewsSource(
     val id: Long,
     val name: String,
@@ -82,12 +84,20 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
         )
         createDynamicCapabilityTables(db)
         createLearningTable(db)
+        createKnowledgeRevisionTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // Migrasi bersifat aditif: seluruh pengetahuan dan riwayat lama tetap dipertahankan.
         if (oldVersion < 2) createDynamicCapabilityTables(db)
         if (oldVersion < 3) createLearningTable(db)
+        if (oldVersion < 4) createKnowledgeRevisionTable(db)
+    }
+
+    private fun createKnowledgeRevisionTable(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS knowledge_revisions (id INTEGER PRIMARY KEY AUTOINCREMENT, knowledge_id INTEGER NOT NULL, question TEXT NOT NULL, keywords TEXT NOT NULL DEFAULT '', answer TEXT NOT NULL, revision_type TEXT NOT NULL, created_at INTEGER NOT NULL)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_knowledge_revisions_created ON knowledge_revisions(created_at DESC)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_knowledge_revisions_item ON knowledge_revisions(knowledge_id, created_at DESC)")
     }
 
     private fun createLearningTable(db: SQLiteDatabase) {
@@ -566,6 +576,6 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
 
     companion object {
         private const val DATABASE_NAME = "tata_ai.db"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
     }
 }

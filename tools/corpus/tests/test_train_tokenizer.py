@@ -4,11 +4,7 @@ from pathlib import Path
 
 import json
 
-from train_tokenizer import CharacterBPE, load_training_texts
-
-
-def tokenizer_vocabulary_for_test(tokenizer):
-    return list(tokenizer.vocab)
+from train_tokenizer import CharacterBPE, SPECIAL_TOKENS, load_training_texts
 
 
 class CharacterBPETests(unittest.TestCase):
@@ -49,7 +45,10 @@ class CharacterBPETests(unittest.TestCase):
         tokenizer = CharacterBPE.train(
             ["kata kata kata", "kata-kata kata"], vocab_size=64, min_frequency=1
         )
-        self.assertEqual(len(tokenizer.vocab), len(tokenizer_vocabulary_for_test(tokenizer)))
+        ordered_tokens = list(SPECIAL_TOKENS) + list(tokenizer.alphabet)
+        ordered_tokens.extend(left + right for left, right in tokenizer.merges)
+        self.assertEqual(len(tokenizer.vocab), len(ordered_tokens))
+        self.assertEqual(len(ordered_tokens), len(set(ordered_tokens)))
         payload = tokenizer.to_dict()
         restored = CharacterBPE.from_dict(payload)
         self.assertEqual(tokenizer.to_dict(), restored.to_dict())
@@ -70,6 +69,18 @@ class CharacterBPETests(unittest.TestCase):
     def test_rejects_incorrect_declared_vocabulary_size(self):
         payload = CharacterBPE.train(["tata"], vocab_size=32).to_dict()
         payload["vocab_size"] += 1
+        with self.assertRaises(ValueError):
+            CharacterBPE.from_dict(payload)
+
+    def test_rejects_two_merge_paths_with_same_token(self):
+        payload = {
+            "format": "tata-character-bpe",
+            "format_version": 1,
+            "special_tokens": SPECIAL_TOKENS,
+            "alphabet": ["a", "b", "c"],
+            "merges": [["a", "b"], ["ab", "c"], ["b", "c"], ["a", "bc"]],
+            "vocab_size": len(SPECIAL_TOKENS) + 3 + 4,
+        }
         with self.assertRaises(ValueError):
             CharacterBPE.from_dict(payload)
 

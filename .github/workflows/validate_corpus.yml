@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'tools/corpus/**'
+      - 'tools/model/**'
+      - 'tools/model/**'
       - '.github/workflows/validate_corpus.yml'
   pull_request:
     paths:
@@ -31,3 +33,5 @@ jobs:
       - name: Run corpus, split, and tokenizer unit tests
         working-directory: tools/corpus
         run: python -m unittest discover -s tests -v
+      - name: Run Transformer configuration unit tests
+        run: python -m unittest discover -s tools/model/tests -v

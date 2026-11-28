@@ -373,4 +373,41 @@ class LocalReasoningEngineTest {
         assertEquals("Tata AI.", KnowledgeMatcher.rank("Apa itu Tata AI?", entries).first().entry.answer)
         assertEquals("Fotosintesis.", KnowledgeMatcher.rank("fotosintesis", entries).first().entry.answer)
     }
+
+    @Test
+    fun knowledgeAnswerComposerReturnsSingleApprovedAnswerWithoutAddingClaims() {
+        val entries = listOf(
+            KnowledgeEntry("Apa itu AI?", listOf("kecerdasan buatan"), "AI adalah kecerdasan buatan.")
+        )
+        assertEquals(
+            "AI adalah kecerdasan buatan.",
+            KnowledgeAnswerComposer.compose("Jelaskan AI", entries)
+        )
+    }
+
+    @Test
+    fun knowledgeAnswerComposerCombinesDistinctApprovedEntriesWithTheirQuestions() {
+        val entries = listOf(
+            KnowledgeEntry("Apa itu AI?", emptyList(), "AI adalah kecerdasan buatan."),
+            KnowledgeEntry("Apa itu machine learning?", emptyList(), "Machine learning adalah bagian dari AI.")
+        )
+        val answer = KnowledgeAnswerComposer.compose("Jelaskan AI dan machine learning", entries)
+        assertNotNull(answer)
+        assertTrue(answer!!.contains("Apa itu AI?"))
+        assertTrue(answer.contains("AI adalah kecerdasan buatan."))
+        assertTrue(answer.contains("Apa itu machine learning?"))
+        assertTrue(answer.contains("Machine learning adalah bagian dari AI."))
+    }
+
+    @Test
+    fun knowledgeAnswerComposerRejectsEmptyOrUnusableEvidence() {
+        assertEquals(null, KnowledgeAnswerComposer.compose("pertanyaan", emptyList()))
+        assertEquals(
+            null,
+            KnowledgeAnswerComposer.compose(
+                "pertanyaan",
+                listOf(KnowledgeEntry("", emptyList(), ""))
+            )
+        )
+    }
 }

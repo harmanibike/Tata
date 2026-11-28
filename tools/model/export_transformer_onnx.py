@@ -11,9 +11,13 @@ import hashlib
 import json
 import os
 import tempfile
+import sys
 from pathlib import Path
 
-from transformer_config import TransformerConfig, report_config
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "corpus"))
+
+from transformer_config import TransformerConfig
 from train_transformer import build_model_class
 from training_data import tokenizer_vocabulary
 from tools.corpus.train_tokenizer import CharacterBPE

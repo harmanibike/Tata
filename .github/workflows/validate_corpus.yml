@@ -33,7 +33,7 @@ jobs:
       - name: Run corpus, split, and tokenizer unit tests
         working-directory: tools/corpus
         run: python -m unittest discover -s tests -v
-      - name: Run Transformer configuration and training-data unit tests
+      - name: Run Transformer configuration, data, and evaluation unit tests
         run: python -m unittest discover -s tools/model/tests -v
-      - name: Check training scripts compile without loading ML dependencies
-        run: python -m py_compile tools/model/transformer_config.py tools/model/training_data.py tools/model/train_transformer.py
+      - name: Check model scripts compile without loading ML dependencies
+        run: python -m py_compile tools/model/transformer_config.py tools/model/training_data.py tools/model/train_transformer.py tools/model/evaluate_transformer.py

@@ -349,3 +349,6 @@ python tools/model/evaluate_transformer.py --checkpoint checkpoints/tata-v0.best
 ### Audit kesiapan dataset neural network
 
 Jalankan `python tools/corpus/audit_dataset.py path/korpus.jsonl` sebelum membagi data atau training. Laporan hanya memuat jumlah contoh/sumber, status tinjauan, lisensi, bahasa, task, dan distribusi split; isi percakapan tidak dicetak. Status `blocked` berarti ada gerbang dasar yang belum terpenuhi. Status `ready_for_pilot_review` hanya berarti struktur split dan sumber minimum tersedia, bukan jaminan data cukup atau model siap. Peringatan jumlah contoh/sumber tetap harus diperiksa manusia.
+
+
+Audit dataset juga dapat mengukur panjang karakter per contoh dan, bila tokenizer tersedia, distribusi token per contoh serta jumlah contoh yang melebihi context length. Contoh: `python tools/corpus/audit_dataset.py path/korpus.jsonl --tokenizer path/tokenizer.json --context-length 256`. Laporan hanya berisi statistik agregat; teks contoh tidak ditampilkan. Contoh yang lebih panjang dari context bukan otomatis dibuang, karena trainer menggunakan jendela konteks.

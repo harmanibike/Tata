@@ -757,15 +757,19 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             updateListenButton("▶  Mulai ngobrol otomatis")
             return
         }
-        appendLog("Anda", spoken)
         activityScope.launch {
             val answer = router.handle(spoken)
             if (answer == CommandRouter.CONFIRM_CLEAR_KNOWLEDGE) {
+                appendLog("Anda", spoken)
                 showClearKnowledgeConfirmation()
             } else if (answer.startsWith(CommandRouter.UNKNOWN_QUERY_PREFIX)) {
+                // Unknown questions and the research prompt remain visible only in this session.
+                // They are deliberately excluded from both knowledge and chat-history storage.
+                appendLog("Anda", spoken, persist = false)
                 val question = answer.removePrefix(CommandRouter.UNKNOWN_QUERY_PREFIX).trim()
                 showResearchOptions(question)
             } else {
+                appendLog("Anda", spoken)
                 appendLog("Tata AI", answer)
                 speakAssistant(answer)
             }
@@ -774,7 +778,11 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun showResearchOptions(question: String) {
         val message = "Saya belum menemukan jawaban yang cukup meyakinkan. Mau saya bantu mencarinya?\n\nPertanyaan ini tidak akan disimpan sebagai pengetahuan Tata."
-        appendLog("Tata", "Saya belum tahu jawabannya. Saya bisa membantu mencarinya di internet atau membuka AI lain. Pertanyaan ini tidak disimpan sebagai pengetahuan.")
+        appendLog(
+            "Tata",
+            "Saya belum tahu jawabannya. Saya bisa membantu mencarinya di internet atau membuka AI lain. Pertanyaan ini hanya tampil sementara dan tidak disimpan ke database.",
+            persist = false
+        )
         speakAssistant("Saya belum tahu jawabannya. Mau kita cari di internet atau bertanya ke AI lain?")
         AlertDialog.Builder(this)
             .setTitle("Cari tahu bersama")
@@ -981,7 +989,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             .show()
     }
 
-    private fun appendLog(speaker: String, message: String) {
+    private fun appendLog(speaker: String, message: String, persist: Boolean = true) {
         if (!::logView.isInitialized) return
         val isUser = speaker == "Anda"
         val bubble = TextView(this).apply {
@@ -1001,7 +1009,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             (resources.displayMetrics.widthPixels * 0.78f).toInt(), -2
         ))
         logView.addView(row)
-        if (::knowledgeStore.isInitialized && knowledgeStore.getSetting(KEY_CHAT_STORAGE_CONSENT) == "allow") {
+        if (persist && ::knowledgeStore.isInitialized && knowledgeStore.getSetting(KEY_CHAT_STORAGE_CONSENT) == "allow") {
             knowledgeStore.saveChat(speaker, message)
         }
     }

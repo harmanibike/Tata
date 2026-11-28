@@ -23,6 +23,9 @@ def create_manifest(corpus_path: Path) -> dict:
         for line in raw.decode("utf-8").splitlines()
         if line.strip()
     ]
+    if any(record.get("privacy_review") != "passed" or record.get("quality_review") != "passed" for record in records):
+        raise ValueError("Manifest hanya boleh dibuat jika seluruh contoh lolos tinjauan privasi dan kualitas.")
+
     source_map: dict[str, dict] = {}
     split_counts: Counter[str] = Counter()
 

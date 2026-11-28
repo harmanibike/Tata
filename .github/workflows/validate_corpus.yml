@@ -1,0 +1,30 @@
+name: Validate Tata AI Training Corpus
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/corpus/**'
+      - '.github/workflows/validate_corpus.yml'
+  pull_request:
+    paths:
+      - 'tools/corpus/**'
+      - '.github/workflows/validate_corpus.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-corpus-tool:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run validator unit tests
+        working-directory: tools/corpus
+        run: python -m unittest discover -s tests -v

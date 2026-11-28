@@ -94,7 +94,7 @@ Implementasi awal di APK:
 - Menu **Pengaturan > Learning Lab** menampilkan catatan koreksi yang disimpan di SQLite lokal.
 - Pengguna menambahkan konteks, koreksi, dan sumber opsional melalui formulir.
 - Menekan **Simpan lokal** diikuti konfirmasi eksplisit menjadi satu-satunya jalur membuat catatan pembelajaran.
-- Status catatan dapat diubah menjadi perlu ditinjau, diterima, ditolak, atau sudah diuji.
+- Status catatan dapat diubah menjadi perlu ditinjau, diterima, ditolak, diterapkan ke pengetahuan aktif, atau sudah diuji.
 - Catatan yang diterima baru dapat dimasukkan ke pengetahuan aktif melalui tindakan terpisah dan konfirmasi.
 - Catatan dapat dihapus tanpa menghapus pengetahuan aktif.
 - Migrasi database versi 2 ke 3 bersifat aditif dan membuat tabel learning_records tanpa menghapus data lama.
@@ -146,3 +146,12 @@ Mulai dari **audit Tahap A dan validasi implementasi awal Tahap B**. Jangan meng
 - Penggabungan memerlukan pratinjau dan konfirmasi. Data lama tidak dihapus dan tidak ada data yang otomatis menjadi pengetahuan aktif.
 - Pendeteksian konflik saat ini memakai pertanyaan yang sama setelah normalisasi teks; belum mendeteksi pertanyaan parafrasa/semakna secara semantik.
 - Pengujian unit mencakup duplikat identik, konflik koreksi, serta perlindungan agar data lama tidak berubah. Uji database Android dan uji alur pemilih file di perangkat masih diperlukan.
+
+
+### Pengamanan saat menerapkan koreksi ke pengetahuan aktif
+
+- Tata memeriksa apakah pertanyaan yang sama sudah ada di pengetahuan aktif.
+- Jika pertanyaan dan jawaban identik, catatan ditandai **Diterapkan** tanpa membuat salinan baru.
+- Jika pertanyaannya sama tetapi jawabannya berbeda, Tata menolak penimpaan otomatis dan meminta pengguna menyelesaikan konflik dari pengelola pengetahuan.
+- Jika belum ada pertanyaan yang sama, pengguna harus mengonfirmasi penambahan. Status menjadi **Diterapkan**, bukan otomatis **Sudah diuji**.
+- Pengguna dapat menandai sudah diuji setelah mencoba jawaban. Mengedit catatan yang sudah diterapkan/diuji mengembalikannya ke **Perlu ditinjau**, karena koreksi terbaru belum tentu sama dengan pengetahuan aktif.

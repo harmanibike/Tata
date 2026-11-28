@@ -1,9 +1,11 @@
+import random
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from train_transformer import best_checkpoint_path, early_stop_reached, load_resume_checkpoint
+from train_transformer import best_checkpoint_path, early_stop_reached, load_resume_checkpoint, atomic_save
 from unittest.mock import Mock
 
 
@@ -61,6 +63,26 @@ class SafeCheckpointLoadingTests(unittest.TestCase):
         torch.load.return_value = checkpoint
         with self.assertRaisesRegex(ValueError, "tidak lengkap"):
             load_resume_checkpoint(torch, Path("bad.pt"), "cpu")
+
+
+    def test_real_checkpoint_round_trip_with_rng_state_is_weights_only_safe(self):
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("PyTorch tidak tersedia pada environment ini")
+        payload = self.valid_checkpoint()
+        payload["model"] = {"weight": torch.tensor([1.0, 2.0])}
+        payload["optimizer"] = {"state": {}, "param_groups": []}
+        payload["python_rng_state"] = random.Random(7).getstate()
+        payload["torch_rng_state"] = torch.get_rng_state()
+        payload["cuda_rng_state"] = None
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "resume.pt"
+            atomic_save(torch, payload, path)
+            loaded = load_resume_checkpoint(torch, path, "cpu")
+        self.assertEqual(loaded["step"], 12)
+        self.assertTrue(torch.equal(loaded["model"]["weight"], payload["model"]["weight"]))
+        self.assertEqual(loaded["python_rng_state"], payload["python_rng_state"])
 
     def test_does_not_fall_back_when_weights_only_is_unsupported(self):
         torch = Mock()

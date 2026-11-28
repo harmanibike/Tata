@@ -14,46 +14,55 @@ class TataGenerativeEngine {
     private var lastIntent: String? = null
     private var lastSubject: String? = null
 
+    private val intentClassifier = TataIntentClassifier()
+
     fun respond(rawText: String): String? {
-        val text = normalize(rawText)
-        if (text.isBlank()) return null
+        val intent = intentClassifier.classify(rawText)
+        if (intent == TataIntent.FOLLOW_UP) return composeFollowUp()
 
-        if (isFollowUp(text)) return composeFollowUp()
-
-        val result = when {
-            isComparisonRequest(text) -> {
-                lastIntent = "comparison"
-                lastSubject = extractSubject(rawText, listOf("bandingkan", "apa perbedaan", "bedanya", "mana lebih baik"))
-                composeComparison(rawText)
-            }
-            isPlanningRequest(text) -> {
+        return when (intent) {
+            TataIntent.PLAN -> {
                 lastIntent = "plan"
                 lastSubject = extractSubject(rawText, listOf(
                     "tolong buatkan rencana untuk", "buatkan rencana untuk", "buat rencana untuk",
-                    "susun rencana untuk", "bagaimana cara memulai", "bagaimana memulai",
-                    "saya ingin belajar", "aku ingin belajar", "saya mau belajar", "aku mau belajar",
+                    "susun rencana untuk", "bantu saya merencanakan", "bantu aku merencanakan",
+                    "susun langkah", "buatkan tahapan", "bagaimana cara memulai",
+                    "bagaimana memulai", "mulai dari mana", "saya ingin belajar",
+                    "aku ingin belajar", "saya mau belajar", "aku mau belajar",
                     "saya ingin membuat", "aku ingin membuat", "saya ingin mengembangkan",
                     "aku ingin mengembangkan", "rencana saya adalah", "target saya adalah"
                 ))
                 composePlan(rawText)
             }
-            isDecisionRequest(text) -> {
+            TataIntent.COMPARE -> {
+                lastIntent = "comparison"
+                lastSubject = extractSubject(rawText, listOf(
+                    "bandingkan", "apa perbedaan", "apa beda", "beda antara",
+                    "bedanya", "perbandingan antara", "mana lebih baik",
+                    "lebih bagus mana", "apa kelebihan dan kekurangan"
+                ))
+                composeComparison(rawText)
+            }
+            TataIntent.DECISION -> {
                 lastIntent = "decision"
                 lastSubject = extractSubject(rawText, listOf(
-                    "menurutmu", "menurut kamu", "sebaiknya saya", "sebaiknya aku", "saya harus", "aku harus"
+                    "menurutmu", "menurut kamu", "sebaiknya saya", "sebaiknya aku",
+                    "saya harus", "aku harus", "pilih yang mana", "lebih baik saya pilih",
+                    "mana yang sebaiknya dipilih"
                 ))
                 composeDecision(rawText)
             }
-            isBrainstormRequest(text) -> {
+            TataIntent.BRAINSTORM -> {
                 lastIntent = "ideas"
-                lastSubject = extractSubject(rawText, listOf("beri ide untuk", "berikan ide untuk", "carikan ide untuk", "ide untuk"))
+                lastSubject = extractSubject(rawText, listOf(
+                    "beri ide untuk", "berikan ide untuk", "carikan ide untuk",
+                    "ada ide untuk", "punya ide untuk", "ide untuk"
+                ))
                 composeIdeas(rawText)
             }
-            else -> null
+            TataIntent.FOLLOW_UP, TataIntent.UNKNOWN -> null
         }
-        return result
     }
-
     fun clearSession() {
         lastIntent = null
         lastSubject = null

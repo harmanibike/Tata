@@ -326,3 +326,12 @@ python tools/model/evaluate_transformer.py --checkpoint checkpoints/tata-v0.pt -
 
 - Rubrik evaluasi manual tersedia di [docs/MODEL_EVALUATION_RUBRIC.md](docs/MODEL_EVALUATION_RUBRIC.md), meliputi Bahasa Indonesia, relevansi, fakta, ketidakpastian, konsistensi, instruksi, keamanan, privasi, ketahanan prompt, dan repetisi. Ambang kelulusan harus ditentukan sebelum melihat hasil.
 
+
+
+## Evaluasi tokenizer Bahasa Indonesia
+
+- Tool `tools/corpus/evaluate_tokenizer.py` menguji tokenizer tersimpan pada probe tetap: imbuhan, kata ulang, angka rupiah, tanggal/jam, tanda baca, campuran Indonesia-Inggris, nama lokal, dan emoji.
+- Laporan mencatat hash tokenizer, jumlah token, rasio token per karakter, karakter yang menjadi `<unk>`, dan keberhasilan round-trip.
+- Probe evaluasi tidak pernah dimasukkan ke data training tokenizer.
+- Jalankan: `python tools/corpus/evaluate_tokenizer.py --tokenizer tata-tokenizer.json --output tokenizer-evaluation.json`.
+- Metrik ini hanya diagnosis tokenisasi; bukan ukuran kecerdasan, pemahaman, atau kebenaran model.

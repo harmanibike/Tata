@@ -59,6 +59,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private var lastSpeechText: String? = null
     // Temporary research text exists only in this Activity session; never persisted.
     private var temporaryResearchText: String? = null
+    // Context terakhir hanya dipakai untuk membuka formulir koreksi; tidak disimpan tersendiri.
+    private var lastUserQuestionForCorrection: String = ""
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) { refreshConnectionStatus() }
         override fun onLost(network: Network) { refreshConnectionStatus() }
@@ -503,19 +505,23 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
-    private fun showLearningRecordEditor() {
+    private fun showLearningRecordEditor(initialQuestion: String = "", previousAnswer: String = "") {
         val form = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(8), dp(20), dp(4)) }
         fun input(hintText: String, lines: Int): EditText = EditText(this).apply {
             hint = hintText; textSize = 15f; minLines = lines; maxLines = if (lines == 1) 2 else 5
             inputType = InputType.TYPE_CLASS_TEXT or (if (lines > 1) InputType.TYPE_TEXT_FLAG_MULTI_LINE else 0) or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             gravity = if (lines > 1) Gravity.TOP else Gravity.CENTER_VERTICAL
         }
-        val question = input("Pertanyaan atau konteks yang dijawab Tata", 2)
+        val question = input("Pertanyaan atau konteks yang dijawab Tata", 2).apply { setText(initialQuestion) }
         val correction = input("Koreksi atau jawaban yang lebih tepat", 4)
         val source = input("Sumber/referensi (opsional)", 1)
         form.addView(question); form.addView(correction); form.addView(source)
-        val dialog = AlertDialog.Builder(this).setTitle("Catat pembelajaran lokal")
-            .setMessage("Data hanya disimpan jika kamu menekan Simpan. Tidak dikirim dan tidak otomatis menjadi pengetahuan aktif.")
+        val explanation = buildString {
+            append("Data hanya disimpan jika kamu menekan Simpan. Tidak dikirim dan tidak otomatis menjadi pengetahuan aktif.")
+            if (previousAnswer.isNotBlank()) append("\n\nJawaban Tata sebelumnya:\n").append(previousAnswer.take(1800))
+        }
+        val dialog = AlertDialog.Builder(this).setTitle("Koreksi jawaban Tata")
+            .setMessage(explanation)
             .setView(form).setPositiveButton("Simpan lokal", null).setNegativeButton("Batal", null).create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
@@ -1490,7 +1496,23 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             gravity = if (isUser) Gravity.END else Gravity.START
             setPadding(dp(2), dp(4), dp(2), dp(4))
         }
-        row.addView(bubble, LinearLayout.LayoutParams(
+        val messageColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        messageColumn.addView(bubble, LinearLayout.LayoutParams(-1, -2))
+        if (isUser) lastUserQuestionForCorrection = message
+        if (speaker == "Tata AI" && lastUserQuestionForCorrection.isNotBlank()) {
+            val correctionButton = Button(this).apply {
+                text = "Koreksi jawaban Tata"
+                isAllCaps = false
+                textSize = 12f
+                setOnClickListener {
+                    showLearningRecordEditor(lastUserQuestionForCorrection, message)
+                }
+            }
+            messageColumn.addView(correctionButton, LinearLayout.LayoutParams(-1, dp(40)))
+        }
+        row.addView(messageColumn, LinearLayout.LayoutParams(
             (resources.displayMetrics.widthPixels * 0.78f).toInt(), -2
         ))
         logView.addView(row)

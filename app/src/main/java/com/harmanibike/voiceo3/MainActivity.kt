@@ -55,6 +55,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private var activityDestroyed = false
     private var selectedVoiceNetworkMode: Boolean? = null
     private var lastSpeechText: String? = null
+    // Temporary research text exists only in this Activity session; never persisted.
+    private var temporaryResearchText: String? = null
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) { refreshConnectionStatus() }
         override fun onLost(network: Network) { refreshConnectionStatus() }
@@ -272,13 +274,14 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         navItem("Riwayat", "◷", { showDataPrivacySettings() })
         navItem("Pengaturan", "⚙", {
             AlertDialog.Builder(this).setTitle("Pengaturan Tata")
-                .setItems(arrayOf("Suara Tata", "Pengetahuan", "Cadangan data", "Privasi", "Sumber berita")) { _, which ->
+                .setItems(arrayOf("Tentang Tata AI", "Suara Tata", "Pengetahuan", "Cadangan data", "Privasi", "Sumber berita")) { _, which ->
                     when (which) {
-                        0 -> showVoiceSettings()
-                        1 -> showKnowledgeManager()
-                        2 -> showKnowledgeBackupOptions()
-                        3 -> showDataPrivacySettings()
-                        4 -> showNewsSourcesManager()
+                        0 -> showAboutTata()
+                        1 -> showVoiceSettings()
+                        2 -> showKnowledgeManager()
+                        3 -> showKnowledgeBackupOptions()
+                        4 -> showDataPrivacySettings()
+                        5 -> showNewsSourcesManager()
                     }
                 }.setNegativeButton("Tutup", null).show()
         })
@@ -750,6 +753,13 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun processCommand(spoken: String) {
         val normalized = spoken.lowercase(Locale("id", "ID")).trim()
+        if (isIdentityQuestion(normalized)) {
+            appendLog("Anda", spoken)
+            val identity = buildIdentityDescription()
+            appendLog("Tata AI", identity)
+            speakAssistant(identity)
+            return
+        }
         if (conversationModeActive && listOf("tata berhenti", "berhenti tata", "akhiri obrolan", "hentikan ngobrol", "stop ngobrol").any { normalized.contains(it) }) {
             appendLog("Anda", spoken)
             conversationModeActive = false
@@ -847,6 +857,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun summarizeResearchTemporarily(question: String, sourceText: String) {
+        temporaryResearchText = sourceText
         val cleaned = sourceText.replace(Regex("\\s+"), " ").trim()
         val sentences = Regex("(?<=[.!?])\\s+")
             .split(cleaned)
@@ -865,8 +876,90 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             .setTitle("Ringkasan sementara")
             .setMessage("Pertanyaan: $question\n\n$summary\n\nCatatan: ini ringkasan awal berdasarkan bagian teks yang ditempel, bukan verifikasi fakta. Tidak disimpan ke database.")
             .setPositiveButton("Mengerti", null)
+            .setNeutralButton("Tanya isi teks") { _, _ -> showTemporaryFollowUpInput() }
             .show()
         speakAssistant("Berikut ringkasan awal dari teks yang Anda tempel. $summary. Perlu diingat, saya belum memverifikasi kebenaran sumbernya dan tidak menyimpan teks ini.")
+    }
+
+
+    private fun showTemporaryFollowUpInput() {
+        val source = temporaryResearchText
+        if (source.isNullOrBlank()) {
+            Toast.makeText(this, "Teks sementara sudah tidak tersedia. Tempel ulang jika ingin bertanya.", Toast.LENGTH_LONG).show()
+            return
+        }
+        val questionInput = EditText(this).apply {
+            hint = "Contoh: Apa penyebabnya? Siapa yang terlibat?"
+            textSize = 14f
+            minLines = 2
+            maxLines = 4
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Tanya berdasarkan teks sementara")
+            .setMessage("Tata mencari kalimat yang paling cocok dari teks yang tadi ditempel. Pemrosesan lokal dan tidak disimpan.")
+            .setView(questionInput)
+            .setPositiveButton("Cari jawaban", null)
+            .setNegativeButton("Batal", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val question = questionInput.text.toString().trim()
+                if (question.isBlank()) {
+                    questionInput.error = "Tulis pertanyaan terlebih dahulu"
+                    return@setOnClickListener
+                }
+                dialog.dismiss()
+                answerFromTemporaryText(question, source)
+            }
+        }
+        dialog.show()
+    }
+
+    private fun answerFromTemporaryText(question: String, sourceText: String) {
+        val stopWords = setOf("apa", "yang", "dan", "atau", "ini", "itu", "dari", "untuk", "dengan", "bagaimana", "mengapa", "kenapa", "jelaskan", "tolong", "tentang", "siapa", "kapan", "dimana", "adalah", "saya", "aku")
+        val keywords = Regex("[a-zA-Z0-9]{3,}").findAll(question.lowercase(Locale.ROOT))
+            .map { it.value }.filterNot { it in stopWords }.toSet()
+        val sentences = Regex("(?<=[.!?])\\s+")
+            .split(sourceText.replace(Regex("\\s+"), " ").trim())
+            .map { it.trim() }
+            .filter { it.length >= 20 }
+            .distinctBy { it.lowercase(Locale.ROOT) }
+        val ranked = sentences.map { sentence ->
+            val words = Regex("[a-zA-Z0-9]{3,}").findAll(sentence.lowercase(Locale.ROOT)).map { it.value }.toSet()
+            sentence to keywords.count { it in words }
+        }.filter { it.second > 0 }.sortedByDescending { it.second }.take(3)
+        val answer = if (ranked.isEmpty()) {
+            "Saya belum menemukan kalimat yang cocok. Coba gunakan kata yang memang muncul di teks tempelan."
+        } else ranked.joinToString("\n\n") { it.first }
+        val response = "$answer\n\nCatatan: ini pencarian kalimat berdasarkan kecocokan kata, bukan penalaran AI generatif atau verifikasi fakta. Teks dan pertanyaan ini hanya sementara, tidak disimpan ke database."
+        appendLog("Anda", question, persist = false)
+        appendLog("Tata AI", response, persist = false)
+        AlertDialog.Builder(this).setTitle("Jawaban dari teks tempelan").setMessage(response)
+            .setPositiveButton("Tutup", null).show()
+        speakAssistant(answer)
+    }
+
+    private fun isIdentityQuestion(command: String): Boolean =
+        listOf("siapa kamu", "siapa nama kamu", "siapa namamu", "nama kamu", "identitas kamu", "tentang dirimu", "informasi tentang dirimu", "versi berapa", "versi tata", "kamu versi apa")
+            .any { command.contains(it) }
+
+    private fun buildIdentityDescription(): String {
+        val packageInfo = packageManager.getPackageInfo(packageName, 0)
+        val versionName = packageInfo.versionName ?: "versi belum ditentukan"
+        val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) packageInfo.longVersionCode else @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
+        return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya dapat membantu perintah dasar, percakapan lokal berpola, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. Saya tidak memakai API AI eksternal; kemampuan percakapan bebas saya masih terbatas dan terus dikembangkan. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
+    }
+
+    private fun showAboutTata() {
+        val description = buildIdentityDescription()
+        AlertDialog.Builder(this)
+            .setTitle("Tentang Tata AI")
+            .setMessage(description)
+            .setPositiveButton("Mengerti", null)
+            .setNeutralButton("Bacakan") { _, _ -> speakAssistant(description) }
+            .show()
     }
 
     private fun openOtherAi(url: String, question: String, label: String) {

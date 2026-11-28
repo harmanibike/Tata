@@ -8,9 +8,13 @@ from pathlib import Path
 try:
     import torch
     import onnx
+    import onnxruntime as ort
+    import numpy as np
 except ImportError:
     torch = None
     onnx = None
+    ort = None
+    np = None
 
 from tools.corpus.train_tokenizer import CharacterBPE
 from tools.model.transformer_config import TransformerConfig
@@ -62,6 +66,25 @@ class TataOnnxExportTests(unittest.TestCase):
         self.assertEqual(manifest["provenance"]["initialization"], "random")
         self.assertFalse(manifest["provenance"]["pretrained_weights"])
         self.assertEqual(manifest["model"]["sha256"], result["sha256"])
+
+
+    @unittest.skipIf(ort is None or np is None, "ONNX Runtime is installed by the runtime workflow")
+    def test_onnx_runtime_matches_pytorch_for_dynamic_shapes(self):
+        output = self.root / "tata-parity.onnx"
+        export(self.checkpoint_path, self.tokenizer_path, output)
+        checkpoint = load_best_checkpoint(torch, self.checkpoint_path)
+        model = build_model_class(torch)(self.config)
+        model.load_state_dict(checkpoint["model"], strict=True)
+        model.eval()
+        session = ort.InferenceSession(str(output), providers=["CPUExecutionProvider"])
+
+        for shape in ((1, 4), (2, 5)):
+            input_ids = torch.randint(0, self.config.vocab_size, shape, dtype=torch.long)
+            with torch.no_grad():
+                expected = model(input_ids).cpu().numpy()
+            actual = session.run(["logits"], {"input_ids": input_ids.cpu().numpy()})[0]
+            self.assertEqual(actual.shape, expected.shape)
+            np.testing.assert_allclose(actual, expected, rtol=1e-3, atol=1e-4)
 
     def test_export_rejects_resume_checkpoint(self):
         payload = torch.load(self.checkpoint_path, map_location="cpu", weights_only=True)

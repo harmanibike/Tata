@@ -77,7 +77,7 @@ class CommandRouter(
                     networkHelper.getTodayNews()
                 } else {
                     offlineConversation.respond(rawCommand)
-                        ?: offlineConversation.unknownResponse()
+                        ?: (UNKNOWN_QUERY_PREFIX + rawCommand)
                 }
             }
         }
@@ -85,6 +85,7 @@ class CommandRouter(
 
     companion object {
         const val CONFIRM_CLEAR_KNOWLEDGE = "__TATA_CONFIRM_CLEAR_KNOWLEDGE__"
+        const val UNKNOWN_QUERY_PREFIX = "__TATA_UNKNOWN_QUERY__:"
     }
 
     private fun getBatteryStatus(): String {

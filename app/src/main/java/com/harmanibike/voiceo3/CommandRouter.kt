@@ -78,7 +78,8 @@ class CommandRouter(
                 result?.takeIf { it.isNotBlank() } ?: (UNKNOWN_QUERY_PREFIX + query)
             }
             else -> {
-                val localAnswer = knowledgeStore.search(command)
+                val relevantKnowledge = knowledgeStore.searchRelevant(rawCommand, 3)
+                val localAnswer = KnowledgeAnswerComposer.compose(rawCommand, relevantKnowledge)
                 if (localAnswer != null) localAnswer
                 else localReasoning.calculate(rawCommand)
                     ?: if (command.contains("berita") || command.contains("bacakan kabar") ||

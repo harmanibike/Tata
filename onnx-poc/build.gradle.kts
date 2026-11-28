@@ -24,4 +24,5 @@ android {
 dependencies {
     // Isolated candidate runtime. This module is not a dependency of :app.
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.32.0")
+    testImplementation("junit:junit:4.13.2")
 }

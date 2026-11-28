@@ -344,3 +344,8 @@ python tools/model/evaluate_transformer.py --checkpoint checkpoints/tata-v0.best
 - Trainer menerima `--context-length` (default 256). Eksperimen pilot boleh memakai konteks lebih pendek bila contoh train/validation belum cukup panjang; konfigurasi konteks disimpan di checkpoint dan harus sama saat resume.
 - Evaluasi validation mengambil jendela penuh dari seluruh contoh, lalu memilih sampel yang tersebar merata bila jumlah jendela melebihi batas evaluasi. Ini menghindari penilaian yang hanya berasal dari bagian awal korpus.
 - Contoh pilot: `python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --output checkpoints/tata-pilot.pt --context-length 64 --steps 1000`. Tetap wajib punya data train dan validation yang sudah lolos review.
+
+
+### Audit kesiapan dataset neural network
+
+Jalankan `python tools/corpus/audit_dataset.py path/korpus.jsonl` sebelum membagi data atau training. Laporan hanya memuat jumlah contoh/sumber, status tinjauan, lisensi, bahasa, task, dan distribusi split; isi percakapan tidak dicetak. Status `blocked` berarti ada gerbang dasar yang belum terpenuhi. Status `ready_for_pilot_review` hanya berarti struktur split dan sumber minimum tersedia, bukan jaminan data cukup atau model siap. Peringatan jumlah contoh/sumber tetap harus diperiksa manusia.

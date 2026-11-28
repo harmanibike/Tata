@@ -162,6 +162,18 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun learningTransferFlagsDifferentAnswersForSameNewQuestion() {
+        val incoming = listOf(
+            TransferLearningRecord("Apa itu energi?", "Kemampuan melakukan usaha."),
+            TransferLearningRecord("Apa itu energi?", "Sesuatu yang dapat menyebabkan perubahan.")
+        )
+        val preview = LearningLabTransfer.preview(incoming, emptyList())
+        assertEquals(1, preview.newRecords.size)
+        assertEquals(1, preview.conflictCount)
+        assertEquals(2, preview.importCount)
+    }
+
+    @Test
     fun learningTransferFingerprintIgnoresCaseAndWhitespaceButNotCorrection() {
         val first = LearningLabTransfer.fingerprint("Apa itu AI?", "Kecerdasan buatan.")
         val normalized = LearningLabTransfer.fingerprint("  APA   ITU ai? ", "Kecerdasan   buatan.")

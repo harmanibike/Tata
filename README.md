@@ -188,3 +188,12 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Saat koreksi diterapkan ke pengetahuan aktif, Tata mendeteksi pertanyaan yang sama terlebih dahulu. Jawaban berbeda tidak menimpa data lama; koreksi baru harus ditinjau. Status **Diterapkan** terpisah dari **Sudah diuji**.
 
 - Format pertukaran Learning Lab versi 2 menyertakan identitas pertanyaan, hash isi, waktu pembuatan asal, jumlah catatan, dan hash payload untuk pemeriksaan integritas tanpa ID akun/perangkat.
+
+
+### Pencarian web langsung (tanpa API AI)
+- Pertanyaan yang tidak terjawab oleh pengetahuan lokal, penalaran, atau percakapan offline akan mencoba pencarian web jika koneksi tervalidasi tersedia.
+- Tata mengambil hasil pencarian publik DuckDuckGo HTML, membaca maksimal tiga halaman HTTPS, membersihkan elemen halaman non-isi, lalu menampilkan cuplikan, isi yang berhasil dibaca, dan tautan sumber.
+- Implementasi menggunakan koneksi HTTPS langsung dan parser Jsoup; tidak memakai API AI, API key, server inference, atau sinkronisasi database.
+- Hasil web bukan jaminan kebenaran. Situs dapat memblokir pengambilan otomatis, mengubah struktur HTML, atau menyajikan informasi usang; pengguna perlu memeriksa sumber dan tanggalnya.
+- Jika pencarian gagal atau offline, Tata melanjutkan ke model AI lokal (jika aktif), lalu menawarkan pencarian eksternal secara manual.
+- Pencarian web mengonsumsi data internet dan belum melakukan penyimpanan otomatis ke pengetahuan Tata.

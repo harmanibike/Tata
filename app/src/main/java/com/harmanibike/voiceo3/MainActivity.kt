@@ -50,6 +50,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private var ttsReady = false
     private var recognizerReady = false
     private var conversationModeActive = false
+    // Mencegah mikrofon aktif saat suara Tata sedang diputar.
+    @Volatile private var assistantSpeaking = false
     private val conversationHandler = Handler(Looper.getMainLooper())
     private lateinit var connectionStatusView: TextView
     private lateinit var connectivityManager: ConnectivityManager
@@ -868,6 +870,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 override fun onBufferReceived(buffer: ByteArray?) = Unit
                 override fun onEndOfSpeech() { updateListenButton("MEMPROSES...") }
                 override fun onError(error: Int) {
+                    if (assistantSpeaking) return
                     updateListenButton(if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis")
                     val message = when (error) {
                         SpeechRecognizer.ERROR_NO_MATCH -> "Ucapan tidak dikenali. Coba bicara lebih jelas."
@@ -882,6 +885,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     } else if (!activityDestroyed) appendLog("Sistem", message)
                 }
                 override fun onResults(results: Bundle?) {
+                    if (assistantSpeaking) return
                     updateListenButton(if (conversationModeActive) "■  Hentikan ngobrol" else "▶  Mulai ngobrol otomatis")
                     val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                         ?.firstOrNull().orEmpty()
@@ -920,6 +924,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             conversationModeActive = false
             conversationHandler.removeCallbacksAndMessages(null)
             if (recognizerReady) runCatching { speechRecognizer.cancel() }
+            assistantSpeaking = false
             if (::textToSpeech.isInitialized) textToSpeech.stop()
             updateListenButton("▶  Mulai ngobrol otomatis")
             appendLog("Tata", "Mode ngobrol dihentikan.")
@@ -940,7 +945,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun startListening() {
-        if (!recognizerReady || activityDestroyed) return
+        if (!recognizerReady || activityDestroyed || assistantSpeaking) return
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestAudioPermission()
             return
@@ -965,16 +970,27 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun speakAssistant(message: String) {
-        if (isVoiceMuted) {
-            if (conversationModeActive) conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 250)
+        if (isVoiceMuted || !ttsReady) {
+            assistantSpeaking = false
+            if (conversationModeActive) conversationHandler.postDelayed({
+                if (conversationModeActive && !assistantSpeaking) startListening()
+            }, 500)
             return
         }
-        if (!ttsReady) {
-            if (conversationModeActive) conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 500)
-            return
-        }
+        // Hentikan sesi pengenalan sebelum TTS dimulai agar suara speaker tidak
+        // masuk kembali sebagai input mikrofon (echo/feedback loop).
+        assistantSpeaking = true
+        if (recognizerReady) runCatching { speechRecognizer.cancel() }
         lastSpeechText = message
-        textToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, "tata-conversation-" + System.nanoTime())
+        val result = textToSpeech.speak(
+            message, TextToSpeech.QUEUE_FLUSH, null, "tata-conversation-" + System.nanoTime()
+        )
+        if (result == TextToSpeech.ERROR) {
+            assistantSpeaking = false
+            if (conversationModeActive) conversationHandler.postDelayed({
+                if (conversationModeActive && !assistantSpeaking) startListening()
+            }, 700)
+        }
     }
 
     private fun processCommand(spoken: String) {
@@ -1648,6 +1664,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 restorePreferredVoice()
                 textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
+                        assistantSpeaking = true
                         conversationHandler.post {
                             if (!activityDestroyed && ::listenButton.isInitialized) {
                                 listenButton.setSpeaking(true)
@@ -1656,10 +1673,15 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                         }
                     }
                     override fun onDone(utteranceId: String?) {
+                        assistantSpeaking = false
                         conversationHandler.post {
                             if (::listenButton.isInitialized) listenButton.setSpeaking(false)
-                            if (conversationModeActive) startListening()
-                            else if (::conversationStatusView.isInitialized) conversationStatusView.text = "SIAP"
+                            if (conversationModeActive) {
+                                // Beri jeda singkat agar gema speaker hilang sebelum mikrofon dibuka.
+                                conversationHandler.postDelayed({
+                                    if (conversationModeActive && !assistantSpeaking && !activityDestroyed) startListening()
+                                }, 650)
+                            } else if (::conversationStatusView.isInitialized) conversationStatusView.text = "SIAP"
                         }
                     }
                     @Deprecated("Deprecated in Java")
@@ -1681,7 +1703,12 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                                     return@post
                                 }
                             }
-                            if (conversationModeActive && !activityDestroyed) startListening()
+                            assistantSpeaking = false
+                            if (conversationModeActive && !activityDestroyed) {
+                                conversationHandler.postDelayed({
+                                    if (conversationModeActive && !assistantSpeaking && !activityDestroyed) startListening()
+                                }, 650)
+                            }
                         }
                     }
                 })

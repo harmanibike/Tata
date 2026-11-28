@@ -41,6 +41,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var textToSpeech: TextToSpeech
     private lateinit var router: CommandRouter
     private lateinit var knowledgeStore: KnowledgeStore
+    private lateinit var localModelStore: LocalModelStore
     private lateinit var logView: LinearLayout
     private lateinit var messageInput: EditText
     private lateinit var listenButton: CircleSpectrumView
@@ -70,6 +71,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
 
         knowledgeStore = KnowledgeStore(this)
+        localModelStore = LocalModelStore(this)
         router = CommandRouter(this, knowledgeStore, NetworkHelper(this, knowledgeStore))
         connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         textToSpeech = TextToSpeech(this, this)
@@ -274,7 +276,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         navItem("Riwayat", "◷", { showDataPrivacySettings() })
         navItem("Pengaturan", "⚙", {
             AlertDialog.Builder(this).setTitle("Pengaturan Tata")
-                .setItems(arrayOf("Tentang Tata AI", "Suara Tata", "Pengetahuan", "Cadangan data", "Privasi", "Sumber berita")) { _, which ->
+                .setItems(arrayOf("Tentang Tata AI", "Suara Tata", "Pengetahuan", "Cadangan data", "Privasi", "Sumber berita", "Model AI lokal")) { _, which ->
                     when (which) {
                         0 -> showAboutTata()
                         1 -> showVoiceSettings()
@@ -282,6 +284,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                         3 -> showKnowledgeBackupOptions()
                         4 -> showDataPrivacySettings()
                         5 -> showNewsSourcesManager()
+                        6 -> showLocalModelsManager()
                     }
                 }.setNegativeButton("Tutup", null).show()
         })
@@ -595,6 +598,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             }.onFailure {
                 Toast.makeText(this, "Gagal mengekspor: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
             }
+            REQUEST_IMPORT_MODEL -> importLocalModel(uri)
             REQUEST_IMPORT_JSON -> {
                 if (knowledgeStore.getKnowledgeCount() > 0) {
                     AlertDialog.Builder(this)
@@ -810,6 +814,72 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             }
             .setNegativeButton("Tutup", null)
             .show()
+    }
+
+    private fun showLocalModelsManager() {
+        val models = localModelStore.listModels()
+        val labels = models.map { "${it.name} • ${formatModelSize(it.sizeBytes)}" }.toTypedArray()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Model AI lokal")
+            .setMessage(
+                "Impor file model GGUF ke penyimpanan privat Tata. File tidak dikirim ke internet dan tidak dimasukkan ke APK.\n\n" +
+                    if (models.isEmpty()) "Belum ada model yang diimpor." else "Model tersimpan: ${models.size}.\nPilih model untuk melihat opsi penghapusan.\n\nCatatan: mesin inferensi lokal belum diaktifkan; tahap ini baru menyiapkan pengelolaan file model."
+            )
+            .setItems(labels) { _, which ->
+                val selected = models[which]
+                AlertDialog.Builder(this)
+                    .setTitle(selected.name)
+                    .setMessage("Ukuran: ${formatModelSize(selected.sizeBytes)}\nLokasi: penyimpanan privat aplikasi.\n\nModel belum dijalankan oleh mesin AI.")
+                    .setNegativeButton("Tutup", null)
+                    .setPositiveButton("Hapus model") { _, _ ->
+                        AlertDialog.Builder(this)
+                            .setTitle("Hapus file model?")
+                            .setMessage("File ${selected.name} akan dihapus dari penyimpanan privat Tata. Pengetahuan dan riwayat percakapan tidak ikut dihapus.")
+                            .setPositiveButton("Ya, hapus") { _, _ ->
+                                runCatching { localModelStore.deleteModel(selected) }
+                                    .onSuccess {
+                                        Toast.makeText(this, if (it) "File model dihapus." else "File model tidak dapat dihapus.", Toast.LENGTH_LONG).show()
+                                    }
+                                    .onFailure {
+                                        Toast.makeText(this, "Gagal menghapus model: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+                                    }
+                            }
+                            .setNegativeButton("Batal", null)
+                            .show()
+                    }
+                    .show()
+            }
+            .setPositiveButton("Impor model GGUF") { _, _ ->
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/octet-stream"
+                }
+                startActivityForResult(intent, REQUEST_IMPORT_MODEL)
+            }
+            .setNegativeButton("Tutup", null)
+            .create()
+        dialog.show()
+    }
+
+    private fun formatModelSize(bytes: Long): String {
+        val mb = bytes / (1024.0 * 1024.0)
+        return if (mb >= 1024) String.format(Locale.US, "%.2f GB", mb / 1024.0)
+        else String.format(Locale.US, "%.0f MB", mb)
+    }
+
+    private fun importLocalModel(uri: Uri) {
+        activityScope.launch {
+            runCatching {
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    localModelStore.importFromUri(uri)
+                }
+            }.onSuccess { model ->
+                Toast.makeText(this@MainActivity, "Model ${model.name} berhasil disimpan (${formatModelSize(model.sizeBytes)}).", Toast.LENGTH_LONG).show()
+                showLocalModelsManager()
+            }.onFailure { error ->
+                Toast.makeText(this@MainActivity, "Gagal mengimpor model: ${error.localizedMessage ?: "file tidak valid"}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun showTemporaryResearchInput(question: String) {
@@ -1332,6 +1402,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         private const val REQUEST_AUDIO = 301
         private const val REQUEST_EXPORT_JSON = 302
         private const val REQUEST_IMPORT_JSON = 303
+        private const val REQUEST_IMPORT_MODEL = 304
         private const val KEY_CHAT_STORAGE_CONSENT = "chat_history_consent"
         private const val PREFS_VOICE = "tata_voice_preferences"
 private const val KEY_VOICE_NAME = "voice_name"

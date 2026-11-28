@@ -118,7 +118,7 @@ class CharacterBPETests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(
-                ["user: teks latih", "assistant: jawaban latih"],
+                ["user: teks latih\n", "assistant: jawaban latih\n"],
                 load_training_texts(path),
             )
 

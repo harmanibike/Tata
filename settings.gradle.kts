@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "TataAI"
-include(":app")
+include(":app", ":onnx-poc")

@@ -60,6 +60,10 @@ object LearningLabTransfer {
         val root = JSONObject(json)
         require(root.optString("format") == FORMAT) { "Ini bukan file Learning Lab Tata AI." }
         require(root.optInt("schemaVersion", -1) == SCHEMA_VERSION) { "Versi format file tidak didukung." }
+        val exportedAt = root.optLong("exportedAt", 0L)
+        require(exportedAt > 0L && exportedAt <= System.currentTimeMillis() + 86_400_000L) {
+            "Waktu ekspor file tidak valid."
+        }
         val array = root.optJSONArray("records") ?: throw IllegalArgumentException("Daftar catatan tidak ditemukan.")
         require(array.length() <= MAX_RECORDS) { "Jumlah catatan melebihi batas $MAX_RECORDS." }
         require(root.optInt("recordCount", -1) == array.length()) { "Jumlah catatan tidak cocok." }
@@ -85,7 +89,9 @@ object LearningLabTransfer {
             require(item.optString("contentHash") == fingerprint(question, correction)) {
                 "Sidik jari isi pada catatan ke-${index + 1} tidak cocok."
             }
-            require(createdAt > 0L) { "Waktu pembuatan catatan ke-${index + 1} tidak valid." }
+            require(createdAt > 0L && createdAt <= exportedAt + 86_400_000L) {
+                "Waktu pembuatan catatan ke-${index + 1} tidak valid."
+            }
             val record = TransferLearningRecord(question, correction, source, createdAt)
             require(seen.add(fingerprint(record))) {
                 "File berisi catatan duplikat pada urutan ke-${index + 1}."

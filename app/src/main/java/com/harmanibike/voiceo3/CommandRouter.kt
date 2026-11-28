@@ -94,10 +94,10 @@ class CommandRouter(
                             localLlmEngine.generate(rawCommand)
                         }?.takeIf { it.isNotBlank() }
                         if (localAnswer != null) localAnswer
-                        else {
-                            // Pertanyaan yang belum terjawab tetap lokal dan sementara.
-                            // Web hanya diakses melalui ResearchIntent yang eksplisit.
-                            UNKNOWN_QUERY_PREFIX + rawCommand
+                        else if (!localLlmEngine.isLoaded) {
+                            "Saya belum bisa menjawab pertanyaan terbuka ini karena model AI generatif lokal belum diaktifkan. Buka menu ☰ > Model AI lokal, impor model GGUF yang kompatibel, lalu pilih Aktifkan model. Pertanyaan dan percakapan tetap diproses di perangkat; saya tidak mengirimnya ke layanan AI lain."
+                        } else {
+                            "Model AI lokal sedang aktif, tetapi belum berhasil menyusun jawaban. Coba tanyakan dengan kalimat lebih sederhana atau periksa kecocokan file model."
                         }
                     }
                 }

@@ -133,6 +133,14 @@ def export(checkpoint_path: Path, tokenizer_path: Path, output_path: Path) -> di
     vocab, token_to_id = tokenizer_vocabulary(tokenizer)
     if len(vocab) != config.vocab_size or len(token_to_id) != config.vocab_size:
         raise ValueError("Vocabulary tokenizer tidak sama dengan vocab_size checkpoint")
+    expected_tokenizer_hash = checkpoint["train_meta"].get("tokenizer_sha256")
+    actual_tokenizer_hash = sha256_file(tokenizer_path)
+    if not expected_tokenizer_hash or expected_tokenizer_hash != actual_tokenizer_hash:
+        raise ValueError("Hash tokenizer tidak cocok dengan metadata checkpoint training")
+    train_register_hash = checkpoint["train_meta"].get("source_register_sha256")
+    validation_register_hash = checkpoint["validation_meta"].get("source_register_sha256")
+    if not train_register_hash or train_register_hash != validation_register_hash:
+        raise ValueError("Register sumber train dan validation tidak cocok")
     if checkpoint["config"].get("derived", {}).get("total_parameters") != config.parameter_count():
         raise ValueError("Parameter count konfigurasi checkpoint tidak konsisten")
 

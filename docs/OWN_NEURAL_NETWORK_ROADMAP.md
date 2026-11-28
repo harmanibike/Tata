@@ -60,7 +60,7 @@ Setiap perubahan korpus menghasilkan manifest versi baru, jumlah contoh, hash fi
 - Normalisasi Unicode dan spasi tanpa mengubah makna atau ejaan istilah.
 - Deteksi bahasa; dataset tahap awal fokus Bahasa Indonesia.
 - Dedup dilakukan sebelum pembagian data agar contoh serupa tidak bocor ke train dan test.
-- Pembagian awal yang dapat diuji: 90% train, 5% validation, 5% test. Pembagian harus deterministik berdasarkan example_id dan sumber/kelompok, bukan acak ulang setiap run.
+- Pembagian awal yang dapat diuji: 90% train, 5% validation, 5% test. Pembagian deterministik dilakukan berdasarkan kelompok `source_id` agar materi dari satu sumber tidak bocor ke split lain. Proporsi dihitung pada tingkat kelompok sumber sehingga persentase jumlah contoh dapat sedikit berbeda.
 - Test set dikunci; jangan digunakan untuk menyetel model.
 - Simpan provenance setiap contoh agar hasil dapat ditelusuri ke sumbernya.
 
@@ -108,4 +108,4 @@ Tidak ada klaim model siap digunakan sebelum melewati evaluasi dan uji perangkat
 6. Android: inferensi offline diuji pada perangkat fisik.
 
 ## Langkah implementasi berikutnya
-Validator korpus JSONL tersedia di `tools/corpus/validate_corpus.py`; generator manifest di `tools/corpus/build_manifest.py` mencatat hash korpus, inventaris sumber/lisensi, jumlah contoh, dan pembagian dataset. Fixture sintetis non-pribadi serta prototipe Character-BPE dan tes determinisme/round-trip sudah ditambahkan. Fixture masih berstatus tinjauan kualitas pending, jadi belum boleh dipakai sebagai data latih. Langkah berikutnya adalah memperketat validasi panjang/kualitas, membuat pembagian train/validation/test deterministik berbasis ID dan sumber, lalu mengevaluasi tokenizer dengan korpus berizin yang benar-benar ditinjau.
+Validator korpus JSONL tersedia di `tools/corpus/validate_corpus.py`; generator manifest di `tools/corpus/build_manifest.py`; pembagi dataset deterministik tersedia di `tools/corpus/split_corpus.py`. Pembagian mengelompokkan berdasarkan `source_id`, hanya menerima contoh yang lolos tinjauan privasi dan kualitas, dan menolak dataset dengan kurang dari tiga sumber yang disetujui. Tes mencakup determinisme, pencegahan kebocoran sumber, dan catatan pending yang tetap unassigned. Fixture sintetis masih berstatus tinjauan kualitas pending, sehingga belum menjadi data latih. Spesifikasi baseline Transformer v0 kini didokumentasikan di `docs/TRANSFORMER_V0_SPEC.md`; belum ada loop training atau bobot model. Langkah berikutnya adalah meninjau sumber dataset berizin yang cukup, menguji tokenizer dengan data tersebut, lalu baru membuat implementasi training kecil.

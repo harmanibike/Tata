@@ -160,3 +160,13 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Saat aktif, pertanyaan terbuka dapat diteruskan ke model lokal setelah jalur perintah, pengetahuan, kalkulasi, dan percakapan khusus diperiksa.
 - Model dapat dilepas dari RAM atau dihapus secara terpisah. Model besar berpotensi membuat perangkat lambat, panas, atau kehabisan RAM.
 - Uji inferensi, stabilitas, konsumsi RAM, suhu, dan kualitas jawaban pada HP fisik tetap diperlukan; CI hanya membuktikan kompilasi dan packaging.
+
+### Koreksi langsung dari percakapan
+
+- Setiap jawaban Tata AI yang terkait dengan pertanyaan pengguna menampilkan tindakan **Koreksi jawaban Tata**.
+- Tindakan tersebut membuka Learning Lab dengan pertanyaan terakhir terisi otomatis dan jawaban Tata sebelumnya ditampilkan sebagai konteks.
+- Pengguna menulis koreksi sendiri; catatan hanya disimpan setelah menekan **Simpan lokal** lalu menyetujui konfirmasi.
+- Koreksi tetap berstatus **Perlu ditinjau** dan tidak otomatis mengubah pengetahuan aktif maupun bobot model.
+- Untuk mengaktifkan koreksi sebagai pengetahuan, pengguna harus meninjau dan menyetujui tindakan terpisah di Learning Lab.
+- Konteks pertanyaan terakhir yang dipakai tombol koreksi hanya berada di memori Activity dan tidak menambah penyimpanan otomatis.
+

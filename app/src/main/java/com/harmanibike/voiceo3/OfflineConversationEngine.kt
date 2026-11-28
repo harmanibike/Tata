@@ -77,6 +77,13 @@ class OfflineConversationEngine {
         }
     }
 
+    fun unknownResponse(): String = reply("unknown",
+        "Aku belum menangkap maksudmu. Bisa ceritakan dengan cara lain?",
+        "Sepertinya aku belum memahami kalimat itu. Coba beri sedikit konteks, ya.",
+        "Aku ingin membantu, tetapi maksudnya belum jelas bagiku. Kita coba susun pertanyaannya bersama.",
+        "Bagian itu belum ada dalam kemampuan lokal yang kukenali. Kamu bisa bertanya dengan kalimat berbeda atau mengajariku melalui menu Pengetahuan."
+    )
+
     private fun reply(topic: String, vararg options: String): String {
         lastTopic = topic
         val index = responseIndexes[topic] ?: 0

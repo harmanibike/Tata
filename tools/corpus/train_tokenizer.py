@@ -11,6 +11,11 @@ from collections import Counter
 from pathlib import Path
 from typing import Iterable
 
+try:
+    from tools.corpus.validate_corpus import validate_file
+except ModuleNotFoundError:
+    from validate_corpus import validate_file
+
 SPECIAL_TOKENS = ["<pad>", "<unk>", "<bos>", "<eos>"]
 ALLOWED_LICENSES = {
     "public_domain", "cc0", "cc_by", "cc_by_sa",
@@ -137,6 +142,9 @@ class CharacterBPE:
 
 
 def load_training_texts(jsonl_path: Path) -> list[str]:
+    errors, _ = validate_file(jsonl_path)
+    if errors:
+        raise ValueError("Korpus tidak lolos validasi: " + "; ".join(errors[:5]))
     texts: list[str] = []
     for line_number, line in enumerate(jsonl_path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():

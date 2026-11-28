@@ -647,7 +647,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             if (::conversationStatusView.isInitialized) conversationStatusView.text = label
             if (::listenButton.isInitialized) {
                 listenButton.setActive(label.contains("MENDENGARKAN", ignoreCase = true))
-                if (!label.contains("MENDENGARKAN", ignoreCase = true)) listenButton.setAmplitude(0f)
+                if (!label.contains("MENDENGARKAN", ignoreCase = true) &&
+                    !label.contains("BERBICARA", ignoreCase = true)
+                ) listenButton.setAmplitude(0f)
             }
         }
     }
@@ -957,13 +959,25 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             else {
                 restorePreferredVoice()
                 textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) = Unit
+                    override fun onStart(utteranceId: String?) {
+                        conversationHandler.post {
+                            if (!activityDestroyed && ::listenButton.isInitialized) {
+                                listenButton.setSpeaking(true)
+                                if (::conversationStatusView.isInitialized) conversationStatusView.text = "TATA SEDANG BERBICARA..."
+                            }
+                        }
+                    }
                     override fun onDone(utteranceId: String?) {
-                        conversationHandler.post { if (conversationModeActive) startListening() }
+                        conversationHandler.post {
+                            if (::listenButton.isInitialized) listenButton.setSpeaking(false)
+                            if (conversationModeActive) startListening()
+                            else if (::conversationStatusView.isInitialized) conversationStatusView.text = "SIAP"
+                        }
                     }
                     @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
                         conversationHandler.post {
+                            if (::listenButton.isInitialized) listenButton.setSpeaking(false)
                             if (utteranceId?.startsWith("tata-conversation-") == true &&
                                 selectedVoiceNetworkMode == true && !activityDestroyed
                             ) {

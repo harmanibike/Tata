@@ -357,3 +357,7 @@ Audit dataset juga dapat mengukur panjang karakter per contoh dan, bila tokenize
 Dataset readiness audit (`tools/corpus/audit_dataset.py`) also reports aggregate-only quality signals: short prompts/answers, long examples, repeated identical answers, task counts by split, and source concentration. These are manual-review warnings, not automatic judgments of semantic quality.
 
 The audit also detects exact normalized prompt repetitions and flags repeated prompts that have different approved answers. This is a conservative exact-text check, not semantic or paraphrase similarity detection.
+
+
+### Deteksi kandidat pertanyaan mirip secara leksikal
+Audit kini membandingkan trigram karakter menggunakan cosine similarity untuk menemukan kandidat pertanyaan yang mirip, termasuk variasi kecil/typo. Hanya contoh yang lulus review privasi dan kualitas pada split train/validation/test yang dibandingkan. Laporan hanya berisi jumlah pasangan, skor maksimum agregat, dan jumlah konflik jawaban; tidak menampilkan teks. Ini heuristik kemiripan bentuk tulisan, bukan pemahaman semantik atau deteksi parafrasa yang andal. Semua kandidat wajib ditinjau manusia dan tidak dihapus otomatis.

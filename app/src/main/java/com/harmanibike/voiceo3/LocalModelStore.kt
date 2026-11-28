@@ -86,7 +86,7 @@ class LocalModelStore(context: Context) {
                         val count = input.read(buffer)
                         if (count < 0) break
                         copiedBytes += count
-                        require(copiedBytes <= importLimit) {
+                        require(copiedBytes <= importLimit && availableBytes() >= MINIMUM_FREE_SPACE_BYTES + count) {
                             "Impor dihentikan agar tersisa minimal 256 MB ruang penyimpanan."
                         }
                         output.write(buffer, 0, count)

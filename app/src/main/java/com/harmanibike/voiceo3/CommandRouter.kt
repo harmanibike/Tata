@@ -19,6 +19,7 @@ class CommandRouter(
     private val networkHelper: NetworkHelper
 ) {
     private val offlineConversation = OfflineConversationEngine()
+    private val localReasoning = LocalReasoningEngine()
 
     suspend fun handle(rawCommand: String): String = withContext(Dispatchers.Main) {
         val command = rawCommand.lowercase(Locale("id", "ID")).trim()
@@ -72,7 +73,8 @@ class CommandRouter(
             else -> {
                 val localAnswer = knowledgeStore.search(command)
                 if (localAnswer != null) localAnswer
-                else if (command.contains("berita") || command.contains("bacakan kabar") ||
+                else localReasoning.calculate(rawCommand)
+                    ?: if (command.contains("berita") || command.contains("bacakan kabar") ||
                     command.contains("kabar hari ini") || command.contains("headline")) {
                     networkHelper.getTodayNews()
                 } else {

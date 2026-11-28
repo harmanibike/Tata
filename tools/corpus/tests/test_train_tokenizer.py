@@ -48,16 +48,40 @@ class CharacterBPETests(unittest.TestCase):
                 "privacy_review": "passed",
                 "quality_review": "passed",
                 "split": "train",
-                "messages": [{"role": "user", "content": "teks latih"}],
+                "source": {"source_id": "sumber-1", "license": "cc0"},
+                "messages": [
+                    {"role": "user", "content": "teks latih"},
+                    {"role": "assistant", "content": "jawaban latih"},
+                ],
             }
             pending = {**base, "quality_review": "pending"}
             held_out = {**base, "split": "test"}
-            unassigned = {**base, "split": "unassigned", "messages": [{"role": "user", "content": "belum dibagi"}]}
+            unassigned = {**base, "split": "unassigned"}
             path.write_text(
                 "\n".join(json.dumps(item) for item in [base, pending, held_out, unassigned]),
                 encoding="utf-8",
             )
-            self.assertEqual(["teks latih"], load_training_texts(path))
+            self.assertEqual(
+                ["user: teks latih", "assistant: jawaban latih"],
+                load_training_texts(path),
+            )
+
+    def test_training_loader_rejects_unapproved_license(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "corpus.jsonl"
+            record = {
+                "privacy_review": "passed",
+                "quality_review": "passed",
+                "split": "train",
+                "source": {"source_id": "sumber", "license": "unknown"},
+                "messages": [
+                    {"role": "user", "content": "pertanyaan"},
+                    {"role": "assistant", "content": "jawaban"},
+                ],
+            }
+            path.write_text(json.dumps(record), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_training_texts(path)
 
 
 if __name__ == "__main__":

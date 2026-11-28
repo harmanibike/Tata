@@ -79,7 +79,7 @@ def build_export_manifest(checkpoint: dict, checkpoint_path: Path, tokenizer_pat
             "vocab_size": len(vocab),
             "id_to_token": vocab,
             "special_tokens": tokenizer.to_dict()["special_tokens"],
-            "tokenization_note": "CharacterBPE encode applies merges in saved order; Android parity tests are still required.",
+            "tokenization_note": "CharacterBPE encode applies merges in saved order; Kotlin JSON loader and synthetic cross-language parity fixture tests exist.",
         },
         "provenance": {
             "checkpoint_file": checkpoint_path.name,
@@ -95,7 +95,7 @@ def build_export_manifest(checkpoint: dict, checkpoint_path: Path, tokenizer_pat
         },
         "limitations": [
             "Experimental export; not yet validated against ONNX Runtime Android.",
-            "Tokenizer ID parity with Kotlin is not yet implemented or tested.",
+            "Tokenizer Kotlin parity is covered by a synthetic shared fixture; broader corpus parity and Android runtime validation remain open.",
             "No claim of production training quality or Android device performance.",
         ],
     }

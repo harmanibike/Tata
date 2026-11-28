@@ -5,12 +5,14 @@ on:
     branches: [main, test/transformer-runtime-smoke]
     paths:
       - 'app/**'
+      - 'onnx-poc/**'
       - '*.gradle.kts'
       - 'gradle.properties'
       - '.github/workflows/android_unit_tests.yml'
   pull_request:
     paths:
       - 'app/**'
+      - 'onnx-poc/**'
       - '*.gradle.kts'
       - 'gradle.properties'
       - '.github/workflows/android_unit_tests.yml'
@@ -48,7 +50,7 @@ jobs:
           echo "ANDROID_NDK_ROOT=$SDK_ROOT/ndk/27.2.12479018" >> "$GITHUB_ENV"
 
       - name: Run Android unit tests
-        run: gradle testDebugUnitTest --no-daemon
+        run: gradle testDebugUnitTest :onnx-poc:testDebugUnitTest --no-daemon
 
-      - name: Build debug APK without publishing it
-        run: gradle assembleDebug --no-daemon
+      - name: Build debug APK and isolated ONNX PoC AAR without publishing
+        run: gradle assembleDebug :onnx-poc:assembleDebug --no-daemon

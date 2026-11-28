@@ -91,7 +91,8 @@ def near_duplicate_prompt_stats(records: list[dict], threshold: float = 0.82, ma
                           normalized_message_hash(record, "assistant"),
                           record.get("example_id", "")))
     inverted = defaultdict(set)
-    for index, (grams, _, _) in enumerate(items):
+    for index, item in enumerate(items):
+        grams = item[0]
         for gram in grams:
             inverted[gram].add(index)
     candidate_pairs = set()

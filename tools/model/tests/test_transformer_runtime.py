@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 import unittest
+import sys
+from pathlib import Path
+
+# Match the import layout used by the existing model test suite.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 try:
     import torch

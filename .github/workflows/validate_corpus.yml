@@ -6,11 +6,11 @@ on:
     paths:
       - 'tools/corpus/**'
       - 'tools/model/**'
-      - 'tools/model/**'
       - '.github/workflows/validate_corpus.yml'
   pull_request:
     paths:
       - 'tools/corpus/**'
+      - 'tools/model/**'
       - '.github/workflows/validate_corpus.yml'
   workflow_dispatch:
 

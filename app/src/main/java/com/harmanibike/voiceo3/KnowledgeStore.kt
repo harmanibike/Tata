@@ -415,16 +415,23 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     @Synchronized
     fun updateLearningRecord(id: Long, question: String, correction: String, source: String) {
         require(question.isNotBlank() && correction.isNotBlank()) { "Pertanyaan dan koreksi wajib diisi." }
-        val previousStatus = readableDatabase.rawQuery(
-            "SELECT status FROM learning_records WHERE id=?", arrayOf(id.toString())
-        ).use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+        val nextQuestion = question.trim().take(2000)
+        val nextCorrection = correction.trim().take(6000)
+        val nextSource = source.trim().take(1000)
+        val previous = readableDatabase.rawQuery(
+            "SELECT question, correction, source FROM learning_records WHERE id=?",
+            arrayOf(id.toString())
+        ).use { cursor ->
+            if (cursor.moveToFirst()) Triple(cursor.getString(0), cursor.getString(1), cursor.getString(2)) else null
+        } ?: return
+        val changed = previous.first != nextQuestion ||
+            previous.second != nextCorrection || previous.third != nextSource
         val values = ContentValues().apply {
-            put("question", question.trim().take(2000))
-            put("correction", correction.trim().take(6000))
-            put("source", source.trim().take(1000))
-            if (previousStatus == "diterapkan" || previousStatus == "sudah_diuji") {
-                put("status", "perlu_ditinjau")
-            }
+            put("question", nextQuestion)
+            put("correction", nextCorrection)
+            put("source", nextSource)
+            // Setiap perubahan isi membatalkan persetujuan/pengujian sebelumnya.
+            if (changed) put("status", "perlu_ditinjau")
             put("updated_at", System.currentTimeMillis())
         }
         writableDatabase.update("learning_records", values, "id=?", arrayOf(id.toString()))

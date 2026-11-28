@@ -486,7 +486,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             .setItems(labels) { _, which -> showLearningRecordDetail(records[which]) }
             .setPositiveButton("Tambah koreksi", null)
             .setNegativeButton("Tutup", null)
-            .setNeutralButton("Filter", null)
+            .setNeutralButton("File", null)
             .create()
         if (records.isEmpty()) dialog.setMessage(
             if (allRecords.isEmpty()) "Belum ada catatan pembelajaran. Catatan hanya disimpan setelah kamu menekan Simpan."
@@ -498,11 +498,20 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 showLearningRecordEditor()
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                val filterLabels = arrayOf("Semua", "Perlu ditinjau", "Diterima", "Ditolak", "Sudah diuji")
-                val filterValues = arrayOf(null, "perlu_ditinjau", "diterima", "ditolak", "sudah_diuji")
-                AlertDialog.Builder(this).setTitle("Filter catatan Learning Lab")
-                    .setItems(filterLabels) { _, which -> showLearningLab(filterValues[which]) }
-                    .setNegativeButton("Batal", null).show()
+                AlertDialog.Builder(this).setTitle("Pertukaran Learning Lab")
+                    .setItems(arrayOf("Filter catatan", "Ekspor catatan ke file", "Gabungkan dari file lain")) { _, which ->
+                        when (which) {
+                            0 -> {
+                                val filterLabels = arrayOf("Semua", "Perlu ditinjau", "Diterima", "Ditolak", "Sudah diuji")
+                                val filterValues = arrayOf(null, "perlu_ditinjau", "diterima", "ditolak", "sudah_diuji")
+                                AlertDialog.Builder(this).setTitle("Filter catatan Learning Lab")
+                                    .setItems(filterLabels) { _, selected -> showLearningLab(filterValues[selected]) }
+                                    .setNegativeButton("Batal", null).show()
+                            }
+                            1 -> exportLearningLab()
+                            2 -> importLearningLab()
+                        }
+                    }.setNegativeButton("Batal", null).show()
             }
         }
         dialog.show()
@@ -724,6 +733,16 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 Toast.makeText(this, "Gagal mengekspor: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
             }
             REQUEST_IMPORT_MODEL -> importLocalModel(uri)
+            REQUEST_EXPORT_LEARNING -> runCatching {
+                val json = LearningLabTransfer.encode(knowledgeStore.getLearningRecords())
+                contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+                    ?: error("Tidak dapat menyimpan file.")
+            }.onSuccess {
+                Toast.makeText(this, "File Learning Lab berhasil diekspor. Percakapan dan memori pribadi tidak disertakan.", Toast.LENGTH_LONG).show()
+            }.onFailure {
+                Toast.makeText(this, "Gagal mengekspor: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+            REQUEST_IMPORT_LEARNING -> performImportLearningLab(uri)
             REQUEST_IMPORT_JSON -> {
                 if (knowledgeStore.getKnowledgeCount() > 0) {
                     AlertDialog.Builder(this)
@@ -736,6 +755,75 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     performImportKnowledgeJson(uri)
                 }
             }
+        }
+    }
+
+    private fun exportLearningLab() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "tata-learning-lab.json")
+        }
+        startActivityForResult(intent, REQUEST_EXPORT_LEARNING)
+    }
+
+    private fun importLearningLab() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivityForResult(intent, REQUEST_IMPORT_LEARNING)
+    }
+
+    private fun performImportLearningLab(uri: Uri) {
+        runCatching {
+            val bytes = contentResolver.openInputStream(uri)?.use { input ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                var total = 0
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    total += count
+                    require(total <= LearningLabTransfer.MAX_FILE_BYTES) {
+                        "Ukuran file maksimal 5 MB."
+                    }
+                    output.write(buffer, 0, count)
+                }
+                output.toByteArray()
+            } ?: error("Tidak dapat membaca file.")
+            LearningLabTransfer.decode(String(bytes, Charsets.UTF_8))
+        }.onSuccess { incoming ->
+            val preview = LearningLabTransfer.preview(incoming, knowledgeStore.getLearningRecords())
+            val message = "Isi file: ${incoming.size} catatan\\n" +
+                "Data baru: ${preview.newRecords.size}\\n" +
+                "Konflik (pertanyaan sama, koreksi berbeda): ${preview.conflictCount}\\n" +
+                "Duplikat identik: ${preview.duplicateCount}\\n\\n" +
+                "Data baru dan konflik akan ditambahkan sebagai catatan 'Perlu ditinjau'. " +
+                "Data lama tidak ditimpa. Duplikat identik dilewati. " +
+                "Percakapan, memori pribadi, dan pengetahuan aktif tidak diimpor."
+            if (preview.importCount == 0) {
+                AlertDialog.Builder(this).setTitle("Tidak ada data baru")
+                    .setMessage(message).setPositiveButton("Mengerti", null).show()
+            } else {
+                AlertDialog.Builder(this).setTitle("Periksa sebelum menggabungkan")
+                    .setMessage(message)
+                    .setPositiveButton("Gabungkan catatan") { _, _ ->
+                        runCatching {
+                            knowledgeStore.mergeLearningRecords(preview.newRecords + preview.conflictRecords)
+                        }.onSuccess { count ->
+                            Toast.makeText(this, "$count catatan ditambahkan ke Learning Lab untuk ditinjau.", Toast.LENGTH_LONG).show()
+                            showLearningLab("perlu_ditinjau")
+                        }.onFailure {
+                            Toast.makeText(this, "Gagal menggabungkan: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
+                        }
+                    }.setNegativeButton("Batal", null).show()
+            }
+        }.onFailure {
+            AlertDialog.Builder(this).setTitle("File tidak dapat diimpor")
+                .setMessage(it.localizedMessage ?: "Format file tidak valid.")
+                .setPositiveButton("Tutup", null).show()
         }
     }
 
@@ -1620,6 +1708,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         private const val REQUEST_EXPORT_JSON = 302
         private const val REQUEST_IMPORT_JSON = 303
         private const val REQUEST_IMPORT_MODEL = 304
+        private const val REQUEST_EXPORT_LEARNING = 305
+        private const val REQUEST_IMPORT_LEARNING = 306
         private const val KEY_CHAT_STORAGE_CONSENT = "chat_history_consent"
         private const val PREFS_VOICE = "tata_voice_preferences"
 private const val KEY_VOICE_NAME = "voice_name"

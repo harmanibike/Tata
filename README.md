@@ -322,3 +322,7 @@ python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer 
 python tools/model/evaluate_transformer.py --checkpoint checkpoints/tata-v0.pt --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --report reports/tata-v0-test.json --prompt "Jelaskan fotosintesis dengan sederhana"
 ```
 - Perplexity bukan ukuran kebenaran, keamanan, atau kemampuan asisten. Evaluasi manual Bahasa Indonesia, halusinasi, privasi, bias, pengulangan, serta uji perangkat tetap wajib.
+
+
+- Rubrik evaluasi manual tersedia di [docs/MODEL_EVALUATION_RUBRIC.md](docs/MODEL_EVALUATION_RUBRIC.md), meliputi Bahasa Indonesia, relevansi, fakta, ketidakpastian, konsistensi, instruksi, keamanan, privasi, ketahanan prompt, dan repetisi. Ambang kelulusan harus ditentukan sebelum melihat hasil.
+

@@ -789,16 +789,84 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         AlertDialog.Builder(this)
             .setTitle("Cari tahu bersama")
             .setMessage(message)
-            .setItems(arrayOf("Cari di Internet", "Tanya ChatGPT", "Tanya Gemini", "Nanti saja")) { dialog, which ->
+            .setItems(arrayOf("Cari di Internet", "Tanya ChatGPT", "Tanya Gemini", "Tempel jawaban untuk diringkas", "Nanti saja")) { dialog, which ->
                 when (which) {
                     0 -> openResearchUrl("https://www.google.com/search?q=" + Uri.encode(question), "Pencarian internet")
                     1 -> openOtherAi("https://chatgpt.com/", question, "ChatGPT")
                     2 -> openOtherAi("https://gemini.google.com/app", question, "Gemini")
+                    3 -> showTemporaryResearchInput(question)
                 }
                 dialog.dismiss()
             }
             .setNegativeButton("Tutup", null)
             .show()
+    }
+
+    private fun showTemporaryResearchInput(question: String) {
+        val answerInput = EditText(this).apply {
+            hint = "Tempel teks hasil pencarian atau jawaban AI di sini..."
+            textSize = 14f
+            minLines = 5
+            maxLines = 10
+            gravity = Gravity.TOP
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(TextView(this@MainActivity).apply {
+                text = "Tempel hasil yang ingin Tata baca. Teks ini hanya diproses sementara di perangkat dan tidak disimpan ke database."
+                textSize = 13f
+                setTextColor(Color.rgb(90, 90, 102))
+            })
+            addView(answerInput, LinearLayout.LayoutParams(-1, dp(150)).apply { topMargin = dp(10) })
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Baca hasil pencarian")
+            .setView(content)
+            .setPositiveButton("Baca & ringkas", null)
+            .setNegativeButton("Batal", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pastedText = answerInput.text.toString().trim()
+                if (pastedText.isBlank()) {
+                    answerInput.error = "Tempel teks terlebih dahulu"
+                    return@setOnClickListener
+                }
+                if (pastedText.length > 12000) {
+                    answerInput.error = "Maksimal 12.000 karakter agar pemrosesan tetap ringan"
+                    return@setOnClickListener
+                }
+                dialog.dismiss()
+                summarizeResearchTemporarily(question, pastedText)
+            }
+        }
+        dialog.show()
+    }
+
+    private fun summarizeResearchTemporarily(question: String, sourceText: String) {
+        val cleaned = sourceText.replace(Regex("\\s+"), " ").trim()
+        val sentences = Regex("(?<=[.!?])\\s+")
+            .split(cleaned)
+            .map { it.trim() }
+            .filter { it.length >= 25 }
+            .distinctBy { it.lowercase(Locale("id", "ID")) }
+        val summary = when {
+            sentences.isEmpty() -> cleaned.take(700)
+            sentences.size <= 3 -> sentences.joinToString(" ")
+            else -> sentences.take(3).joinToString(" ")
+        }.let { if (it.length > 1100) it.take(1097).trimEnd() + "..." else it }
+        val result = "Ringkasan awal dari teks yang Anda tempel (diproses lokal, bukan verifikasi fakta):\\n$summary\\n\\nCatatan: Tata belum memeriksa kebenaran sumber atau membandingkan sumber lain. Teks dan ringkasan ini tidak disimpan ke database."
+        appendLog("Anda", "Memberikan teks hasil pencarian untuk diringkas.", persist = false)
+        appendLog("Tata AI", result, persist = false)
+        AlertDialog.Builder(this)
+            .setTitle("Ringkasan sementara")
+            .setMessage("Pertanyaan: $question\\n\\n$summary\\n\\nCatatan: ini ringkasan awal berdasarkan bagian teks yang ditempel, bukan verifikasi fakta. Tidak disimpan ke database.")
+            .setPositiveButton("Mengerti", null)
+            .show()
+        speakAssistant("Berikut ringkasan awal dari teks yang Anda tempel. $summary. Perlu diingat, saya belum memverifikasi kebenaran sumbernya dan tidak menyimpan teks ini.")
     }
 
     private fun openOtherAi(url: String, question: String, label: String) {

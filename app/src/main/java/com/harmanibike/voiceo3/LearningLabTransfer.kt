@@ -82,7 +82,7 @@ object LearningLabTransfer {
         existing: List<LearningRecord>
     ): LearningImportPreview {
         val existingFingerprints = existing.map { fingerprint(it.question, it.correction) }.toHashSet()
-        val existingQuestions = existing.map { normalize(it.question) }.toHashSet()
+        val seenQuestions = existing.map { normalize(it.question) }.toHashSet()
         val seenIncoming = HashSet<String>()
         val newRecords = mutableListOf<TransferLearningRecord>()
         val conflicts = mutableListOf<TransferLearningRecord>()
@@ -91,7 +91,7 @@ object LearningLabTransfer {
             val fingerprint = fingerprint(record)
             if (fingerprint in existingFingerprints || !seenIncoming.add(fingerprint)) {
                 duplicates++
-            } else if (normalize(record.question) in existingQuestions) {
+            } else if (!seenQuestions.add(normalize(record.question))) {
                 conflicts += record
             } else {
                 newRecords += record

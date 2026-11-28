@@ -7,7 +7,8 @@ import java.security.MessageDigest
 data class TransferLearningRecord(
     val question: String,
     val correction: String,
-    val source: String = ""
+    val source: String = "",
+    val createdAt: Long = 0L
 )
 
 data class LearningImportPreview(
@@ -25,7 +26,7 @@ data class LearningImportPreview(
  */
 object LearningLabTransfer {
     const val FORMAT = "tata-learning-lab"
-    const val SCHEMA_VERSION = 1
+    const val SCHEMA_VERSION = 2
     const val MAX_RECORDS = 5000
     const val MAX_FILE_BYTES = 5 * 1024 * 1024
 
@@ -33,17 +34,24 @@ object LearningLabTransfer {
         require(records.size <= MAX_RECORDS) { "Maksimal $MAX_RECORDS catatan per file." }
         val array = JSONArray()
         records.forEach { record ->
+            val createdAt = record.createdAt.takeIf { it > 0L } ?: exportedAt
             array.put(
                 JSONObject()
+                    .put("knowledgeId", questionIdentity(record.question))
+                    .put("contentHash", fingerprint(record.question, record.correction))
                     .put("question", record.question)
                     .put("correction", record.correction)
                     .put("source", record.source)
+                    .put("createdAt", createdAt)
             )
         }
+        val payload = array.toString()
         return JSONObject()
             .put("format", FORMAT)
             .put("schemaVersion", SCHEMA_VERSION)
             .put("exportedAt", exportedAt)
+            .put("recordCount", records.size)
+            .put("payloadHash", sha256(payload))
             .put("records", array)
             .toString(2)
     }
@@ -54,6 +62,8 @@ object LearningLabTransfer {
         require(root.optInt("schemaVersion", -1) == SCHEMA_VERSION) { "Versi format file tidak didukung." }
         val array = root.optJSONArray("records") ?: throw IllegalArgumentException("Daftar catatan tidak ditemukan.")
         require(array.length() <= MAX_RECORDS) { "Jumlah catatan melebihi batas $MAX_RECORDS." }
+        require(root.optInt("recordCount", -1) == array.length()) { "Jumlah catatan tidak cocok." }
+        require(root.optString("payloadHash") == sha256(array.toString())) { "Pemeriksaan integritas file gagal. File mungkin berubah atau rusak." }
         val result = mutableListOf<TransferLearningRecord>()
         val seen = HashSet<String>()
         for (index in 0 until array.length()) {
@@ -62,13 +72,21 @@ object LearningLabTransfer {
             val question = item.optString("question").trim()
             val correction = item.optString("correction").trim()
             val source = item.optString("source").trim()
+            val createdAt = item.optLong("createdAt", 0L)
             require(question.isNotBlank() && correction.isNotBlank()) {
                 "Konteks dan koreksi pada catatan ke-${index + 1} wajib diisi."
             }
             require(question.length <= 2000 && correction.length <= 6000 && source.length <= 1000) {
                 "Catatan ke-${index + 1} melebihi batas panjang."
             }
-            val record = TransferLearningRecord(question, correction, source)
+            require(item.optString("knowledgeId") == questionIdentity(question)) {
+                "Identitas pengetahuan pada catatan ke-${index + 1} tidak cocok."
+            }
+            require(item.optString("contentHash") == fingerprint(question, correction)) {
+                "Sidik jari isi pada catatan ke-${index + 1} tidak cocok."
+            }
+            require(createdAt > 0L) { "Waktu pembuatan catatan ke-${index + 1} tidak valid." }
+            val record = TransferLearningRecord(question, correction, source, createdAt)
             require(seen.add(fingerprint(record))) {
                 "File berisi catatan duplikat pada urutan ke-${index + 1}."
             }
@@ -91,7 +109,7 @@ object LearningLabTransfer {
             val fingerprint = fingerprint(record)
             if (fingerprint in existingFingerprints || !seenIncoming.add(fingerprint)) {
                 duplicates++
-            } else if (!seenQuestions.add(normalize(record.question))) {
+            } else if (!seenQuestions.add(questionIdentity(record.question))) {
                 conflicts += record
             } else {
                 newRecords += record

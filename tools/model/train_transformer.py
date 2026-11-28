@@ -288,6 +288,8 @@ def main() -> int:
             torch.cuda.set_rng_state_all(checkpoint["cuda_rng_state"])
 
     model.train()
+    train_loss_sum = 0.0
+    train_loss_count = 0
     for step in range(start_step + 1, start_step + args.steps + 1):
         inputs, targets = batch_from_sequences(
             torch, train_sequences, args.batch_size, config.context_length, device, rng
@@ -304,6 +306,8 @@ def main() -> int:
         if not math.isfinite(float(gradient_norm)):
             raise RuntimeError(f"Gradient norm tidak finite pada step {step}; training dihentikan")
         optimizer.step()
+        train_loss_sum += float(loss.item())
+        train_loss_count += 1
 
         should_evaluate = step % args.eval_interval == 0 or step == start_step + args.steps
         stop_early = False
@@ -321,14 +325,19 @@ def main() -> int:
                 evaluations_without_improvement += 1
             print(json.dumps({
                 "step": step,
-                "train_loss": round(float(loss.item()), 6),
+                "train_loss_mean_since_last_eval": round(mean_train_loss, 6),
                 "validation_loss": round(validation_loss, 6),
+                "validation_minus_train_loss": round(generalization_gap, 6),
                 "best_validation_loss": round(best_validation, 6),
                 "best_step": best_step,
                 "evaluations_without_improvement": evaluations_without_improvement,
                 "perplexity": round(math.exp(min(validation_loss, 20)), 4),
                 "device": device,
             }, ensure_ascii=False), flush=True)
+            mean_train_loss = train_loss_sum / max(train_loss_count, 1)
+            generalization_gap = validation_loss - mean_train_loss
+            train_loss_sum = 0.0
+            train_loss_count = 0
             stop_early = early_stop_reached(
                 args.early_stopping_patience, evaluations_without_improvement
             )

@@ -33,6 +33,50 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun calculatesDiscountAndFinalPrice() {
+        assertEquals(
+            "Diskon 10% dari Rp150.000 = Rp15.000. Harga setelah diskon: Rp135.000.",
+            engine.calculate("hitung diskon 10 persen dari 150000")
+        )
+        assertEquals(
+            "Persentase diskon harus 0–100% dan harga tidak boleh negatif.",
+            engine.calculate("diskon 120 persen dari 100000")
+        )
+    }
+
+    @Test
+    fun calculatesPriceIncreaseAndDecrease() {
+        assertEquals(
+            "Perubahan 10% dari Rp100.000 adalah Rp10.000. Harga baru: Rp110.000.",
+            engine.calculate("100000 naik 10 persen")
+        )
+        assertEquals(
+            "Perubahan 20% dari Rp100.000 adalah Rp20.000. Harga baru: Rp80.000.",
+            engine.calculate("harga 100000 turun 20 persen")
+        )
+        assertEquals(
+            "Harga Rp100.000 naik 5%: perubahan Rp5.000. Harga baru: Rp105.000.",
+            engine.calculate("naik 5 persen dari 100000")
+        )
+    }
+
+    @Test
+    fun calculatesProfitLossAndBreakEven() {
+        assertEquals(
+            "Keuntungan Rp25.000 (25% dari modal).",
+            engine.calculate("hitung keuntungan modal 100000 jual 125000")
+        )
+        assertEquals(
+            "Kerugian Rp10.000 (10% dari modal).",
+            engine.calculate("modal 100000 jual 90000")
+        )
+        assertEquals(
+            "Tidak untung dan tidak rugi. Harga jual sama dengan modal.",
+            engine.calculate("modal 100000 jual 100000")
+        )
+    }
+
+    @Test
     fun reportsDivisionByZero() {
         val result = engine.calculate("hitung 10 dibagi 0")
         assertNotNull(result)

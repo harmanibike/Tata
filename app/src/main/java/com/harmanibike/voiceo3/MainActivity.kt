@@ -762,10 +762,51 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             val answer = router.handle(spoken)
             if (answer == CommandRouter.CONFIRM_CLEAR_KNOWLEDGE) {
                 showClearKnowledgeConfirmation()
+            } else if (answer.startsWith(CommandRouter.UNKNOWN_QUERY_PREFIX)) {
+                val question = answer.removePrefix(CommandRouter.UNKNOWN_QUERY_PREFIX).trim()
+                showResearchOptions(question)
             } else {
                 appendLog("Tata AI", answer)
                 speakAssistant(answer)
             }
+        }
+    }
+
+    private fun showResearchOptions(question: String) {
+        val message = "Saya belum menemukan jawaban yang cukup meyakinkan. Mau saya bantu mencarinya?\n\nPertanyaan ini tidak akan disimpan sebagai pengetahuan Tata."
+        appendLog("Tata", "Saya belum tahu jawabannya. Saya bisa membantu mencarinya di internet atau membuka AI lain. Pertanyaan ini tidak disimpan sebagai pengetahuan.")
+        speakAssistant("Saya belum tahu jawabannya. Mau kita cari di internet atau bertanya ke AI lain?")
+        AlertDialog.Builder(this)
+            .setTitle("Cari tahu bersama")
+            .setMessage(message)
+            .setItems(arrayOf("Cari di Internet", "Tanya ChatGPT", "Tanya Gemini", "Nanti saja")) { dialog, which ->
+                when (which) {
+                    0 -> openResearchUrl("https://www.google.com/search?q=" + Uri.encode(question), "Pencarian internet")
+                    1 -> openOtherAi("https://chatgpt.com/", question, "ChatGPT")
+                    2 -> openOtherAi("https://gemini.google.com/app", question, "Gemini")
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Tutup", null)
+            .show()
+    }
+
+    private fun openOtherAi(url: String, question: String, label: String) {
+        runCatching {
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Pertanyaan untuk $label", question))
+        }
+        Toast.makeText(this, "Pertanyaan disalin. Tempelkan di $label untuk mencari jawabannya.", Toast.LENGTH_LONG).show()
+        openResearchUrl(url, label)
+    }
+
+    private fun openResearchUrl(url: String, label: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, "Tidak ada browser untuk membuka $label.", Toast.LENGTH_LONG).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Tidak dapat membuka $label.", Toast.LENGTH_LONG).show()
         }
     }
 

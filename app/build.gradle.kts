@@ -13,6 +13,7 @@ val releaseSigningReady = listOf(
 android {
     namespace = "com.harmanibike.voiceo3"
     compileSdk = 34
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "com.harmanibike.voiceo3"
@@ -22,6 +23,11 @@ android {
         versionName = "2.4.0"
         ndk {
             abiFilters += "arm64-v8a"
+        }
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DANDROID_STL=c++_static")
+            }
         }
     }
 
@@ -43,6 +49,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"

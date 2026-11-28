@@ -28,6 +28,7 @@ jobs:
       - name: Install CPU PyTorch
         run: |
           python -m pip install --upgrade pip
-          python -m pip install torch onnx --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install onnx
       - name: Run Transformer runtime and checkpoint safety tests
         run: python -m unittest tools.model.tests.test_transformer_runtime tools.model.tests.test_training_checkpoint tools.model.tests.test_export_transformer_onnx -v

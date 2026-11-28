@@ -1,6 +1,6 @@
 # Tata Transformer v0 — spesifikasi eksperimen
 
-**Status: rancangan arsitektur, belum ada implementasi pelatihan atau bobot model.**
+**Status: spesifikasi dan loop training awal tersedia; belum dijalankan pada korpus berizin dan belum ada bobot model terlatih.**
 
 Dokumen ini menetapkan baseline kecil untuk membuktikan pipeline model bahasa Tata dari bobot acak. Angka konfigurasi adalah titik awal eksperimen, bukan klaim performa atau keputusan final.
 
@@ -76,3 +76,22 @@ python tools/model/transformer_config.py --output transformer-config-report.json
 ```
 
 Laporan menyertakan rincian embedding, blok Transformer, normalisasi, dan output head. Angka ini adalah hitungan konfigurasi, bukan bukti bahwa model, bobot, atau proses pelatihan sudah dibuat. Implementasi aktual kelak harus mencocokkan hitungan ini dan diuji dengan framework yang dipilih.
+
+
+## Implementasi training awal
+
+Implementasi tersedia pada `tools/model/train_transformer.py` dan loader data pada `tools/model/training_data.py`.
+
+- Loader hanya menerima split `train` dan `validation`, serta hanya contoh dengan `privacy_review=passed` dan `quality_review=passed`. Split `test` tidak dapat dimuat oleh loader.
+- Model dibuat dari bobot acak. Implementasi memakai causal scaled-dot-product attention, pre-LayerNorm, GELU, tied embedding, dan prediksi token berikutnya.
+- Loop training menggunakan AdamW, gradient clipping, validation loss/perplexity, dan checkpoint yang ditulis atomik.
+- Vocabulary model diambil dari tokenizer aktual. Hitungan parameter runtime harus sama dengan estimator; jika berbeda, proses dihentikan.
+- Checkpoint mengikat hash korpus train, korpus validation, dan tokenizer. RNG serta optimizer disimpan untuk mendukung resume yang lebih konsisten.
+- PyTorch 2.x diperlukan hanya pada komputer lokal untuk pelatihan. CI fondasi tidak mengunduh PyTorch dan tidak menjalankan training.
+- Belum ada pelatihan nyata: korpus sintetis yang ada masih pending dan tidak memenuhi syarat. Tidak ada model siap pakai atau bobot yang dapat diimpor ke Android.
+
+Contoh perintah setelah dataset benar-benar disetujui:
+```bash
+python tools/corpus/train_tokenizer.py corpus-split.jsonl --output tata-tokenizer.json --vocab-size 4096
+python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --output checkpoints/tata-v0.pt --steps 1000 --device auto
+```

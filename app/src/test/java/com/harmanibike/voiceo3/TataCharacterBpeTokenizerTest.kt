@@ -2,6 +2,7 @@ package com.harmanibike.voiceo3
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
+import org.json.JSONObject
 import org.junit.Test
 
 class TataCharacterBpeTokenizerTest {
@@ -13,6 +14,29 @@ class TataCharacterBpeTokenizerTest {
         merges: String = """[["a","b"],["ab","c"]]""",
         vocabSize: String = "11"
     ) = """{"format":"$format","format_version":$version,"special_tokens":$specialTokens,"alphabet":$alphabet,"merges":$merges,"vocab_size":$vocabSize}"""
+
+    @Test
+    fun matchesPythonUsingSharedParityFixture() {
+        val fixtureText = javaClass.getResourceAsStream("/character_bpe_parity.json")
+            ?.bufferedReader(Charsets.UTF_8)
+            ?.use { it.readText() }
+            ?: error("Shared tokenizer parity fixture is missing")
+        val fixture = JSONObject(fixtureText)
+        val tokenizer = TataCharacterBpeTokenizer.fromJson(
+            fixture.getJSONObject("tokenizer").toString()
+        )
+        val samples = fixture.getJSONArray("samples")
+        for (index in 0 until samples.length()) {
+            val sample = samples.getJSONObject(index)
+            val text = sample.getString("text")
+            val expectedIds = sample.getJSONArray("token_ids")
+            assertEquals(
+                (0 until expectedIds.length()).map { expectedIds.getInt(it) },
+                tokenizer.encode(text)
+            )
+            assertEquals(sample.getString("decoded"), tokenizer.decode(tokenizer.encode(text)))
+        }
+    }
 
     @Test
     fun matchesPythonVocabularyOrderAndMergeEncoding() {

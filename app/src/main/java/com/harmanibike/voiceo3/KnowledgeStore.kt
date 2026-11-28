@@ -300,6 +300,18 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     }
 
     @Synchronized
+    fun updateLearningRecord(id: Long, question: String, correction: String, source: String) {
+        require(question.isNotBlank() && correction.isNotBlank()) { "Pertanyaan dan koreksi wajib diisi." }
+        val values = ContentValues().apply {
+            put("question", question.trim().take(2000))
+            put("correction", correction.trim().take(6000))
+            put("source", source.trim().take(1000))
+            put("updated_at", System.currentTimeMillis())
+        }
+        writableDatabase.update("learning_records", values, "id=?", arrayOf(id.toString()))
+    }
+
+    @Synchronized
     fun updateLearningStatus(id: Long, status: String) {
         require(status in setOf("perlu_ditinjau", "diterima", "ditolak", "sudah_diuji"))
         val values = ContentValues().apply {

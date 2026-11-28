@@ -953,7 +953,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val capabilities = knowledgeStore.getAssistantCapabilities()
             .filter { it.enabled }
             .joinToString(" ") { it.displayName + ": " + it.description }
-        return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya tidak memakai API AI eksternal. Kemampuan saya saat ini: $capabilities Saya juga dapat membantu perintah dasar, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. Percakapan saya masih berbasis aturan dan pencocokan teks, bukan model bahasa generatif. Saya mengenali petunjuk emosi dari kata-kata, tetapi tidak bisa mengetahui perasaan seseorang secara pasti. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
+        return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya tidak memakai API AI eksternal. Kemampuan saya saat ini: $capabilities Saya juga dapat membantu perintah dasar, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. Percakapan saya masih berbasis aturan dan pencocokan teks, bukan model bahasa generatif. Saya tidak memiliki perasaan seperti manusia. Saya mengenali petunjuk emosi dari kata-kata dan merespons dengan empati, tetapi tidak bisa mengetahui perasaan seseorang secara pasti. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
     }
 
     private fun showAboutTata() {
@@ -976,7 +976,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val labels = capabilities.map { it.displayName + " • v" + it.version + if (it.enabled) "" else " • Nonaktif" }.toTypedArray()
         AlertDialog.Builder(this)
             .setTitle("Profil kemampuan Tata")
-            .setMessage("Pilih kemampuan untuk melihat atau memperbarui deskripsinya. Perubahan hanya disimpan setelah Anda menekan Simpan.")
+            .setMessage("Pilih kemampuan untuk melihat atau memperbarui keterangannya. Perubahan hanya disimpan setelah Anda menekan Simpan. Mengubah keterangan profil tidak otomatis menambah kode fungsi baru.")
             .setItems(labels) { _, which -> editCapabilityDescription(capabilities[which]) }
             .setNegativeButton("Tutup", null)
             .show()

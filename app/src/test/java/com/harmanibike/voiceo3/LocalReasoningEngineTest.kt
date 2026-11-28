@@ -217,6 +217,44 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun localConversationContextUsesHistoryOnlyForFollowUps() {
+        val context = LocalConversationContext(maxTurns = 2, promptLimit = 1400)
+        context.remember("Apa itu fotosintesis?", "Fotosintesis adalah proses tumbuhan membuat makanan dengan bantuan cahaya.")
+        val standalone = context.buildPrompt("Jelaskan sejarah Kerajaan Majapahit.")
+        assertTrue(standalone.startsWith("Pertanyaan pengguna:"))
+        assertFalse(standalone.contains("fotosintesis"))
+
+        val followUp = context.buildPrompt("Contohnya bagaimana?")
+        assertTrue(followUp.contains("fotosintesis"))
+        assertTrue(followUp.contains("Contohnya bagaimana?"))
+    }
+
+    @Test
+    fun localConversationContextKeepsOnlyRecentTurnsAndCanClear() {
+        val context = LocalConversationContext(maxTurns = 2)
+        context.remember("Pertanyaan satu", "Jawaban satu")
+        context.remember("Pertanyaan dua", "Jawaban dua")
+        context.remember("Pertanyaan tiga", "Jawaban tiga")
+        assertEquals(2, context.size())
+        val prompt = context.buildPrompt("Lanjutkan")
+        assertFalse(prompt.contains("Pertanyaan satu"))
+        assertTrue(prompt.contains("Pertanyaan dua"))
+        assertTrue(prompt.contains("Pertanyaan tiga"))
+        context.clear()
+        assertEquals(0, context.size())
+        assertTrue(context.buildPrompt("Lanjutkan").startsWith("Pertanyaan pengguna:"))
+    }
+
+    @Test
+    fun localConversationContextBoundsPromptAndStoredTurns() {
+        val context = LocalConversationContext(maxTurns = 2, promptLimit = 900)
+        context.remember("Q".repeat(500), "A".repeat(500))
+        val prompt = context.buildPrompt("Jelaskan lagi")
+        assertTrue(prompt.length <= 900)
+        assertTrue(context.size() <= 2)
+    }
+
+    @Test
     fun ignoresNonMathQuestions() {
         assertEquals(null, engine.calculate("siapa nama kamu"))
     }

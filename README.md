@@ -184,3 +184,5 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - File `tata-learning-lab.json` hanya berisi konteks, koreksi, dan sumber Learning Lab; tidak memuat percakapan, memori pribadi, pengetahuan aktif, atau model.
 - Impor memeriksa duplikat dan konflik sebelum meminta konfirmasi. Duplikat identik dilewati, sedangkan koreksi berbeda untuk pertanyaan yang sama disimpan sebagai catatan terpisah berstatus **Perlu ditinjau**.
 - Data yang sudah ada tidak ditimpa. Hasil impor tidak otomatis menjadi pengetahuan aktif dan tidak melatih bobot model.
+
+- Saat koreksi diterapkan ke pengetahuan aktif, Tata mendeteksi pertanyaan yang sama terlebih dahulu. Jawaban berbeda tidak menimpa data lama; koreksi baru harus ditinjau. Status **Diterapkan** terpisah dari **Sudah diuji**.

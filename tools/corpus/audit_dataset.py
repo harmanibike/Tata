@@ -53,6 +53,85 @@ def record_lengths(record: dict, tokenizer: CharacterBPE | None) -> tuple[int, i
     return character_count, token_count
 
 
+
+
+def character_ngrams(value: str, n: int = 3) -> Counter:
+    normalized = " ".join(value.casefold().split())
+    if not normalized:
+        return Counter()
+    padded = "  " + normalized + "  "
+    if len(padded) < n:
+        return Counter({padded: 1})
+    return Counter(padded[index:index + n] for index in range(len(padded) - n + 1))
+
+
+def cosine_similarity(left: Counter, right: Counter) -> float:
+    if not left or not right:
+        return 0.0
+    dot = sum(count * right.get(token, 0) for token, count in left.items())
+    left_norm = sum(value * value for value in left.values()) ** 0.5
+    right_norm = sum(value * value for value in right.values()) ** 0.5
+    return dot / (left_norm * right_norm) if left_norm and right_norm else 0.0
+
+
+def near_duplicate_prompt_stats(records: list[dict], threshold: float = 0.82, max_candidates: int = 20000) -> dict:
+    """Find lexical near-duplicate prompt candidates; never return raw prompt text."""
+    items = []
+    for record in records:
+        if record.get("privacy_review") != "passed" or record.get("quality_review") != "passed":
+            continue
+        if record.get("split") not in {"train", "validation", "test"}:
+            continue
+        prompt = "\\n".join(
+            message["content"] for message in record["messages"] if message["role"] == "user"
+        )
+        grams = character_ngrams(prompt)
+        if grams:
+            items.append((grams, normalized_message_hash(record, "user"),
+                          normalized_message_hash(record, "assistant")))
+    inverted = defaultdict(set)
+    for index, (grams, _, _) in enumerate(items):
+        for gram in grams:
+            inverted[gram].add(index)
+    candidate_pairs = set()
+    truncated = False
+    for index, (grams, _, _) in enumerate(items):
+        possible = set()
+        for gram in grams:
+            possible.update(inverted[gram])
+        for other in possible:
+            if other <= index:
+                continue
+            candidate_pairs.add((index, other))
+            if len(candidate_pairs) >= max_candidates:
+                truncated = True
+                break
+        if truncated:
+            break
+    similar_pairs = 0
+    conflicting_pairs = 0
+    max_similarity = 0.0
+    for left, right in candidate_pairs:
+        score = cosine_similarity(items[left][0], items[right][0])
+        max_similarity = max(max_similarity, score)
+        if score >= threshold:
+            similar_pairs += 1
+            if items[left][2] != items[right][2]:
+                conflicting_pairs += 1
+    return {
+        "method": "character_trigram_cosine_lexical_heuristic",
+        "threshold": threshold,
+        "candidate_pairs_compared": len(candidate_pairs),
+        "candidate_limit": max_candidates,
+        "candidate_search_truncated": truncated,
+        "near_duplicate_prompt_pairs": similar_pairs,
+        "near_duplicate_pairs_with_different_answers": conflicting_pairs,
+        "maximum_candidate_similarity": round(max_similarity, 4),
+        "limitation": "Lexical similarity only; not semantic understanding, paraphrase verification, or proof of duplicate content.",
+        "raw_text_included": False,
+    }
+
+
 def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | None = None) -> dict:
     if context_length < 2:
         raise ValueError("context_length minimal 2")
@@ -130,6 +209,7 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
                     tokens_by_split[split].append(token_count)
                     eligible_token_lengths.append(token_count)
 
+    near_duplicate_stats = near_duplicate_prompt_stats(records)
     blockers = []
     warnings = []
     if approved_examples == 0:
@@ -163,6 +243,10 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
         warnings.append("Ada pertanyaan identik yang muncul berulang; tinjau apakah duplikat perlu digabung")
     if conflicting_prompt_groups:
         warnings.append("Ada pertanyaan identik dengan jawaban berbeda; tinjau konsistensi atau konteks sumber sebelum training")
+    if near_duplicate_stats["near_duplicate_prompt_pairs"]:
+        warnings.append("Ada pasangan pertanyaan yang mirip secara leksikal; tinjau manual sebelum training")
+    if near_duplicate_stats["near_duplicate_pairs_with_different_answers"]:
+        warnings.append("Ada pasangan pertanyaan mirip dengan jawaban berbeda; pastikan perbedaan konteksnya valid")
     max_source_examples = max(source_example_counts.values(), default=0)
     source_concentration = round(max_source_examples / approved_examples, 4) if approved_examples else 0.0
     if source_concentration > 0.5:
@@ -211,7 +295,8 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
             "groups_of_identical_answers_repeated_at_least_3_times": repeated_answer_groups,
             "groups_of_identical_prompts_repeated_at_least_2_times": repeated_prompt_groups,
             "groups_of_identical_prompts_with_different_answers": conflicting_prompt_groups,
-            "similarity_method": "exact normalized text hashes; not semantic or paraphrase similarity",
+            "similarity_method": "exact normalized text hashes plus character-trigram lexical cosine; not semantic understanding",
+            "near_duplicate_prompt_analysis": near_duplicate_stats,
             "task_counts_by_split": {
                 split: dict(sorted(split_tasks[split].items())) for split in ("train", "validation", "test")
             },

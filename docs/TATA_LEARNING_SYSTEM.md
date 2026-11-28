@@ -101,8 +101,9 @@ Implementasi awal di APK:
 
 Pekerjaan lanjutan:
 - Hubungkan koreksi langsung dari percakapan dengan pratinjau sebelum penyimpanan.
-- Tambahkan edit catatan, filter status, ekspor/impor yang tetap lokal, dan pengujian migrasi/penyimpanan pada perangkat.
-- Tambahkan uji regresi untuk memastikan koreksi tidak merusak pengetahuan lain.
+- [x] Tambahkan edit catatan dan filter status di Learning Lab; perubahan tetap lokal dan tidak mengaktifkan pengetahuan otomatis.
+- Tambahkan ekspor/impor paket koreksi lokal dengan pratinjau, validasi, dan konfirmasi sebelum mengganti atau menambah catatan.
+- Tambahkan uji regresi untuk memastikan koreksi tidak merusak pengetahuan lain serta pengujian migrasi/penyimpanan pada perangkat.
 
 ### Tahap C — kontribusi komunitas opsional
 

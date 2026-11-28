@@ -171,17 +171,18 @@ def main() -> int:
     if args.device == "cuda" and not torch.cuda.is_available():
         parser.error("CUDA diminta tetapi tidak tersedia")
     device = ("cuda" if torch.cuda.is_available() else "cpu") if args.device == "auto" else args.device
-    config = TransformerConfig(vocab_size=train_meta["vocab_size"])
-    config.validate()
-    if config.vocab_size <= 0:
-        parser.error("Konfigurasi vocabulary tidak valid")
-
     train_sequences, train_meta = load_reviewed_sequences(
         args.corpus, args.tokenizer, "train"
     )
     validation_sequences, validation_meta = load_reviewed_sequences(
         args.corpus, args.tokenizer, "validation"
     )
+    config = TransformerConfig(vocab_size=train_meta["vocab_size"])
+    config.validate()
+    if config.vocab_size <= 0:
+        parser.error("Konfigurasi vocabulary tidak valid")
+    if validation_meta["vocab_size"] != train_meta["vocab_size"]:
+        parser.error("Vocabulary tokenizer train dan validation tidak konsisten")
     minimum = config.context_length + 1
     train_sequences = [sequence for sequence in train_sequences if len(sequence) >= minimum]
     validation_sequences = [sequence for sequence in validation_sequences if len(sequence) >= minimum]

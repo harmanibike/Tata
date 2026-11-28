@@ -31,6 +31,8 @@
 - Fondasi database kemampuan sudah tersedia secara lokal. Sinkronisasi konfigurasi dari server/database online belum diaktifkan pada tahap ini.
 
 ## Izin dan kendali data
+- **Learning Lab lokal (tahap awal):** tersedia melalui Pengaturan > Learning Lab untuk mencatat koreksi secara eksplisit, meninjau status, dan secara terpisah memasukkan koreksi yang diterima ke pengetahuan aktif. Catatan tidak dibagikan dan tidak melatih bobot model secara otomatis. Lihat [docs/TATA_LEARNING_SYSTEM.md](docs/TATA_LEARNING_SYSTEM.md).
+
 - Saat pertama kali dibuka, Tata meminta izin sebelum menyimpan riwayat percakapan ke database lokal.
 - Spesifikasi pembelajaran dengan persetujuan ada di [docs/TATA_LEARNING_SYSTEM.md](docs/TATA_LEARNING_SYSTEM.md). Data pengetahuan disimpan lokal secara default; persetujuan menyimpan, berbagi ke komunitas, dan menggunakan contoh untuk pelatihan model adalah tiga izin yang berbeda.
 - Informasi pencarian, koreksi, dan percakapan tidak otomatis menjadi data pengetahuan atau data pelatihan. Pengguna harus meninjau dan menyetujui setiap tindakan penyimpanan/kontribusi.

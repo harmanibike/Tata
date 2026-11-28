@@ -52,7 +52,7 @@ class ManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "corpus.jsonl"
             invalid = record()
-            invalid["privacy_review"] = "pending"
+            invalid["quality_review"] = "pending"
             path.write_text(json.dumps(invalid), encoding="utf-8")
             with self.assertRaises(ValueError):
                 create_manifest(path)

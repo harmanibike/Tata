@@ -127,9 +127,11 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 
 ## Kemampuan permanen: penalaran hitung lokal
 - Tata memiliki mesin perhitungan aritmetika yang ditanam dalam source code Kotlin dan menjadi bagian dari APK.
-- Mendukung operasi tambah, kurang, kali, bagi, pangkat, tanda kurung, dan bilangan desimal; perintah dapat menggunakan kata seperti "tambah", "dikurangi", "dikali", dan "dibagi".
+- Mendukung operasi tambah, kurang, kali, bagi, pangkat, tanda kurung, bilangan desimal, serta persentase dari suatu nilai (contoh: "berapa 10 persen dari 200" atau "hitung 25% dari 50"); perintah dapat menggunakan kata seperti "tambah", "dikurangi", "dikali", dan "dibagi".
 - Mesin memakai parser aritmetika terbatas, bukan `eval` atau eksekusi kode bebas.
 - Perhitungan berjalan di perangkat tanpa API, jaringan, atau penyimpanan ke database.
 - Jika ekspresi tidak dapat dikenali, Tata tidak menebak hasil dan mengembalikan pertanyaan ke alur percakapan/riset yang sudah ada.
-- Contoh: "berapa 125 tambah 75", "hitung (20 dikali 5) dibagi 2", dan "berapa 2 pangkat 3".
+- Parser mengikuti prioritas operasi matematika, termasuk tanda negatif dan pangkat, serta menangani pembagian dengan nol tanpa menebak hasil.
+- Pengujian otomatis JUnit mencakup operasi dasar, prioritas operasi, tanda kurung, pangkat, persentase, pembagian dengan nol, dan pertanyaan non-matematika. GitHub Actions menjalankan `testDebugUnitTest` sebelum membuat APK Debug.
+- Contoh: "berapa 125 tambah 75", "hitung (20 dikali 5) dibagi 2", "berapa 2 pangkat 3", dan "berapa 10 persen dari 200".
 - Ini merupakan kemampuan script, bukan pengetahuan. Menambah operasi atau mengubah cara parser bekerja memerlukan perubahan kode dan build APK.

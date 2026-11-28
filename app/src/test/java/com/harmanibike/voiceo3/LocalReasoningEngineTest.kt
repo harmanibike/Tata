@@ -142,6 +142,36 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun learningTransferDetectsDuplicatesAndConflictsWithoutOverwriting() {
+        val existing = listOf(
+            LearningRecord(1, "Apa itu fotosintesis?", "Proses tumbuhan membuat makanan.", "Buku", "diterima", 1L)
+        )
+        val incoming = listOf(
+            TransferLearningRecord(" Apa itu FOTOSINTESIS? ", "Proses tumbuhan membuat makanan.", "Sumber lain"),
+            TransferLearningRecord("Apa itu fotosintesis?", "Proses tumbuhan membuat makanan dengan bantuan cahaya.", "Referensi baru"),
+            TransferLearningRecord("Apa itu gravitasi?", "Gaya tarik antar benda.", "Buku")
+        )
+
+        val preview = LearningLabTransfer.preview(incoming, existing)
+
+        assertEquals(1, preview.duplicateCount)
+        assertEquals(1, preview.conflictCount)
+        assertEquals(2, preview.importCount)
+        assertEquals("diterima", existing.single().status)
+        assertEquals("Proses tumbuhan membuat makanan.", existing.single().correction)
+    }
+
+    @Test
+    fun learningTransferFingerprintIgnoresCaseAndWhitespaceButNotCorrection() {
+        val first = LearningLabTransfer.fingerprint("Apa itu AI?", "Kecerdasan buatan.")
+        val normalized = LearningLabTransfer.fingerprint("  APA   ITU ai? ", "Kecerdasan   buatan.")
+        val changed = LearningLabTransfer.fingerprint("Apa itu AI?", "Program komputer biasa.")
+
+        assertEquals(first, normalized)
+        assertTrue(first != changed)
+    }
+
+    @Test
     fun ignoresNonMathQuestions() {
         assertEquals(null, engine.calculate("siapa nama kamu"))
     }

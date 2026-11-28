@@ -106,9 +106,22 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             ).apply { cornerRadii = floatArrayOf(0f,0f,0f,0f,dp(42).toFloat(),dp(42).toFloat(),dp(42).toFloat(),dp(42).toFloat()) }
         }
         val headerLine = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        val menuButton = TextView(this).apply {
+            text = "☰"
+            textSize = 27f
+            includeFontPadding = false
+            gravity = Gravity.CENTER
+            setTextColor(white)
+            contentDescription = "Buka navigasi Tata AI"
+            isClickable = true
+            isFocusable = true
+            setPadding(dp(8), dp(4), dp(14), dp(4))
+            setOnClickListener { showNavigationMenu() }
+        }
+        headerLine.addView(menuButton, LinearLayout.LayoutParams(dp(48), dp(48)))
         val title = TextView(this).apply {
             text = "Tata AI"
-            textSize = 27f
+            textSize = 25f
             setTextColor(white)
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
@@ -240,62 +253,37 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         composer.addView(send, LinearLayout.LayoutParams(dp(68), dp(42)).apply { leftMargin = dp(8) })
         root.addView(composer)
 
-        val nav = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setPadding(dp(6), dp(5), dp(6), dp(5))
-            background = rounded(white, 28)
-            elevation = dp(8).toFloat()
-        }
-        fun navItem(label: String, icon: String, action: () -> Unit, selected: Boolean = false) {
-            val item = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                isClickable = true
-                isFocusable = true
-                setPadding(dp(3), dp(3), dp(3), dp(3))
-                setOnClickListener { action() }
-            }
-            val iconView = TextView(this).apply {
-                text = icon
-                textSize = 29f
-                includeFontPadding = false
-                gravity = Gravity.CENTER
-                setTextColor(if (selected) purple else muted)
-                background = null
-                contentDescription = label
-            }
-            item.addView(iconView, LinearLayout.LayoutParams(-1, dp(36)))
-            val labelView = TextView(this).apply {
-                text = label
-                textSize = 11f
-                gravity = Gravity.CENTER
-                setTextColor(if (selected) purple else muted)
-            }
-            item.addView(labelView, LinearLayout.LayoutParams(-1, dp(18)))
-            item.alpha = if (selected) 1f else 0.88f
-            nav.addView(item, LinearLayout.LayoutParams(0, dp(62), 1f))
-        }
-        navItem("Chat", "▤", { appendLog("Tata", "Silakan tulis atau ucapkan pesan.") })
-        navItem("Suara", "◉", { toggleConversationMode() }, true)
-        navItem("Riwayat", "◷", { showDataPrivacySettings() })
-        navItem("Pengaturan", "⚙", {
-            AlertDialog.Builder(this).setTitle("Pengaturan Tata")
-                .setItems(arrayOf("Tentang Tata AI", "Suara Tata", "Pengetahuan", "Learning Lab", "Cadangan data", "Privasi", "Sumber berita", "Model AI lokal")) { _, which ->
-                    when (which) {
-                        0 -> showAboutTata()
-                        1 -> showVoiceSettings()
-                        2 -> showKnowledgeManager()
-                        3 -> showLearningLab()
-                        4 -> showKnowledgeBackupOptions()
-                        5 -> showDataPrivacySettings()
-                        6 -> showNewsSourcesManager()
-                        7 -> showLocalModelsManager()
-                    }
-                }.setNegativeButton("Tutup", null).show()
-        })
-        root.addView(nav, LinearLayout.LayoutParams(-1, -2).apply { leftMargin = dp(8); rightMargin = dp(8); topMargin = dp(4); bottomMargin = dp(5) })
         setContentView(root)
+    }
+
+    private fun showNavigationMenu() {
+        val items = arrayOf("Percakapan", "Mode suara", "Riwayat percakapan", "Pengetahuan", "Learning Lab", "Model AI lokal", "Pengaturan Tata")
+        AlertDialog.Builder(this).setTitle("Navigasi Tata AI")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> messageInput.requestFocus()
+                    1 -> toggleConversationMode()
+                    2 -> showDataPrivacySettings()
+                    3 -> showKnowledgeManager()
+                    4 -> showLearningLab()
+                    5 -> showLocalModelsManager()
+                    6 -> showSettingsMenu()
+                }
+            }.setNegativeButton("Tutup", null).show()
+    }
+
+    private fun showSettingsMenu() {
+        val items = arrayOf("Tentang Tata AI", "Suara Tata", "Cadangan data", "Privasi", "Sumber berita")
+        AlertDialog.Builder(this).setTitle("Pengaturan Tata")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> showAboutTata()
+                    1 -> showVoiceSettings()
+                    2 -> showKnowledgeBackupOptions()
+                    3 -> showDataPrivacySettings()
+                    4 -> showNewsSourcesManager()
+                }
+            }.setNegativeButton("Kembali") { _, _ -> showNavigationMenu() }.show()
     }
 
     private var isVoiceMuted = false

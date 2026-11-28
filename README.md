@@ -253,3 +253,4 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Pencarian pengetahuan aktif menggunakan pemeringkatan kecocokan yang lebih konservatif agar satu kata umum tidak mudah memicu jawaban yang salah.
 - Hanya pengetahuan aktif yang telah disetujui dan diterapkan yang dicari sebagai jawaban. Catatan Learning Lab berstatus menunggu/ditolak tidak dipakai sebagai fakta.
 - Klasifikasi dan pencarian ini adalah fondasi berbasis kode, bukan pemahaman neural network.
+- Jawaban dari beberapa catatan pengetahuan aktif dapat digabungkan secara terbatas sambil mempertahankan pertanyaan sumber dan jawaban aslinya. Catatan Learning Lab yang belum disetujui tidak dipakai sebagai fakta.

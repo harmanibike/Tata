@@ -1,7 +1,5 @@
 package com.harmanibike.voiceo3
 
-import java.util.ArrayDeque
-
 /**
  * JNI facade for the optional on-device language model.
  * Calls must run on Dispatchers.IO. No prompt or model data is sent over a network.
@@ -10,8 +8,7 @@ class LocalLlmEngine {
     @Volatile
     private var loaded = false
 
-    private val historyLock = Any()
-    private val conversationHistory = ArrayDeque<Pair<String, String>>()
+    private val conversationContext = LocalConversationContext(maxTurns = 2, promptLimit = 1400)
 
     @Volatile
     var activeModelPath: String? = null
@@ -34,18 +31,7 @@ class LocalLlmEngine {
     fun generate(prompt: String, maxTokens: Int = 160): String? {
         if (!isLoaded || prompt.isBlank()) return null
         val question = prompt.trim().take(700)
-        val contextualPrompt = synchronized(historyLock) {
-            val recent = conversationHistory.toList().takeLast(2)
-            if (recent.isEmpty()) {
-                "Pertanyaan pengguna: $question"
-            } else {
-                val previous = recent.joinToString("\n") { pair ->
-                    "Pengguna: " + pair.first.take(180) + "\nTata: " + pair.second.take(260)
-                }
-                "Riwayat percakapan relevan (gunakan hanya jika berkaitan):\n" + previous +
-                    "\n\nPertanyaan terbaru pengguna: " + question
-            }
-        }
+        val contextualPrompt = conversationContext.buildPrompt(question)
         val answer = nativeGenerate(contextualPrompt.take(1400), maxTokens.coerceIn(32, 220))
         if (!answer.isNullOrBlank() &&
             !answer.startsWith("Pertanyaan terlalu panjang") &&
@@ -54,10 +40,7 @@ class LocalLlmEngine {
             !answer.startsWith("Generasi dihentikan") &&
             !answer.startsWith("Prompt tidak") &&
             !answer.startsWith("Tokenisasi")) {
-            synchronized(historyLock) {
-                conversationHistory.addLast(question to answer.take(600))
-                while (conversationHistory.size > 3) conversationHistory.removeFirst()
-            }
+            conversationContext.remember(question, answer)
         }
         return answer
     }
@@ -70,7 +53,7 @@ class LocalLlmEngine {
         // Mark unavailable before waiting for native generation to finish.
         loaded = false
         activeModelPath = null
-        synchronized(historyLock) { conversationHistory.clear() }
+        conversationContext.clear()
         if (nativeLibraryAvailable) runCatching { nativeUnload() }
     }
 

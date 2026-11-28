@@ -95,3 +95,8 @@ Contoh perintah setelah dataset benar-benar disetujui:
 python tools/corpus/train_tokenizer.py corpus-split.jsonl --output tata-tokenizer.json --vocab-size 4096
 python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --output checkpoints/tata-v0.pt --steps 1000 --device auto
 ```
+
+
+## Evaluator held-out test
+
+Script `tools/model/evaluate_transformer.py` memuat checkpoint dan menghitung loss/perplexity pada split `test` yang telah lolos tinjauan. Data test tidak pernah dimuat oleh loop training. Evaluator juga dapat menghasilkan contoh greedy dari prompt manual, tetapi hasilnya hanya untuk inspeksi manusia dan tidak membuktikan kebenaran atau keamanan. Laporan mencatat hash korpus/tokenizer dan jumlah token yang dinilai. Perplexity harus dilengkapi evaluasi kualitatif Bahasa Indonesia, halusinasi, privasi, bias, repetisi, dan uji perangkat.

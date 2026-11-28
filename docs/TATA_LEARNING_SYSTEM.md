@@ -1,0 +1,125 @@
+# Tata AI Learning System
+
+Status: **spesifikasi pengembangan; belum menyatakan fitur Learning Lab sudah tersedia di APK**.
+
+## Tujuan
+
+Mengembangkan sistem pembelajaran Tata AI yang dimulai dari interaksi langsung pengguna, tetapi tetap menjaga aturan persetujuan penyimpanan yang sudah ada sejak versi awal. Setiap instalasi Tata AI mengelola data belajarnya sendiri di perangkat. Berbagi pengetahuan dan kontribusi untuk pelatihan model adalah pilihan terpisah dan tidak pernah aktif otomatis.
+
+## Prinsip wajib
+
+1. **Pencarian bukan persetujuan.** Hasil pencarian, teks tempelan, ringkasan sementara, dan percakapan sementara tidak otomatis masuk database pengetahuan atau data pelatihan.
+2. **Persetujuan eksplisit sebelum menyimpan.** Pengguna memeriksa/mengedit informasi dan menekan Simpan. Membuka dialog, menekan Ajari Tata, atau melihat hasil pencarian belum berarti menyetujui penyimpanan.
+3. **Lokal secara default.** Pengetahuan yang disimpan masuk SQLite pada perangkat. Tidak dikirim ke server.
+4. **Izin terpisah untuk berbagi.** Menyimpan ke perangkat tidak berarti menyetujui pengiriman ke komunitas.
+5. **Izin terpisah untuk pelatihan model.** Berbagi pengetahuan umum tidak otomatis berarti mengizinkan data itu menjadi bahan pelatihan bobot model.
+6. **Data pribadi dikecualikan.** Jangan mengirim percakapan pribadi, identitas, kontak, lokasi presisi, atau informasi sensitif sebagai kontribusi komunitas.
+7. **Koreksi tidak otomatis dianggap benar.** Koreksi disimpan sebagai usulan setelah disetujui, lalu dapat ditinjau, diuji, dan dibandingkan dengan sumber yang dapat dipercaya.
+8. **Penghapusan harus jelas.** Pengguna dapat menghapus pengetahuan lokal dan menarik kontribusi yang masih dapat diidentifikasi sesuai kemampuan sistem distribusi. Jangan menjanjikan penghapusan dari salinan yang sudah diunduh pengguna lain.
+9. **Tidak ada AI API berbayar.** Fitur inti berjalan lokal. Jika kelak ada katalog bersama, itu hanya distribusi data statis/terverifikasi, bukan layanan inferensi AI.
+
+## Empat lapisan data yang terpisah
+
+### 1. Informasi sementara
+
+- Hasil riset, artikel, jawaban tempelan, dan konteks sesi.
+- Berada di memori sementara.
+- Tidak masuk SQLite sebagai pengetahuan atau bahan pelatihan.
+- Dapat hilang saat sesi berakhir.
+
+### 2. Pengetahuan lokal
+
+- Disimpan ke tabel `knowledge` hanya setelah pengguna menekan Simpan.
+- Menjadi sumber jawaban offline dan dapat diedit/dihapus.
+- Tetap berada di perangkat dan dapat dicadangkan secara manual melalui mekanisme ekspor yang disetujui pengguna.
+
+### 3. Riwayat pembelajaran dan evaluasi
+
+- Menyimpan koreksi atau hasil evaluasi hanya jika pengguna secara eksplisit memilih menyimpannya.
+- Mencatat asal informasi, waktu, status pemeriksaan, dan hubungan dengan pengetahuan yang diperbaiki.
+- Tidak otomatis menjadi memori pribadi, kontribusi komunitas, atau data pelatihan model.
+- Pengguna dapat meninjau dan menghapus catatan pembelajaran.
+
+### 4. Kontribusi komunitas dan data pelatihan
+
+- Dua persetujuan berbeda: (a) bagikan pengetahuan umum yang sudah disaring; (b) izinkan contoh tertentu digunakan untuk eksperimen/pelatihan model.
+- Sebelum berbagi, tampilkan pratinjau persis data yang akan dikirim, tujuan, dan pilihan batal.
+- Hilangkan metadata perangkat dan lakukan pemeriksaan data pribadi.
+- Kontribusi ditandai dengan versi, lisensi/izin, sumber, dan status moderasi.
+- Model hasil pelatihan diterbitkan sebagai versi baru yang dapat diunduh; tidak ada perubahan bobot model secara diam-diam di HP pengguna.
+
+## Alur belajar yang diharapkan
+
+1. Tata mencari atau menerima informasi dan menyajikannya sebagai sesi sementara.
+2. Pengguna memeriksa isi dan sumber.
+3. Tata menawarkan **Simpan sebagai pengetahuan lokal?**
+4. Jika pengguna setuju, formulir pengetahuan dibuka untuk diperiksa dan diedit.
+5. Hanya tombol **Simpan** yang menulis ke SQLite.
+6. Jika pengguna melakukan koreksi, Tata dapat menawarkan **Simpan koreksi untuk evaluasi?** secara terpisah.
+7. Jika pengguna ingin berbagi, Tata menampilkan persetujuan kontribusi komunitas secara terpisah.
+8. Jika pengguna ingin membantu pelatihan model, Tata menampilkan persetujuan pelatihan yang terpisah lagi.
+
+## Makna “Tata belajar” — jangan dicampur
+
+| Mekanisme | Apa yang berubah | Kapan tersedia |
+|---|---|---|
+| Belajar pengetahuan | Isi database lokal `knowledge` | Setelah persetujuan simpan |
+| Belajar preferensi/memori | Data personal pengguna | Setelah izin khusus |
+| Belajar dari koreksi | Kumpulan contoh evaluasi lokal | Setelah persetujuan terpisah |
+| Melatih model | Bobot neural network | Melalui pipeline training, evaluasi, dan rilis model baru |
+
+Menambahkan jawaban ke SQLite membuat Tata dapat mengambil pengetahuan itu kembali, tetapi **tidak dengan sendirinya mengubah bobot neural network**. Pelatihan model memerlukan dataset yang disiapkan secara sadar, tokenizer, pipeline training, komputasi, checkpoint, evaluasi terpisah, dan penerbitan versi model.
+
+## Arsitektur yang direncanakan
+
+- **KnowledgeStore (SQLite lokal):** pengetahuan yang telah disetujui.
+- **Learning Lab:** antarmuka untuk meninjau koreksi, sumber, dan evaluasi.
+- **Consent Manager:** mencatat persetujuan per tujuan, per item, dan waktu; persetujuan berbagi/pelatihan tidak boleh disimpulkan dari persetujuan simpan lokal.
+- **Contribution Exporter:** membuat paket kontribusi setelah pratinjau dan persetujuan, dengan penyaringan data pribadi.
+- **Community Knowledge Catalog (opsional, tahap berikutnya):** distribusi paket pengetahuan umum yang telah ditinjau. Tidak menerima chat pribadi atau data mentah secara otomatis.
+- **Tata Model Training Pipeline (riset terpisah):** mengolah contoh yang memang diizinkan untuk pelatihan, mencatat lisensi dan asal-usul data, mengevaluasi model, lalu merilis versi model baru.
+- **AI Cartridge:** memasang/mengganti/melepas model; pengetahuan lokal dan riwayat pengguna tidak ikut terhapus saat model diganti.
+
+## Tahapan implementasi
+
+### Tahap A — pertahankan alur lama
+
+- Jangan mengubah aturan pencarian sementara dan tombol Simpan yang sudah ada.
+- Audit seluruh jalur penulisan ke `knowledge` agar tidak ada penyimpanan otomatis.
+- Pastikan penghapusan semua pengetahuan tetap terpisah dari riwayat chat, pengaturan, dan model.
+
+### Tahap B — Learning Lab lokal
+
+- Tambahkan layar daftar koreksi/evaluasi yang pengguna pilih untuk simpan.
+- Tambahkan status: baru, perlu ditinjau, diterima, ditolak, dan sudah diuji.
+- Setiap perubahan pengetahuan menampilkan nilai sebelum/sesudah dan memerlukan konfirmasi.
+- Tambahkan uji regresi untuk memastikan koreksi tidak merusak pengetahuan lain.
+
+### Tahap C — kontribusi komunitas opsional
+
+- Rancang ekspor paket pengetahuan umum yang telah dipilih satu per satu.
+- Tampilkan pratinjau dan izin berbagi sebelum file dikirim.
+- Mulai dari impor/ekspor paket manual; sinkronisasi online hanya setelah server, autentikasi, moderasi, keamanan, dan kebijakan privasi dirancang.
+- Tidak menjadikan server sebagai syarat penggunaan offline.
+
+### Tahap D — pelatihan Tata Model
+
+- Siapkan korpus legal dan contoh instruksi yang memiliki izin pelatihan.
+- Pisahkan data training, validation, dan test.
+- Mulai dari eksperimen kecil dari bobot acak; simpan seed, konfigurasi, manifest sumber, checkpoint, dan metrik.
+- Latih dan evaluasi di komputer yang memadai; HP menjadi perangkat inferensi dan pengujian, bukan tempat utama melatih model besar.
+- Terbitkan model baru hanya jika evaluasi menunjukkan peningkatan dan tidak ada regresi penting.
+
+## Kriteria penerimaan
+
+- Tidak ada hasil pencarian/teks tempelan yang tersimpan tanpa persetujuan eksplisit.
+- Menyimpan lokal tidak pernah otomatis mengirim data.
+- Persetujuan berbagi dan persetujuan pelatihan model ditampilkan secara terpisah.
+- Pengguna dapat melihat, mengedit, dan menghapus pengetahuan lokal.
+- Pergantian atau penghapusan model tidak menghapus pengetahuan dan riwayat lokal.
+- Setiap klaim model telah belajar dari pelatihan harus didukung checkpoint, manifest data, metrik evaluasi, dan pengujian inferensi.
+- Build CI lulus dan perilaku penyimpanan diuji pada perangkat Android nyata sebelum fitur dinyatakan siap.
+
+## Keputusan awal
+
+Mulai dari **Tahap A dan desain Tahap B**. Jangan mengaktifkan sinkronisasi komunitas atau pelatihan dari data pengguna secara otomatis. Pertahankan aplikasi yang sekarang tetap berfungsi; perubahan skema database harus aditif dan disertai migrasi serta pengujian agar data lama tidak hilang.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import statistics
 from collections import Counter, defaultdict
@@ -31,6 +32,15 @@ def distribution(values: list[int]) -> dict:
     }
 
 
+def normalized_answer_hash(record: dict) -> str:
+    answer = "\n".join(
+        message["content"].casefold().strip()
+        for message in record["messages"] if message["role"] == "assistant"
+    )
+    normalized = " ".join(answer.split())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
 def record_lengths(record: dict, tokenizer: CharacterBPE | None) -> tuple[int, int | None]:
     messages = record["messages"]
     character_count = sum(len(message["content"]) for message in messages)
@@ -39,11 +49,13 @@ def record_lengths(record: dict, tokenizer: CharacterBPE | None) -> tuple[int, i
     token_count = sum(
         len(tokenizer.encode(message["role"] + ": " + message["content"] + "\n"))
         for message in messages
-    ) + 2  # BOS and EOS
+    ) + 2
     return character_count, token_count
 
 
 def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | None = None) -> dict:
+    if context_length < 2:
+        raise ValueError("context_length minimal 2")
     errors, validation_stats = validate_file(path)
     if errors:
         return {
@@ -60,14 +72,22 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
     privacy = Counter()
     splits = Counter()
     split_sources = defaultdict(set)
+    split_tasks = defaultdict(Counter)
     licenses = Counter()
     languages = Counter()
     tasks = Counter()
     approved_sources = set()
+    source_example_counts = Counter()
     approved_examples = 0
     chars_by_split = defaultdict(list)
     tokens_by_split = defaultdict(list)
+    user_chars_by_split = defaultdict(list)
+    assistant_chars_by_split = defaultdict(list)
     eligible_token_lengths = []
+    short_user_examples = 0
+    short_assistant_examples = 0
+    long_examples = 0
+    answer_hash_counts = Counter()
 
     for record in records:
         quality[record.get("quality_review", "missing")] += 1
@@ -75,15 +95,29 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
         split = record.get("split", "unassigned")
         splits[split] += 1
         languages[record.get("language", "missing")] += 1
-        tasks[record.get("task", "missing")] += 1
+        task = record.get("task", "missing")
+        tasks[task] += 1
         source = record.get("source") or {}
         licenses[source.get("license", "missing")] += 1
         source_id = source.get("source_id")
         if record.get("privacy_review") == "passed" and record.get("quality_review") == "passed":
             approved_examples += 1
             approved_sources.add(source_id)
+            source_example_counts[source_id] += 1
             if split in {"train", "validation", "test"}:
                 split_sources[split].add(source_id)
+                split_tasks[split][task] += 1
+                user_text = "\n".join(m["content"] for m in record["messages"] if m["role"] == "user")
+                assistant_text = "\n".join(m["content"] for m in record["messages"] if m["role"] == "assistant")
+                user_chars_by_split[split].append(len(user_text))
+                assistant_chars_by_split[split].append(len(assistant_text))
+                if len(user_text.strip()) < 10:
+                    short_user_examples += 1
+                if len(assistant_text.strip()) < 20:
+                    short_assistant_examples += 1
+                if len(user_text) + len(assistant_text) > 4000:
+                    long_examples += 1
+                answer_hash_counts[normalized_answer_hash(record)] += 1
                 char_count, token_count = record_lengths(record, tokenizer)
                 chars_by_split[split].append(char_count)
                 if token_count is not None:
@@ -107,10 +141,30 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
         warnings.append("Jumlah contoh disetujui di bawah 1.000; hasil hanya layak dianggap pilot pipeline, bukan asisten umum")
     if any(quality[key] for key in ("pending", "missing")):
         warnings.append("Masih ada contoh yang menunggu tinjauan kualitas atau belum memiliki status")
+    if short_user_examples:
+        warnings.append("Ada prompt user yang sangat pendek; tinjau konteks dan kegunaannya secara manual")
+    if short_assistant_examples:
+        warnings.append("Ada jawaban sangat pendek; pastikan bukan jawaban kosong atau tidak informatif")
+    if long_examples:
+        warnings.append("Ada contoh gabungan di atas 4.000 karakter; periksa kualitas dan batas konteksnya")
+
+    repeated_answer_groups = sum(1 for count in answer_hash_counts.values() if count >= 3)
+    if repeated_answer_groups:
+        warnings.append("Ada jawaban identik yang dipakai pada tiga atau lebih contoh; tinjau kemungkinan pola jawaban berulang")
+    max_source_examples = max(source_example_counts.values(), default=0)
+    source_concentration = round(max_source_examples / approved_examples, 4) if approved_examples else 0.0
+    if source_concentration > 0.5:
+        warnings.append("Lebih dari separuh contoh berasal dari satu sumber; keragaman sumber perlu ditingkatkan")
 
     length_report = {
         "characters_per_example": {
             split: distribution(chars_by_split[split]) for split in ("train", "validation", "test")
+        },
+        "user_characters_per_example": {
+            split: distribution(user_chars_by_split[split]) for split in ("train", "validation", "test")
+        },
+        "assistant_characters_per_example": {
+            split: distribution(assistant_chars_by_split[split]) for split in ("train", "validation", "test")
         },
         "tokenizer_supplied": tokenizer is not None,
         "tokenizer_vocab_size": len(tokenizer.vocab) if tokenizer else None,
@@ -121,17 +175,32 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
             "context_length": context_length,
             "examples_over_context": sum(value > context_length for value in eligible_token_lengths),
             "examples_at_or_under_context": sum(value <= context_length for value in eligible_token_lengths),
-            "note": "Perbandingan panjang contoh utuh; trainer mengambil jendela konteks dan bukan membuang contoh panjang."
+            "note": "Panjang contoh utuh; trainer mengambil jendela konteks dan bukan membuang contoh panjang."
                     if tokenizer else "Berikan --tokenizer untuk mengukur panjang token terhadap context length.",
         },
     }
     if tokenizer and eligible_token_lengths and max(eligible_token_lengths) > context_length:
-        warnings.append("Sebagian contoh lebih panjang dari context length; trainer memotongnya menjadi jendela, periksa apakah batas giliran tetap terwakili")
+        warnings.append("Sebagian contoh lebih panjang dari context length; periksa apakah batas giliran tetap terwakili")
+
     return {
         "status": "blocked" if blockers else "ready_for_pilot_review",
         "records_total": len(records),
         "approved_examples": approved_examples,
         "approved_source_groups": len(approved_sources),
+        "source_balance": {
+            "largest_source_examples": max_source_examples,
+            "largest_source_share": source_concentration,
+            "source_count_by_split": {key: len(split_sources[key]) for key in ("train", "validation", "test")},
+        },
+        "quality_profile": {
+            "short_user_examples_under_10_chars": short_user_examples,
+            "short_assistant_examples_under_20_chars": short_assistant_examples,
+            "long_examples_over_4000_chars": long_examples,
+            "groups_of_identical_answers_repeated_at_least_3_times": repeated_answer_groups,
+            "task_counts_by_split": {
+                split: dict(sorted(split_tasks[split].items())) for split in ("train", "validation", "test")
+            },
+        },
         "quality_review": dict(sorted(quality.items())),
         "privacy_review": dict(sorted(privacy.items())),
         "split_examples": {key: splits[key] for key in ("train", "validation", "test", "unassigned")},
@@ -142,7 +211,7 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
         "length_analysis": length_report,
         "blockers": blockers,
         "warnings": warnings,
-        "privacy_note": "Tidak ada isi percakapan, nama pengguna, atau teks mentah yang ditampilkan dalam laporan.",
+        "privacy_note": "Laporan hanya berisi statistik agregat; tidak menampilkan isi percakapan atau teks mentah.",
     }
 
 

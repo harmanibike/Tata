@@ -212,3 +212,16 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Jawaban dipilih menurut maksud: siapa Tata, arti AI, versi aplikasi, atau kemampuan Tata.
 - Pertanyaan umum yang tidak berkaitan dengan identitas tidak boleh ditangkap oleh pengenal identitas.
 - Pengujian unit mencakup variasi pertanyaan, tanda baca, dan jawaban ringkas yang sesuai.
+
+## Prioritas pemrosesan percakapan
+
+Urutan penanganan pesan Tata AI:
+1. Perintah perangkat dan tindakan khusus yang dikenali aplikasi.
+2. Pengetahuan lokal yang telah disimpan dan disetujui pengguna.
+3. Perhitungan lokal serta informasi berita yang diminta.
+4. Respons percakapan ringan untuk salam, emosi, dan interaksi sosial yang dikenali.
+5. Model bahasa generatif lokal (GGUF) untuk pertanyaan terbuka ketika model sedang aktif; inferensi dilakukan di perangkat tanpa API AI eksternal.
+6. Pencarian web sebagai cadangan jika model lokal belum aktif atau tidak menghasilkan jawaban.
+7. Jika tidak ada jawaban, Tata menawarkan alur riset manual. Pertanyaan yang belum terjawab tidak otomatis disimpan sebagai pengetahuan.
+
+Riwayat konteks model lokal bersifat sementara di RAM dan dibatasi pada beberapa pasangan percakapan terakhir. Riwayat tersebut dibersihkan saat model dilepas dari memori.

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from evaluate_tokenizer import DEFAULT_PROBES, build_report, evaluate_text
+from evaluate_tokenizer import DEFAULT_PROBES, atomic_write_json, build_report, evaluate_text
 
 
 class TokenizerEvaluationTests(unittest.TestCase):
@@ -48,6 +48,14 @@ class TokenizerEvaluationTests(unittest.TestCase):
     def test_report_rejects_empty_custom_probe(self):
         with self.assertRaises(ValueError):
             build_report(self.tokenizer_path, [""])
+
+    def test_atomic_report_is_valid_json(self):
+        report = build_report(self.tokenizer_path, ["kata-kata"])
+        output = Path(self.temp.name) / "reports" / "tokenizer.json"
+        atomic_write_json(output, report)
+        loaded = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(report, loaded)
+        self.assertEqual([], list(output.parent.glob("*.tmp")))
 
 if __name__ == "__main__":
     unittest.main()

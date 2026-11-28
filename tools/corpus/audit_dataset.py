@@ -37,7 +37,7 @@ def record_lengths(record: dict, tokenizer: CharacterBPE | None) -> tuple[int, i
     if tokenizer is None:
         return character_count, None
     token_count = sum(
-        len(tokenizer.encode(message["role"] + ": " + message["content"] + "\\n"))
+        len(tokenizer.encode(message["role"] + ": " + message["content"] + "\n"))
         for message in messages
     ) + 2  # BOS and EOS
     return character_count, token_count

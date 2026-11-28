@@ -38,11 +38,18 @@ class CharacterBPETests(unittest.TestCase):
         ordered_tokens = list(SPECIAL_TOKENS) + list(tokenizer.alphabet)
         ordered_tokens.extend(left + right for left, right in tokenizer.merges)
         token_to_id = {token: index for index, token in enumerate(ordered_tokens)}
-        for sample in fixture["samples"]:
-            with self.subTest(text=sample["text"]):
-                tokens = tokenizer.encode(sample["text"])
-                self.assertEqual(sample["token_ids"], [token_to_id[token] for token in tokens])
-                self.assertEqual(sample["decoded"], tokenizer.decode(tokens))
+        cases = [{"tokenizer": fixture["tokenizer"], "samples": fixture["samples"]}]
+        cases.extend(fixture.get("additional_cases", []))
+        for case in cases:
+            case_tokenizer = CharacterBPE.from_dict(case["tokenizer"])
+            case_vocab = list(SPECIAL_TOKENS) + list(case_tokenizer.alphabet)
+            case_vocab.extend(left + right for left, right in case_tokenizer.merges)
+            case_token_to_id = {token: index for index, token in enumerate(case_vocab)}
+            for sample in case["samples"]:
+                with self.subTest(text=sample["text"]):
+                    tokens = case_tokenizer.encode(sample["text"])
+                    self.assertEqual(sample["token_ids"], [case_token_to_id[token] for token in tokens])
+                    self.assertEqual(sample["decoded"], case_tokenizer.decode(tokens))
 
     def test_round_trip_indonesian_text(self):
         texts = [

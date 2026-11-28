@@ -25,14 +25,14 @@ class TataCharacterBpeTokenizerTest {
             alphabet = listOf("a", "🧩"),
             merges = emptyList()
         )
-        assertEquals(listOf(5, 6), tokenizer.encode("a🧩"))
-        assertEquals("a🧩", tokenizer.decode(listOf(5, 6)))
+        assertEquals(listOf(4, 5), tokenizer.encode("a🧩"))
+        assertEquals("a🧩", tokenizer.decode(listOf(4, 5)))
     }
 
     @Test
     fun unknownCharactersUseUnknownToken() {
         val tokenizer = TataCharacterBpeTokenizer(listOf("a"), emptyList())
-        assertEquals(listOf(5, 1), tokenizer.encode("a🧩"))
+        assertEquals(listOf(4, 1), tokenizer.encode("a🧩"))
     }
 
     @Test

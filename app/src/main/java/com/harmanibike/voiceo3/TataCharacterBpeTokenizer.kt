@@ -1,5 +1,9 @@
 package com.harmanibike.voiceo3
 
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+
 /**
  * Eksperimen tokenizer Character-BPE Tata.
  * Urutan ID harus identik dengan tools.model.training_data.tokenizer_vocabulary.
@@ -11,6 +15,74 @@ class TataCharacterBpeTokenizer(
 ) {
     companion object {
         val SPECIAL_TOKENS = listOf("<pad>", "<unk>", "<bos>", "<eos>")
+        private const val MAX_JSON_CHARS = 16 * 1024 * 1024
+        private const val MAX_TOKEN_ENTRIES = 100_000
+
+        /**
+         * Membaca format JSON yang ditulis oleh CharacterBPE.to_dict() Python.
+         * Ukuran dan seluruh field struktural diperiksa sebelum tokenizer dibuat.
+         */
+        fun fromJson(json: String): TataCharacterBpeTokenizer {
+            require(json.length <= MAX_JSON_CHARS) { "File tokenizer terlalu besar" }
+            try {
+                val payload = JSONObject(json)
+                require(payload.get("format") == "tata-character-bpe") {
+                    "Format tokenizer tidak dikenal"
+                }
+                require(payload.getInteger("format_version") == 1) {
+                    "Versi format tokenizer tidak didukung"
+                }
+
+                val specialTokens = payload.getJSONArray("special_tokens").toStringList()
+                require(specialTokens == SPECIAL_TOKENS) {
+                    "Daftar token khusus tidak cocok"
+                }
+
+                val alphabetArray = payload.getJSONArray("alphabet")
+                require(alphabetArray.length() <= MAX_TOKEN_ENTRIES) {
+                    "Alphabet tokenizer terlalu besar"
+                }
+                val alphabet = alphabetArray.toStringList()
+
+                val mergesArray = payload.getJSONArray("merges")
+                require(mergesArray.length() <= MAX_TOKEN_ENTRIES) {
+                    "Daftar merge tokenizer terlalu besar"
+                }
+                val merges = ArrayList<Pair<String, String>>(mergesArray.length())
+                for (index in 0 until mergesArray.length()) {
+                    val pair = mergesArray.getJSONArray(index)
+                    require(pair.length() == 2) { "Setiap merge harus berisi dua token" }
+                    val left = pair.getString(0)
+                    val right = pair.getString(1)
+                    merges.add(left to right)
+                }
+
+                val tokenizer = TataCharacterBpeTokenizer(alphabet, merges)
+                require(payload.getInteger("vocab_size") == tokenizer.idToToken.size) {
+                    "Ukuran vocabulary tokenizer tidak cocok"
+                }
+                return tokenizer
+            } catch (error: JSONException) {
+                throw IllegalArgumentException("JSON tokenizer tidak valid", error)
+            }
+        }
+
+        private fun JSONObject.getInteger(name: String): Int {
+            val value = get(name)
+            require(value is Number) { "Field $name harus berupa angka" }
+            val number = value.toDouble()
+            require(number.isFinite() && number % 1.0 == 0.0 &&
+                number >= Int.MIN_VALUE && number <= Int.MAX_VALUE
+            ) { "Field $name harus berupa bilangan bulat" }
+            return number.toInt()
+        }
+
+        private fun JSONArray.toStringList(): List<String> =
+            (0 until length()).map { index ->
+                val value = get(index)
+                require(value is String) { "Elemen array harus berupa teks" }
+                value
+            }
     }
 
     val alphabet: List<String> = alphabet.toList()

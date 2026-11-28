@@ -70,14 +70,14 @@ class LocalModelStore(context: Context) {
         try {
             resolver.openInputStream(uri)?.use { input ->
                 FileOutputStream(temporary).use { output ->
-                    val header = ByteArray(4)
+                    val header = ByteArray(GgufHeaderReader.HEADER_SIZE)
                     var offset = 0
                     while (offset < header.size) {
                         val count = input.read(header, offset, header.size - offset)
                         if (count < 0) throw IllegalArgumentException("File model terlalu pendek atau rusak.")
                         offset += count
                     }
-                    require(isGgufHeader(header)) { "Format tidak dikenali. Tata hanya menerima model GGUF." }
+                    require(GgufHeaderReader.parse(header) != null) { "Header GGUF tidak valid atau versinya belum didukung Tata (versi 2–3)." }
                     output.write(header)
                     var copiedBytes = header.size.toLong()
                     require(copiedBytes <= importLimit) { "Ukuran model melebihi ruang penyimpanan yang aman." }

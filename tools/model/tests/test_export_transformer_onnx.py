@@ -15,7 +15,7 @@ except ImportError:
 from tools.corpus.train_tokenizer import CharacterBPE
 from tools.model.transformer_config import TransformerConfig
 from tools.model.train_transformer import build_model_class
-from tools.model.export_transformer_onnx import export, load_best_checkpoint
+from tools.model.export_transformer_onnx import export, load_best_checkpoint, sha256_file
 
 
 @unittest.skipIf(torch is None or onnx is None, "PyTorch and ONNX are installed by the runtime workflow")
@@ -40,8 +40,8 @@ class TataOnnxExportTests(unittest.TestCase):
             "seed": 17,
             "config": self.config.report(),
             "model": model.state_dict(),
-            "train_meta": {"corpus_sha256": "synthetic-train", "source_register_sha256": "synthetic-register"},
-            "validation_meta": {"corpus_sha256": "synthetic-validation"},
+            "train_meta": {"corpus_sha256": "synthetic-train", "tokenizer_sha256": sha256_file(self.tokenizer_path), "source_register_sha256": "synthetic-register"},
+            "validation_meta": {"corpus_sha256": "synthetic-validation", "source_register_sha256": "synthetic-register"},
             "training": {"initialization": "random", "pretrained_weights": False},
         }, self.checkpoint_path)
 

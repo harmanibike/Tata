@@ -11,7 +11,6 @@ import org.xmlpull.v1.XmlPullParser
 import java.net.HttpURLConnection
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.net.URLDecoder
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,7 +105,7 @@ class NetworkHelper(context: Context, private val knowledgeStore: KnowledgeStore
     private fun resolveSearchUrl(href: String): String {
         if (href.startsWith("https://") && !href.contains("duckduckgo.com/l/")) return href
         val query = runCatching { android.net.Uri.parse(href).getQueryParameter("uddg") }.getOrNull()
-        return query?.let { runCatching { URLDecoder.decode(it, "UTF-8") }.getOrDefault(it) }.orEmpty()
+        return query.orEmpty()
     }
 
     private fun readWebPage(pageUrl: String): String {

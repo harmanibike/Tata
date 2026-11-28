@@ -174,6 +174,15 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun learningTransferUsesStableQuestionIdentityAcrossFormatting() {
+        val first = LearningLabTransfer.questionIdentity("Apa itu Tata AI?")
+        val normalized = LearningLabTransfer.questionIdentity("  APA   ITU tata ai? ")
+        val other = LearningLabTransfer.questionIdentity("Apa itu Tata?")
+        assertEquals(first, normalized)
+        assertTrue(first != other)
+    }
+
+    @Test
     fun learningTransferFingerprintIgnoresCaseAndWhitespaceButNotCorrection() {
         val first = LearningLabTransfer.fingerprint("Apa itu AI?", "Kecerdasan buatan.")
         val normalized = LearningLabTransfer.fingerprint("  APA   ITU ai? ", "Kecerdasan   buatan.")

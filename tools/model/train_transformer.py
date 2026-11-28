@@ -88,6 +88,37 @@ def build_model_class(torch):
     return TataTransformer
 
 
+def load_resume_checkpoint(torch, source: Path, device):
+    """Load only safe tensor/primitive checkpoint data; never unpickle arbitrary objects."""
+    try:
+        checkpoint = torch.load(
+            source, map_location=device, weights_only=True
+        )
+    except TypeError as error:
+        raise RuntimeError(
+            "Versi PyTorch tidak mendukung pemuatan checkpoint aman (weights_only=True)"
+        ) from error
+    except Exception as error:
+        raise ValueError("Checkpoint tidak dapat dibaca dengan mode aman") from error
+
+    if not isinstance(checkpoint, dict):
+        raise ValueError("Format checkpoint tidak valid: harus berupa dictionary")
+    if checkpoint.get("format") != "tata-transformer-checkpoint":
+        raise ValueError("Format checkpoint bukan milik Tata Transformer")
+    if checkpoint.get("format_version") != 1:
+        raise ValueError("Versi format checkpoint tidak didukung")
+    if checkpoint.get("checkpoint_role") != "latest_resume":
+        raise ValueError("Checkpoint bukan checkpoint untuk melanjutkan training")
+    required = {
+        "step", "config", "model", "optimizer", "train_meta", "validation_meta"
+    }
+    if not required.issubset(checkpoint):
+        raise ValueError("Checkpoint tidak lengkap: ada bagian wajib yang hilang")
+    if not isinstance(checkpoint["model"], dict) or not isinstance(checkpoint["optimizer"], dict):
+        raise ValueError("State model atau optimizer pada checkpoint tidak valid")
+    return checkpoint
+
+
 def atomic_save(torch, payload, destination: Path):
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
@@ -261,7 +292,7 @@ def main() -> int:
     if args.resume:
         if not args.output.exists():
             parser.error("--resume dipakai tetapi checkpoint tidak ditemukan")
-        checkpoint = torch.load(args.output, map_location=device, weights_only=False)
+        checkpoint = load_resume_checkpoint(torch, args.output, device)
         if checkpoint.get("config") != config.report():
             parser.error("Konfigurasi checkpoint berbeda")
         if checkpoint.get("train_meta", {}).get("corpus_sha256") != train_meta["corpus_sha256"]:

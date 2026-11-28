@@ -237,16 +237,33 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             elevation = dp(8).toFloat()
         }
         fun navItem(label: String, icon: String, action: () -> Unit, selected: Boolean = false) {
-            val item = TextView(this).apply {
-                text = "$icon\n$label"
-                textSize = 12f
+            val item = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setTextColor(if (selected) white else muted)
-                setPadding(dp(7), dp(8), dp(7), dp(8))
-                if (selected) background = rounded(purple, 16)
+                isClickable = true
+                isFocusable = true
+                setPadding(dp(3), dp(3), dp(3), dp(3))
                 setOnClickListener { action() }
             }
-            nav.addView(item, LinearLayout.LayoutParams(0, dp(52), 1f))
+            val iconView = TextView(this).apply {
+                text = icon
+                textSize = 29f
+                includeFontPadding = false
+                gravity = Gravity.CENTER
+                setTextColor(if (selected) purple else muted)
+                background = null
+                contentDescription = label
+            }
+            item.addView(iconView, LinearLayout.LayoutParams(-1, dp(36)))
+            val labelView = TextView(this).apply {
+                text = label
+                textSize = 11f
+                gravity = Gravity.CENTER
+                setTextColor(if (selected) purple else muted)
+            }
+            item.addView(labelView, LinearLayout.LayoutParams(-1, dp(18)))
+            item.alpha = if (selected) 1f else 0.88f
+            nav.addView(item, LinearLayout.LayoutParams(0, dp(62), 1f))
         }
         navItem("Chat", "▤", { appendLog("Tata", "Silakan tulis atau ucapkan pesan.") })
         navItem("Suara", "◉", { toggleConversationMode() }, true)

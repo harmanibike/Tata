@@ -87,7 +87,8 @@ Pengembangan tidak mewajibkan GGUF. Jalur hibrida dibagi menjadi tiga lapisan ya
 3. **Mesin generatif neural milik Tata (tahap riset berikutnya):** model yang arsitektur dan bobotnya dikembangkan serta dilatih sendiri. Pelatihan memerlukan korpus teks berizin, tokenizer, pipeline training, evaluasi, dan komputasi yang memadai. Ini belum tersedia di APK.
 
 ### Implementasi awal generator berbasis kode
-- TataGenerativeEngine menyusun respons dari maksud dan bagian kalimat yang diberikan pengguna untuk permintaan membuat rencana, membandingkan pilihan, dan menimbang keputusan.
+- TataGenerativeEngine menyusun respons dari maksud dan bagian kalimat yang diberikan pengguna untuk membuat rencana, membandingkan pilihan, menimbang keputusan, dan mengembangkan ide awal.
+- Generator dapat melanjutkan permintaan sebelumnya seperti “lanjutkan” atau “contohnya” dengan konteks singkat yang hanya disimpan di RAM sesi. Konteks dapat dibersihkan dan tidak masuk database.
 - Generator berjalan di Kotlin, offline, tanpa API, tanpa GGUF, tanpa jaringan, dan tanpa penyimpanan percakapan ke database.
 - Generator tidak mengarang fakta. Untuk pertanyaan faktual yang tidak ditemukan di pengetahuan lokal, Tata menyatakan keterbatasannya dan meminta pengguna mengajarkan sumber melalui Learning Lab atau secara eksplisit meminta riset web.
 - Jika model lokal opsional tersedia dan aktif, model tersebut tetap dapat digunakan untuk generasi bahasa lebih luas. Namun generator berbasis kode tetap menjadi jalur tanpa model eksternal.

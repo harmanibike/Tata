@@ -2,7 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from train_tokenizer import CharacterBPE
+import json
+
+from train_tokenizer import CharacterBPE, load_training_texts
 
 
 class CharacterBPETests(unittest.TestCase):
@@ -38,6 +40,23 @@ class CharacterBPETests(unittest.TestCase):
     def test_rejects_too_small_vocabulary(self):
         with self.assertRaises(ValueError):
             CharacterBPE.train(["Indonesia"], vocab_size=4)
+
+    def test_training_loader_excludes_unreviewed_and_held_out_records(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "corpus.jsonl"
+            base = {
+                "privacy_review": "passed",
+                "quality_review": "passed",
+                "split": "train",
+                "messages": [{"role": "user", "content": "teks latih"}],
+            }
+            pending = {**base, "quality_review": "pending"}
+            held_out = {**base, "split": "test"}
+            path.write_text(
+                "\\n".join(json.dumps(item) for item in [base, pending, held_out]),
+                encoding="utf-8",
+            )
+            self.assertEqual(["teks latih"], load_training_texts(path))
 
 
 if __name__ == "__main__":

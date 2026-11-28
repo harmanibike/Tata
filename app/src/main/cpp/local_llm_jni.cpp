@@ -134,7 +134,7 @@ Java_com_harmanibike_voiceo3_LocalLlmEngine_nativeGenerate(
     const int32_t output_limit = std::clamp(max_tokens, 16, 256);
     const int32_t prompt_limit = std::max(1, context_limit - output_limit - 8);
     if (static_cast<int32_t>(tokens.size()) > prompt_limit) {
-        tokens.erase(tokens.begin(), tokens.end() - prompt_limit);
+        return to_java(env, "Pertanyaan terlalu panjang untuk konteks model saat ini. Ringkas pertanyaannya lalu coba lagi.");
     }
 
     for (size_t i = 0; i < tokens.size(); ++i) {

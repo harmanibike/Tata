@@ -1,6 +1,6 @@
 # Tata AI Learning System
 
-Status: **spesifikasi pengembangan; belum menyatakan fitur Learning Lab sudah tersedia di APK**.
+Status: **Learning Lab lokal tahap awal sudah ditambahkan ke kode; perlu verifikasi CI dan uji perangkat sebelum dinyatakan siap.**
 
 ## Tujuan
 
@@ -90,9 +90,18 @@ Menambahkan jawaban ke SQLite membuat Tata dapat mengambil pengetahuan itu kemba
 
 ### Tahap B — Learning Lab lokal
 
-- Tambahkan layar daftar koreksi/evaluasi yang pengguna pilih untuk simpan.
-- Tambahkan status: baru, perlu ditinjau, diterima, ditolak, dan sudah diuji.
-- Setiap perubahan pengetahuan menampilkan nilai sebelum/sesudah dan memerlukan konfirmasi.
+Implementasi awal di APK:
+- Menu **Pengaturan > Learning Lab** menampilkan catatan koreksi yang disimpan di SQLite lokal.
+- Pengguna menambahkan konteks, koreksi, dan sumber opsional melalui formulir.
+- Menekan **Simpan lokal** diikuti konfirmasi eksplisit menjadi satu-satunya jalur membuat catatan pembelajaran.
+- Status catatan dapat diubah menjadi perlu ditinjau, diterima, ditolak, atau sudah diuji.
+- Catatan yang diterima baru dapat dimasukkan ke pengetahuan aktif melalui tindakan terpisah dan konfirmasi.
+- Catatan dapat dihapus tanpa menghapus pengetahuan aktif.
+- Migrasi database versi 2 ke 3 bersifat aditif dan membuat tabel learning_records tanpa menghapus data lama.
+
+Pekerjaan lanjutan:
+- Hubungkan koreksi langsung dari percakapan dengan pratinjau sebelum penyimpanan.
+- Tambahkan edit catatan, filter status, ekspor/impor yang tetap lokal, dan pengujian migrasi/penyimpanan pada perangkat.
 - Tambahkan uji regresi untuk memastikan koreksi tidak merusak pengetahuan lain.
 
 ### Tahap C — kontribusi komunitas opsional
@@ -122,4 +131,4 @@ Menambahkan jawaban ke SQLite membuat Tata dapat mengambil pengetahuan itu kemba
 
 ## Keputusan awal
 
-Mulai dari **Tahap A dan desain Tahap B**. Jangan mengaktifkan sinkronisasi komunitas atau pelatihan dari data pengguna secara otomatis. Pertahankan aplikasi yang sekarang tetap berfungsi; perubahan skema database harus aditif dan disertai migrasi serta pengujian agar data lama tidak hilang.
+Mulai dari **audit Tahap A dan validasi implementasi awal Tahap B**. Jangan mengaktifkan sinkronisasi komunitas atau pelatihan dari data pengguna secara otomatis. Pertahankan aplikasi yang sekarang tetap berfungsi; perubahan skema database harus aditif dan disertai migrasi serta pengujian agar data lama tidak hilang.

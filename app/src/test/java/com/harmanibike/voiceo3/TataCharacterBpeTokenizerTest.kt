@@ -104,6 +104,11 @@ class TataCharacterBpeTokenizerTest {
                 validTokenizerJson(alphabet = """["a",7]""")
             )
         }
+        assertThrows(IllegalArgumentException::class.java) {
+            TataCharacterBpeTokenizer.fromJson(
+                validTokenizerJson(merges = """[["a",7]]""")
+            )
+        }
     }
 
     @Test

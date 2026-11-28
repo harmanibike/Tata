@@ -193,6 +193,29 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun identifiesCommonTataIdentityQuestions() {
+        assertTrue(TataIdentity.isIdentityQuestion("Siapa Tata AI?"))
+        assertTrue(TataIdentity.isIdentityQuestion("siapa kamu"))
+        assertTrue(TataIdentity.isIdentityQuestion("Halo, siapa nama kamu?"))
+        assertTrue(TataIdentity.isIdentityQuestion("Apa kemampuanmu?"))
+        assertEquals(false, TataIdentity.isIdentityQuestion("Siapa presiden Indonesia?"))
+    }
+
+    @Test
+    fun answersIdentityQuestionsWithOnlyRelevantInformation() {
+        assertEquals(
+            "Saya Tata AI, asisten digital Android yang sedang dikembangkan untuk membantu Anda.",
+            TataIdentity.answer("Siapa Tata AI?")
+        )
+        assertEquals(
+            "AI adalah singkatan dari Artificial Intelligence, yaitu kecerdasan buatan.",
+            TataIdentity.answer("Apa arti AI?")
+        )
+        assertTrue(TataIdentity.answer("Versi berapa?", "2.4.0").contains("2.4.0"))
+        assertTrue(TataIdentity.answer("Apa kemampuanmu?").contains("pengetahuan lokal"))
+    }
+
+    @Test
     fun ignoresNonMathQuestions() {
         assertEquals(null, engine.calculate("siapa nama kamu"))
     }

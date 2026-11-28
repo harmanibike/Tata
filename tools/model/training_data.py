@@ -104,6 +104,8 @@ def load_reviewed_sequences(
             }
             if source.get("license") not in allowed_licenses:
                 raise ValueError(f"Lisensi korpus tidak dikenal pada baris {line_number}")
+            if source.get("license") != registered["declared_license"].strip().lower():
+                raise ValueError(f"Lisensi korpus tidak cocok dengan register pada baris {line_number}")
             messages = record.get("messages")
             if not isinstance(messages, list) or len(messages) < 2:
                 raise ValueError(f"messages tidak valid pada baris {line_number}")

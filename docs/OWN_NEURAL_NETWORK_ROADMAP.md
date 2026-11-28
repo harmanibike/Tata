@@ -123,7 +123,7 @@ Evaluator held-out tersedia di `tools/model/evaluate_transformer.py`, dengan tes
 
 ### Evaluasi tokenizer sebelum model training
 
-Tool `tools/corpus/evaluate_tokenizer.py` menyediakan probe tetap untuk imbuhan Indonesia, reduplikasi, format rupiah, tanggal/jam, tanda baca, campuran bahasa, nama lokal, dan karakter emoji. Catat unknown rate, token-per-character, dan round-trip; bandingkan tokenizer pada korpus train yang sama. Probe ini hanya untuk evaluasi, tidak boleh digabung ke data training. Rasio token lebih kecil bukan bukti model lebih pintar atau lebih akurat.
+Tool `tools/corpus/evaluate_tokenizer.py` menyediakan probe tetap untuk imbuhan Indonesia, reduplikasi, format rupiah, tanggal/jam, tanda baca, campuran bahasa, nama lokal, dan karakter emoji. Laporan hanya menyimpan ID probe dan metrik agregat (unknown rate, token-per-character, dan round-trip), bukan menyalin isi teks uji. Probe hanya untuk evaluasi dan tidak boleh digabung ke data training. Tes memastikan teks khusus tidak bocor ke JSON laporan. Rasio token lebih kecil bukan bukti model lebih pintar atau lebih akurat.
 
 
 ### Konteks pilot dan sampling validation

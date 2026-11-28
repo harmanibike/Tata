@@ -18,6 +18,7 @@ class CircleSpectrumView(context: Context) : View(context) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var amplitude = 0f
     private var active = false
+    private var speaking = false
     private var phase = 0f
     private val purple = Color.rgb(112, 63, 238)
     private val violet = Color.rgb(180, 91, 255)
@@ -35,7 +36,14 @@ class CircleSpectrumView(context: Context) : View(context) {
 
     fun setActive(value: Boolean) {
         active = value
+        if (active) speaking = false
         if (!active) amplitude = 0f
+        invalidate()
+    }
+
+    fun setSpeaking(value: Boolean) {
+        speaking = value
+        if (value) active = false
         invalidate()
     }
 
@@ -45,7 +53,7 @@ class CircleSpectrumView(context: Context) : View(context) {
         val cy = height / 2f
         val base = (width.coerceAtMost(height) * 0.29f)
         phase += if (active) 0.10f else 0.025f
-        val pulse = if (active) amplitude else 0.08f + 0.035f * (1f + sin(phase * 0.7f))
+        val pulse = if (active) amplitude else if (speaking) 0.30f + 0.22f * (1f + sin(phase * 1.8f)) else 0.08f + 0.035f * (1f + sin(phase * 0.7f))
         val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.argb(if (active) 38 else 20, 137, 86, 245)
             style = Paint.Style.FILL
@@ -65,8 +73,11 @@ class CircleSpectrumView(context: Context) : View(context) {
             val angle = (2.0 * PI * i / bars - PI / 2.0).toFloat()
             val wave = (0.5f + 0.5f * sin(i * 0.57f + phase * 2.2f))
             val detail = (0.5f + 0.5f * cos(i * 0.31f - phase * 1.4f))
-            val energy = if (active) (0.12f + amplitude * (0.25f + 0.75f * wave) + 0.12f * detail)
-                         else (0.10f + 0.10f * wave)
+            val energy = when {
+                active -> 0.12f + amplitude * (0.25f + 0.75f * wave) + 0.12f * detail
+                speaking -> 0.20f + 0.35f * wave + 0.18f * detail
+                else -> 0.10f + 0.10f * wave
+            }
             val inner = base * 1.12f
             val outer = inner + base * energy.coerceIn(0.08f, 1.05f)
             paint.style = Paint.Style.STROKE
@@ -94,13 +105,14 @@ class CircleSpectrumView(context: Context) : View(context) {
         paint.textSize = base * 0.18f
         paint.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
         paint.color = Color.rgb(218, 210, 255)
-        canvas.drawText(if (active) "LISTENING" else "VOICE", cx, cy + base * 0.48f, paint)
+        canvas.drawText(when { active -> "LISTENING"; speaking -> "SPEAKING"; else -> "VOICE" }, cx, cy + base * 0.48f, paint)
 
-        if (active) postInvalidateDelayed(32L)
+        if (active || speaking) postInvalidateDelayed(32L)
     }
 
     override fun onDetachedFromWindow() {
         active = false
+        speaking = false
         super.onDetachedFromWindow()
     }
 }

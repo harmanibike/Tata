@@ -335,3 +335,10 @@ python tools/model/evaluate_transformer.py --checkpoint checkpoints/tata-v0.pt -
 - Probe evaluasi tidak pernah dimasukkan ke data training tokenizer.
 - Jalankan: `python tools/corpus/evaluate_tokenizer.py --tokenizer tata-tokenizer.json --output tokenizer-evaluation.json`.
 - Metrik ini hanya diagnosis tokenisasi; bukan ukuran kecerdasan, pemahaman, atau kebenaran model.
+
+
+## Pengaturan konteks dan evaluasi validation
+
+- Trainer menerima `--context-length` (default 256). Eksperimen pilot boleh memakai konteks lebih pendek bila contoh train/validation belum cukup panjang; konfigurasi konteks disimpan di checkpoint dan harus sama saat resume.
+- Evaluasi validation mengambil jendela penuh dari seluruh contoh, lalu memilih sampel yang tersebar merata bila jumlah jendela melebihi batas evaluasi. Ini menghindari penilaian yang hanya berasal dari bagian awal korpus.
+- Contoh pilot: `python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --output checkpoints/tata-pilot.pt --context-length 64 --steps 1000`. Tetap wajib punya data train dan validation yang sudah lolos review.

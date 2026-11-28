@@ -33,15 +33,35 @@ class OfflineConversationEngine {
                 "Dengan senang hati! Kalau ada yang ingin dibahas lagi, kita lanjut saja.",
                 "Sama-sama, ya. Semoga penjelasannya bermanfaat."
             )
-            containsAny(text, "aku sedih", "saya sedih", "lagi sedih", "merasa sedih", "sedang sedih") -> reply("sad",
-                "Aku ikut prihatin mendengarnya. Kalau kamu nyaman, ceritakan apa yang sedang terjadi. Aku akan mendengarkan.",
+            containsAny(text, "aku sedih", "saya sedih", "lagi sedih", "merasa sedih", "sedang sedih", "hatiku sedih", "hati saya sedih", "aku menangis", "saya menangis") -> reply("sad",
+                "Aku ikut prihatin mendengarnya. Kalau kamu nyaman, ceritakan apa yang sedang terjadi. Aku akan mendengarkan tanpa menghakimi.",
                 "Kedengarannya hari ini cukup berat. Tidak perlu buru-buru, kamu boleh cerita pelan-pelan.",
-                "Maaf kamu sedang melalui hal yang tidak menyenangkan. Aku bisa menemanimu bicara."
+                "Maaf kamu sedang melalui hal yang tidak menyenangkan. Kita bisa membicarakannya satu per satu."
             )
-            containsAny(text, "aku senang", "saya senang", "lagi bahagia", "merasa bahagia", "aku bahagia") -> reply("happy",
+            containsAny(text, "aku senang", "saya senang", "lagi bahagia", "merasa bahagia", "aku bahagia", "aku gembira", "saya gembira", "aku berhasil", "saya berhasil") -> reply("happy",
                 "Wah, ikut senang mendengarnya! Apa hal paling menyenangkan yang terjadi hari ini?",
-                "Asyik! Senang rasanya mendengar kabar baik. Cerita sedikit, yuk.",
-                "Itu kabar bagus. Semoga suasana hati menyenangkan ini bertahan sepanjang hari."
+                "Asyik! Itu kabar baik. Cerita sedikit, yuk, apa yang membuatmu bahagia?",
+                "Ikut merayakan kabar baikmu. Semoga suasana menyenangkan ini bertahan sepanjang hari."
+            )
+            containsAny(text, "aku marah", "saya marah", "lagi marah", "sedang marah", "aku kesal", "saya kesal", "jengkel", "naik darah", "emosi sekali", "aku emosi") -> reply("angry",
+                "Aku menangkap kamu sedang marah. Perasaan itu bisa muncul saat sesuatu terasa tidak adil atau melelahkan. Kalau kamu bersedia, apa yang paling membuatmu kesal?",
+                "Sepertinya ada hal yang benar-benar mengganggumu. Kita pelan-pelan saja. Mau cerita dulu, atau mengambil jeda sebentar untuk menenangkan diri?",
+                "Aku akan mendengarkan tanpa membalas dengan kemarahan. Coba ceritakan apa yang terjadi; kita cari langkah yang aman dan masuk akal."
+            )
+            containsAny(text, "aku takut", "saya takut", "merasa takut", "cemas", "khawatir", "gelisah", "panik") -> reply("anxious",
+                "Kedengarannya kamu sedang merasa takut atau cemas. Coba tarik napas perlahan jika nyaman, lalu ceritakan apa yang membuatmu khawatir.",
+                "Rasa khawatir bisa terasa berat. Kita urai satu hal dulu: apa yang paling kamu takutkan saat ini?",
+                "Aku bisa menemanimu menyusun langkah kecil. Apakah ada sesuatu yang sedang terasa mendesak atau membuatmu tidak aman?"
+            )
+            containsAny(text, "aku kecewa", "saya kecewa", "merasa kecewa", "gagal lagi", "putus asa") -> reply("disappointed",
+                "Aku turut prihatin. Kecewa setelah berharap banyak itu tidak mudah. Mau cerita apa yang tidak berjalan sesuai harapan?",
+                "Kita tidak perlu langsung mencari solusi. Aku bisa mendengarkan dulu, lalu kalau kamu siap kita pikirkan langkah berikutnya.",
+                "Satu hasil yang buruk tidak menentukan seluruh kemampuanmu. Apa yang terjadi?"
+            )
+            containsAny(text, "aku kesepian", "saya kesepian", "merasa sendiri", "tidak punya teman") -> reply("lonely",
+                "Merasa sendirian bisa berat. Aku bisa menemanimu berbicara di sini. Apakah ada orang tepercaya yang juga bisa kamu hubungi?",
+                "Terima kasih sudah cerita. Mau ngobrol tentang apa yang sedang kamu rasakan? Kamu tidak harus memendam semuanya sendiri.",
+                "Aku siap mendengarkan. Jika memungkinkan, menghubungi teman atau keluarga yang kamu percaya juga bisa membantu."
             )
             containsAny(text, "aku bosan", "saya bosan", "lagi bosan") -> reply("bored",
                 "Kita cari kegiatan yang seru, yuk. Bisa tebak-tebakan, cerita, atau bahas teknologi.",
@@ -95,6 +115,10 @@ class OfflineConversationEngine {
         return when (lastTopic) {
             "sad" -> "Aku masih mendengarkan. Bagian mana yang paling mengganggu pikiranmu saat ini?"
             "happy" -> "Apa ada hal lain dari kejadian itu yang membuatmu merasa senang?"
+            "angry" -> "Aku masih mendengarkan. Apa yang kamu butuhkan sekarang: didengarkan, mencari solusi, atau mengambil jeda?"
+            "anxious" -> "Mari fokus pada satu hal yang bisa kamu kendalikan sekarang. Apa langkah kecil yang terasa mungkin dilakukan?"
+            "disappointed" -> "Apa bagian yang paling membuatmu kecewa? Kita bisa memisahkan fakta, harapan, dan pilihan berikutnya."
+            "lonely" -> "Apakah ada seseorang yang membuatmu merasa aman untuk dihubungi hari ini?"
             "bored" -> "Kita pilih satu kegiatan dulu. Aku bisa mulai dengan teka-teki sederhana."
             "motivation" -> "Coba tentukan satu hal kecil yang realistis untuk kamu selesaikan hari ini."
             "joke" -> "Mau satu lagi? Aku punya beberapa tebak-tebakan ringan."

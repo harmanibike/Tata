@@ -63,3 +63,16 @@ Perkiraan jumlah parameter sekitar 1,3 juta dengan embedding output terikat. Ang
 
 ## Gerbang berikutnya
 Sebelum menulis loop training, selesaikan dan tinjau: validator, deduplikasi, split berbasis sumber, tokenizer, korpus legal yang memadai, serta evaluasi baseline. Implementasi PyTorch atau runtime lain harus ditinjau lisensi, ukuran, dan kemampuan perangkat pelatihan terlebih dahulu.
+
+
+## Estimator konfigurasi dan parameter
+
+Script `tools/model/transformer_config.py` memvalidasi dimensi konfigurasi dan menghitung estimasi parameter secara analitis tanpa framework machine learning. Baseline saat ini menghasilkan **1.310.400 parameter** dengan token embedding dan output head yang diikat (tied embeddings), bias aktif, dan dimensi pada tabel di atas.
+
+Perintah:
+```bash
+python tools/model/transformer_config.py
+python tools/model/transformer_config.py --output transformer-config-report.json
+```
+
+Laporan menyertakan rincian embedding, blok Transformer, normalisasi, dan output head. Angka ini adalah hitungan konfigurasi, bukan bukti bahwa model, bobot, atau proses pelatihan sudah dibuat. Implementasi aktual kelak harus mencocokkan hitungan ini dan diuji dengan framework yang dipilih.

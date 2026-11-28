@@ -355,3 +355,5 @@ Audit dataset juga dapat mengukur panjang karakter per contoh dan, bila tokenize
 
 
 Dataset readiness audit (`tools/corpus/audit_dataset.py`) also reports aggregate-only quality signals: short prompts/answers, long examples, repeated identical answers, task counts by split, and source concentration. These are manual-review warnings, not automatic judgments of semantic quality.
+
+The audit also detects exact normalized prompt repetitions and flags repeated prompts that have different approved answers. This is a conservative exact-text check, not semantic or paraphrase similarity detection.

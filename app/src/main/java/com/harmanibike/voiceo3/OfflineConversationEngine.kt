@@ -19,7 +19,7 @@ class OfflineConversationEngine {
         if (text.isBlank()) return null
 
         if (containsAny(text, "lanjut", "terus", "ceritakan lebih lanjut", "jelaskan lebih lanjut", "lalu bagaimana", "terus bagaimana")) {
-            return followUp()
+            return if (lastTopic == null) null else followUp()
         }
 
         return when {

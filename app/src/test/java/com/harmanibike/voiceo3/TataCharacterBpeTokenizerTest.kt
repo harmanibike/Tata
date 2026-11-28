@@ -22,9 +22,6 @@ class TataCharacterBpeTokenizerTest {
             ?.use { it.readText() }
             ?: error("Shared tokenizer parity fixture is missing")
         val fixture = JSONObject(fixtureText)
-        val tokenizer = TataCharacterBpeTokenizer.fromJson(
-            fixture.getJSONObject("tokenizer").toString()
-        )
         fun assertCase(case: JSONObject) {
             val caseTokenizer = TataCharacterBpeTokenizer.fromJson(
                 case.getJSONObject("tokenizer").toString()

@@ -278,13 +278,15 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         super.onStop()
     }
 
+    private fun isInternetValidated(): Boolean = runCatching {
+        val active = connectivityManager.activeNetwork
+        val caps = active?.let { connectivityManager.getNetworkCapabilities(it) }
+        caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }.getOrDefault(false)
+
     private fun refreshConnectionStatus() {
-        val connected = runCatching {
-            val active = connectivityManager.activeNetwork
-            val caps = active?.let { connectivityManager.getNetworkCapabilities(it) }
-            caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
-                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-        }.getOrDefault(false)
+        val connected = isInternetValidated()
         runOnUiThread {
             if (!::connectionStatusView.isInitialized) return@runOnUiThread
             connectionStatusView.text = if (connected) "● ONLINE" else "● OFFLINE"
@@ -419,13 +421,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun restorePreferredVoice() {
         if (!::textToSpeech.isInitialized) return
-        val online = runCatching {
-            val active = connectivityManager.activeNetwork
-            val caps = active?.let { connectivityManager.getNetworkCapabilities(it) }
-            caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
-                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-        }.getOrDefault(false)
-        applyVoiceForConnection(online)
+        applyVoiceForConnection(isInternetValidated())
     }
 
     private fun showKnowledgeManager() {
@@ -686,7 +682,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "id-ID")
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "id-ID")
             putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, false)
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            // Utamakan pengenalan lokal saat offline; izinkan layanan jaringan saat online.
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, !isInternetValidated())
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
         }

@@ -341,4 +341,36 @@ class LocalReasoningEngineTest {
         assertNotNull(ideas)
         assertTrue(ideas!!.contains("usaha kecil"))
     }
+
+    @Test
+    fun knowledgeMatcherRanksStrongMatchesAndRejectsWeakOverlap() {
+        val entries = listOf(
+            KnowledgeEntry("Apa itu fotosintesis?", listOf("tumbuhan", "cahaya"), "Jawaban fotosintesis."),
+            KnowledgeEntry("Apa itu gravitasi?", listOf("gaya tarik", "massa"), "Jawaban gravitasi."),
+            KnowledgeEntry("Sejarah kerajaan", listOf("majapahit"), "Jawaban sejarah.")
+        )
+        val matches = KnowledgeMatcher.rank("Jelaskan proses fotosintesis pada tumbuhan", entries)
+        assertEquals(1, matches.size)
+        assertEquals("Jawaban fotosintesis.", matches.first().entry.answer)
+        assertTrue(matches.first().score > 0.0)
+    }
+
+    @Test
+    fun knowledgeMatcherDoesNotReturnGenericKeywordCollisions() {
+        val entries = listOf(
+            KnowledgeEntry("Apa itu fotosintesis?", listOf("proses", "tumbuhan"), "Jawaban fotosintesis."),
+            KnowledgeEntry("Bagaimana cara membuat roti?", listOf("proses", "adonan"), "Jawaban roti.")
+        )
+        assertTrue(KnowledgeMatcher.rank("Jelaskan prosesnya", entries).isEmpty())
+    }
+
+    @Test
+    fun knowledgeMatcherSupportsExactAndDistinctiveSingleWordQueries() {
+        val entries = listOf(
+            KnowledgeEntry("Apa itu Tata AI?", listOf("asisten digital"), "Tata AI."),
+            KnowledgeEntry("Apa itu fotosintesis?", listOf("tumbuhan"), "Fotosintesis.")
+        )
+        assertEquals("Tata AI.", KnowledgeMatcher.rank("Apa itu Tata AI?", entries).first().entry.answer)
+        assertEquals("Fotosintesis.", KnowledgeMatcher.rank("fotosintesis", entries).first().entry.answer)
+    }
 }

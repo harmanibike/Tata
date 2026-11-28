@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import tempfile
 from collections import Counter
 from pathlib import Path
 from typing import Iterable
@@ -51,10 +53,14 @@ class CharacterBPE:
 
         merges: list[tuple[str, str]] = []
         sequences = [sequence[:] for sequence in corpus]
-        while len(SPECIAL_TOKENS) + len(alphabet) + len(merges) < vocab_size:
+        known_tokens = set(SPECIAL_TOKENS) | set(alphabet)
+        while len(known_tokens) < vocab_size:
             counts: Counter[tuple[str, str]] = Counter()
             for sequence in sequences:
-                counts.update(zip(sequence, sequence[1:]))
+                counts.update(
+                    pair for pair in zip(sequence, sequence[1:])
+                    if pair[0] + pair[1] not in known_tokens
+                )
             if not counts:
                 break
             best_pair, frequency = min(
@@ -64,6 +70,7 @@ class CharacterBPE:
                 break
             merges.append(best_pair)
             merged = best_pair[0] + best_pair[1]
+            known_tokens.add(merged)
             updated = []
             for sequence in sequences:
                 output: list[str] = []
@@ -117,24 +124,60 @@ class CharacterBPE:
 
     @classmethod
     def from_dict(cls, payload: dict) -> "CharacterBPE":
+        if not isinstance(payload, dict):
+            raise ValueError("Payload tokenizer harus berupa objek")
         if payload.get("format") != "tata-character-bpe" or payload.get("format_version") != 1:
             raise ValueError("Format tokenizer tidak dikenal")
         if payload.get("special_tokens") != SPECIAL_TOKENS:
             raise ValueError("Daftar token khusus tidak cocok")
         alphabet = payload.get("alphabet")
         merges = payload.get("merges")
-        if not isinstance(alphabet, list) or not all(isinstance(x, str) and len(x) == 1 for x in alphabet):
-            raise ValueError("Alphabet tokenizer tidak valid")
-        if not isinstance(merges, list) or not all(
-            isinstance(pair, list) and len(pair) == 2
-            and all(isinstance(part, str) and part for part in pair)
-            for pair in merges
+        if (
+            not isinstance(alphabet, list)
+            or not all(isinstance(x, str) and len(x) == 1 for x in alphabet)
+            or len(set(alphabet)) != len(alphabet)
         ):
+            raise ValueError("Alphabet tokenizer tidak valid atau berisi duplikat")
+
+        known_tokens = set(SPECIAL_TOKENS) | set(alphabet)
+        validated_merges: list[tuple[str, str]] = []
+        if not isinstance(merges, list):
             raise ValueError("Daftar merge tokenizer tidak valid")
-        return cls(alphabet, [(pair[0], pair[1]) for pair in merges])
+        for pair in merges:
+            if (
+                not isinstance(pair, list) or len(pair) != 2
+                or not all(isinstance(part, str) and part for part in pair)
+            ):
+                raise ValueError("Daftar merge tokenizer tidak valid")
+            left, right = pair
+            if left not in known_tokens or right not in known_tokens:
+                raise ValueError("Merge memakai token yang belum tersedia")
+            merged = left + right
+            if merged in known_tokens:
+                raise ValueError("Merge menghasilkan token duplikat")
+            known_tokens.add(merged)
+            validated_merges.append((left, right))
+
+        if payload.get("vocab_size") != len(known_tokens):
+            raise ValueError("Ukuran vocabulary tokenizer tidak cocok")
+        return cls(alphabet, validated_merges)
 
     def save(self, path: Path) -> None:
-        path.write_text(json.dumps(self.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=path.parent,
+                prefix=path.name + ".", suffix=".tmp", delete=False
+            ) as handle:
+                temporary = Path(handle.name)
+                handle.write(json.dumps(self.to_dict(), ensure_ascii=False, indent=2) + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, path)
+        finally:
+            if temporary and temporary.exists():
+                temporary.unlink()
 
     @classmethod
     def load(cls, path: Path) -> "CharacterBPE":

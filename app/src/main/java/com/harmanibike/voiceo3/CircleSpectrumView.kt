@@ -96,7 +96,7 @@ class CircleSpectrumView(context: Context) : View(context) {
         paint.color = Color.rgb(218, 210, 255)
         canvas.drawText(if (active) "LISTENING" else "VOICE", cx, cy + base * 0.48f, paint)
 
-        if (active || isAttachedToWindow) postInvalidateDelayed(if (active) 32L else 80L)
+        if (active) postInvalidateDelayed(32L)
     }
 
     override fun onDetachedFromWindow() {

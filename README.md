@@ -123,3 +123,13 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Menghapus pengetahuan umum tidak boleh diam-diam menghapus atau mengubah memori pengguna maupun riwayat percakapan; setiap jenis data dikelola secara terpisah.
 
 **Ringkasnya:** script menentukan apa yang Tata mampu lakukan; database pengetahuan menentukan apa yang Tata ketahui. Memperbarui pengetahuan tidak memerlukan APK baru, sedangkan menambah kemampuan yang benar-benar baru memerlukan perubahan kode dan build APK.
+
+
+## Kemampuan permanen: penalaran hitung lokal
+- Tata memiliki mesin perhitungan aritmetika yang ditanam dalam source code Kotlin dan menjadi bagian dari APK.
+- Mendukung operasi tambah, kurang, kali, bagi, pangkat, tanda kurung, dan bilangan desimal; perintah dapat menggunakan kata seperti "tambah", "dikurangi", "dikali", dan "dibagi".
+- Mesin memakai parser aritmetika terbatas, bukan `eval` atau eksekusi kode bebas.
+- Perhitungan berjalan di perangkat tanpa API, jaringan, atau penyimpanan ke database.
+- Jika ekspresi tidak dapat dikenali, Tata tidak menebak hasil dan mengembalikan pertanyaan ke alur percakapan/riset yang sudah ada.
+- Contoh: "berapa 125 tambah 75", "hitung (20 dikali 5) dibagi 2", dan "berapa 2 pangkat 3".
+- Ini merupakan kemampuan script, bukan pengetahuan. Menambah operasi atau mengubah cara parser bekerja memerlukan perubahan kode dan build APK.

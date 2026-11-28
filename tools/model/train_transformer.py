@@ -324,6 +324,10 @@ def main() -> int:
                 evaluations_without_improvement = 0
             else:
                 evaluations_without_improvement += 1
+            mean_train_loss = train_loss_sum / max(train_loss_count, 1)
+            generalization_gap = validation_loss - mean_train_loss
+            train_loss_sum = 0.0
+            train_loss_count = 0
             print(json.dumps({
                 "step": step,
                 "train_loss_mean_since_last_eval": round(mean_train_loss, 6),
@@ -335,10 +339,6 @@ def main() -> int:
                 "perplexity": round(math.exp(min(validation_loss, 20)), 4),
                 "device": device,
             }, ensure_ascii=False), flush=True)
-            mean_train_loss = train_loss_sum / max(train_loss_count, 1)
-            generalization_gap = validation_loss - mean_train_loss
-            train_loss_sum = 0.0
-            train_loss_count = 0
             stop_early = early_stop_reached(
                 args.early_stopping_patience, evaluations_without_improvement
             )

@@ -111,6 +111,7 @@ def generate_sample(torch, model, tokenizer, token_to_id, prompt, config, device
     for token in tokenizer.encode("user: " + prompt + "\nassistant: "):
         ids.append(token_to_id.get(token, token_to_id["<unk>"]))
     ids = ids[-config.context_length:]
+    generated_ids = []
     model.eval()
     with torch.no_grad():
         for _ in range(max_new_tokens):
@@ -120,15 +121,11 @@ def generate_sample(torch, model, tokenizer, token_to_id, prompt, config, device
             if next_id == token_to_id["<eos>"]:
                 break
             ids.append(next_id)
+            generated_ids.append(next_id)
             if len(ids) > config.context_length:
                 ids = ids[-config.context_length:]
-    generated = [token for token_id in ids for token in [token_id]]
-    del generated
-    # Decode only the continuation after the prompt prefix.
-    prompt_ids = [token_to_id.get(token, token_to_id["<unk>"]) for token in tokenizer.encode("user: " + prompt + "\nassistant: ")]
-    continuation = ids[len([token_to_id["<bos>"]] + prompt_ids):]
     id_to_token = {value: key for key, value in token_to_id.items()}
-    return tokenizer.decode(id_to_token.get(token_id, "<unk>") for token_id in continuation)
+    return tokenizer.decode(id_to_token.get(token_id, "<unk>") for token_id in generated_ids)
 
 
 def main() -> int:

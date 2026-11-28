@@ -68,6 +68,31 @@ class DatasetAuditTests(unittest.TestCase):
         self.assertEqual("blocked", report["status"])
         self.assertEqual(0, report["approved_examples"])
 
+
+    def test_length_statistics_and_tokenizer_metrics_are_aggregated(self):
+        from train_tokenizer import CharacterBPE
+        records = [
+            make_record("one", "src-one", "train"),
+            make_record("two", "src-two", "validation"),
+            make_record("three", "src-three", "test"),
+        ]
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        tokenizer_path = Path(temporary.name) / "tokenizer.json"
+        tokenizer = CharacterBPE.train(
+            ["user: Pertanyaan contoh?\\n", "assistant: Jawaban contoh.\\n"],
+            vocab_size=64,
+            min_frequency=1,
+        )
+        tokenizer.save(tokenizer_path)
+        report = audit_dataset(
+            self.write_records(records), context_length=64, tokenizer_path=tokenizer_path
+        )
+        self.assertTrue(report["length_analysis"]["tokenizer_supplied"])
+        self.assertEqual(1, report["length_analysis"]["tokens_per_example"]["train"]["count"])
+        self.assertIsNotNone(report["length_analysis"]["characters_per_example"]["train"]["median"])
+        self.assertNotIn("Pertanyaan one", json.dumps(report))
+
     def test_invalid_corpus_is_reported_as_invalid(self):
         path = self.write_records([{"schema_version": 1}])
         report = audit_dataset(path)

@@ -294,3 +294,19 @@ python tools/corpus/split_corpus.py corpus.jsonl --output corpus-split.jsonl --s
 - Konfigurasi baseline pada spesifikasi v0 diperkirakan tepat **1.350.400 parameter** dengan tied embeddings. Laporan dapat dibuat dengan `python tools/model/transformer_config.py --output transformer-config-report.json`.
 - Pengujian konfigurasi mencakup dimensi attention, dimensi tidak valid, perincian jumlah parameter, tied/untied output head, dan penegasan bahwa estimator tidak membuat bobot atau menjalankan training.
 - Workflow Python menguji modul konfigurasi ini bersama tes validator korpus. Fondasi ini belum menjadi implementasi Transformer, bobot model, ataupun model terlatih.
+
+
+## Implementasi awal mesin pelatihan Transformer
+
+- `tools/model/training_data.py` hanya memuat contoh yang lolos tinjauan privasi dan kualitas dari split `train` atau `validation`. Split `test` sengaja tidak dapat diminta melalui loader.
+- `tools/model/train_transformer.py` adalah loop training lokal PyTorch 2.x: decoder-only causal self-attention, pre-LayerNorm, GELU, next-token cross-entropy, AdamW, gradient clipping, evaluasi validation loss/perplexity, dan checkpoint atomik.
+- Vocabulary model mengikuti ukuran tokenizer aktual; proses training menolak bila hitungan parameter implementasi tidak cocok dengan estimator konfigurasi.
+- Checkpoint mencatat hash korpus/tokenizer, konfigurasi, seed, optimizer, dan status RNG untuk melanjutkan training. Perubahan korpus validation atau tokenizer mencegah resume yang tidak konsisten.
+- Mesin ini belum dijalankan pada korpus Tata yang sah dan cukup. Tidak ada bobot model terlatih yang dihasilkan. Jangan memakai fixture sintetis berstatus pending.
+- PyTorch dipasang secara lokal pada komputer pelatihan sesuai CPU/CUDA; tidak ada panggilan API atau pengunduhan model pretrained. Training tidak ditujukan untuk HP Android 4 GB.
+
+Contoh setelah korpus dan tokenizer sudah ditinjau:
+```bash
+python tools/corpus/train_tokenizer.py corpus-split.jsonl --output tata-tokenizer.json --vocab-size 4096
+python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --output checkpoints/tata-v0.pt --steps 1000 --device auto
+```

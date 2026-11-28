@@ -32,11 +32,12 @@ Dokumentasi resmi llama.cpp menyediakan contoh Android dan jalur kompilasi NDK u
 ## Status implementasi
 - Selesai: pengelola file GGUF lokal melalui **Pengaturan > Model AI lokal**. File dipilih melalui pemilih dokumen Android, signature awal `GGUF` divalidasi, lalu file disalin ke penyimpanan privat aplikasi.
 - Selesai: daftar nama dan ukuran model, nama file aman, impor sementara lalu rename atomik, serta penghapusan file model dengan konfirmasi.
+- Selesai: informasi ruang kosong dan perlindungan penyimpanan saat impor. Tata membaca ukuran file jika disediakan pemilih dokumen, memeriksa ruang yang tersedia, dan menghentikan penyalinan jika ruang kosong akan turun di bawah 256 MB.
 - Selesai: model tidak otomatis dimuat, tidak dikirim ke server, tidak dimasukkan ke APK, dan penghapusan model tidak menghapus pengetahuan/riwayat.
 - Belum selesai: validasi metadata GGUF penuh, native library llama.cpp, bridge JNI, token streaming/cancel, dan inferensi generatif. Menu pengelola model secara eksplisit memberi tahu bahwa model belum dijalankan.
 
 ## Tahapan implementasi
-1. [Selesai] Fondasi pengelola model GGUF privat dan uji signature file.
+1. [Selesai] Fondasi pengelola model GGUF privat, uji signature file, dan perlindungan ruang penyimpanan.
 2. Audit kompatibilitas NDK/JNI dan tentukan versi llama.cpp yang dipatok (pinned), bukan mengambil branch bergerak saat setiap build.
 3. Buat native library arm64-v8a dan bridge JNI dengan lifecycle aman: init, load, generate token, cancel, unload, destroy.
 4. Tambahkan pembaca metadata GGUF dan validasi arsitektur/tokenizer sebelum model diaktifkan.

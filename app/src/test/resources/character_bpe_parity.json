@@ -1,0 +1,53 @@
+{
+  "purpose": "synthetic_cross_language_tokenizer_test_only_not_training_data",
+  "tokenizer": {
+    "format": "tata-character-bpe",
+    "format_version": 1,
+    "special_tokens": [
+      "<pad>",
+      "<unk>",
+      "<bos>",
+      "<eos>"
+    ],
+    "alphabet": [
+      " ",
+      "a",
+      "b",
+      "c",
+      "i",
+      "🧩"
+    ],
+    "merges": [
+      [
+        "a",
+        "b"
+      ],
+      [
+        "ab",
+        "c"
+      ]
+    ],
+    "vocab_size": 12
+  },
+  "samples": [
+    {
+      "text": "abc i🧩",
+      "token_ids": [
+        11,
+        4,
+        8,
+        9
+      ],
+      "decoded": "abc i🧩"
+    },
+    {
+      "text": "abc z",
+      "token_ids": [
+        11,
+        4,
+        1
+      ],
+      "decoded": "abc <unk>"
+    }
+  ]
+}

@@ -6,6 +6,8 @@ on:
     paths:
       - ".github/workflows/build_local_llm_native.yml"
       - "docs/LOCAL_AI_ENGINE.md"
+      - "app/src/main/cpp/**"
+      - "app/src/main/java/com/harmanibike/voiceo3/LocalLlmEngine.kt"
 
 permissions:
   contents: read

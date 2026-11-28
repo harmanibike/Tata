@@ -73,3 +73,13 @@ jobs:
 
       - name: Build debug APKs without publishing them
         run: gradle assembleDebug :onnx-poc:assembleDebug --no-daemon
+
+      - name: Upload debug APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tata-android-debug-apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            onnx-poc/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7

@@ -228,28 +228,16 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     }
 
     @Synchronized
-    fun search(query: String): String? {
-        val normalized = normalize(query)
-        if (normalized.isBlank()) return null
-        var bestScore = 0
-        var bestAnswer: String? = null
-        getAll().forEach { entry ->
-            val terms = listOf(entry.question) + entry.keywords
-            val score = terms.sumOf { term ->
-                val candidate = normalize(term)
-                when {
-                    candidate.isNotEmpty() && normalized.contains(candidate) -> candidate.split(' ').size + 2
-                    candidate.isNotEmpty() && candidate.split(' ').any { it.length > 3 && normalized.contains(it) } -> 1
-                    else -> 0
-                }
-            }
-            if (score > bestScore) {
-                bestScore = score
-                bestAnswer = entry.answer
-            }
-        }
-        return bestAnswer
-    }
+    fun search(query: String): String? =
+        searchRelevant(query, 1).firstOrNull()?.answer
+
+    /**
+     * Returns only sufficiently supported matches from approved active knowledge.
+     * Pending/rejected Learning Lab records are stored elsewhere and are never searched here.
+     */
+    @Synchronized
+    fun searchRelevant(query: String, limit: Int = 3): List<KnowledgeEntry> =
+        KnowledgeMatcher.rank(query, getAll(), limit).map { it.entry }
 
     @Synchronized
     fun findKnowledgeByQuestion(question: String): List<KnowledgeEntry> {

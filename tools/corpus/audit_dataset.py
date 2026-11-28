@@ -88,6 +88,8 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
     short_assistant_examples = 0
     long_examples = 0
     answer_hash_counts = Counter()
+    prompt_to_answers = defaultdict(set)
+    prompt_hash_counts = Counter()
 
     for record in records:
         quality[record.get("quality_review", "missing")] += 1

@@ -46,6 +46,7 @@ Perkiraan jumlah parameter sekitar 1,3 juta dengan embedding output terikat. Ang
 - Contoh pending tetap unassigned dan tidak boleh dipakai untuk tokenizer maupun pelatihan.
 - Test set disimpan terpisah dan tidak digunakan untuk memilih hyperparameter.
 - Simpan hash korpus, manifest, tokenizer hash, seed, konfigurasi, versi kode, dan checkpoint.
+- Serialisasi percakapan memakai penanda peran dan newline eksplisit setelah setiap pesan; tokenizer, loader training, prompt generasi, dan evaluator harus menjaga batas giliran yang sama.
 
 ## Pelatihan awal
 - Gunakan seed yang tercatat untuk inisialisasi dan urutan batch.

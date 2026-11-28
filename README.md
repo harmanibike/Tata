@@ -25,6 +25,8 @@
 ## Izin dan kendali data
 - Saat pertama kali dibuka, Tata meminta izin sebelum menyimpan riwayat percakapan ke database lokal.
 - Jika izin ditolak, percakapan tetap tampil selama aplikasi berjalan tetapi tidak disimpan sebagai riwayat.
+- Pertanyaan yang belum dapat dijawab Tata ditampilkan sebagai sesi pencarian sementara. Pertanyaan tersebut dan pemberitahuan pencarian tidak ditulis ke tabel `knowledge` maupun `chat_messages`, walaupun izin penyimpanan riwayat chat sedang aktif.
+- Jika pengguna memilih pencarian internet atau AI lain, Tata membuka browser. Untuk ChatGPT/Gemini, pertanyaan disalin ke clipboard agar pengguna dapat menempelkannya sendiri. Tidak ada API AI yang dipanggil dan hasil pencarian tidak otomatis dipelajari atau disimpan.
 - Izin penyimpanan riwayat dapat diubah melalui tombol **Privasi**.
 - Pengetahuan baru hanya tersimpan setelah pengguna mengisi dan menekan **Simpan**. Impor JSON juga hanya berjalan setelah pengguna memilih file dan memulai proses impor.
 - Penghapusan satu pengetahuan memerlukan konfirmasi.

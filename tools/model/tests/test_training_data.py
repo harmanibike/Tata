@@ -74,6 +74,13 @@ class TrainingDataTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             load_reviewed_sequences(self.corpus, self.tokenizer_path, "train")
 
+    def test_unapproved_license_is_rejected(self):
+        record = self.record("bad-license", "train")
+        record["source"]["license"] = "unknown"
+        self.write_records([record])
+        with self.assertRaises(ValueError):
+            load_reviewed_sequences(self.corpus, self.tokenizer_path, "train")
+
 
 if __name__ == "__main__":
     unittest.main()

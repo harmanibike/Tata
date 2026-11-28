@@ -156,8 +156,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
         val micButton = CircleSpectrumView(this).apply {
             contentDescription = "Spektrum suara Tata. Ketuk untuk mulai atau menghentikan obrolan."
-            background = null
+            background = rounded(Color.rgb(239, 234, 250), 30)
             elevation = 0f
+            setPadding(dp(8), dp(8), dp(8), dp(8))
             setOnClickListener { toggleConversationMode() }
         }
         listenButton = micButton
@@ -178,54 +179,12 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         scroll.minimumHeight = dp(90)
         panel.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        val controlRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(4))
-        }
-        fun roundControl(label: String, icon: String, action: () -> Unit) {
-            val column = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                isClickable = true
-                isFocusable = true
-                setOnClickListener { action() }
-            }
-            val iconView = TextView(this).apply {
-                text = icon
-                textSize = 34f
-                includeFontPadding = false
-                gravity = Gravity.CENTER
-                setTextColor(purple)
-                background = null
-                elevation = dp(5).toFloat()
-                contentDescription = label
-            }
-            column.addView(iconView, LinearLayout.LayoutParams(dp(66), dp(58)))
-            val caption = TextView(this).apply {
-                text = label
-                textSize = 12f
-                setTextColor(muted)
-                gravity = Gravity.CENTER
-            }
-            column.addView(caption)
-            controlRow.addView(column, LinearLayout.LayoutParams(0, -2, 1f))
-        }
-        roundControl("Mute", "🎙") {
-            isVoiceMuted = !isVoiceMuted
-            Toast.makeText(this, if (isVoiceMuted) "Suara Tata dimatikan." else "Suara Tata diaktifkan.", Toast.LENGTH_SHORT).show()
-        }
-        roundControl("Obrolan", "◉") { toggleConversationMode() }
-        roundControl("Keyboard", "⌨") { messageInput.requestFocus(); (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).showSoftInput(messageInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT) }
-        roundControl("Hentikan AI", "■") { localLlmEngine.cancel(); Toast.makeText(this, "Permintaan menghentikan generasi dikirim.", Toast.LENGTH_SHORT).show() }
-        panel.addView(controlRow)
-
         val hint = TextView(this).apply {
-            text = "◈  Tekan lingkaran untuk bicara  •  Obrolan otomatis tersedia"
+            text = "Ketuk spektrum untuk mulai berbicara"
             textSize = 10f
             setTextColor(muted)
             gravity = Gravity.CENTER
-            setPadding(0, dp(5), 0, dp(8))
+            setPadding(0, dp(3), 0, dp(5))
         }
         panel.addView(hint)
         root.addView(panel, LinearLayout.LayoutParams(-1, 0, 1f).apply {

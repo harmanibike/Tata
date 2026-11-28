@@ -63,11 +63,18 @@ Dokumentasi resmi llama.cpp menyediakan contoh Android dan jalur kompilasi NDK u
 ## Pengamanan penggunaan RAM dan prompt
 - Model hanya dimuat setelah pengguna memilih **Aktifkan model**.
 - Saat aplikasi masuk background (`onStop`), Tata meminta generasi berhenti dan melepas model dari RAM melalui thread IO. Pengguna perlu mengaktifkan ulang model saat kembali.
-- Input prompt dibatasi 1.800 karakter di sisi Kotlin. Jika jumlah token tetap melebihi kapasitas konteks setelah instruksi sistem diperhitungkan, generasi ditolak dengan pesan agar pengguna meringkas pertanyaan; bagian awal prompt tidak dipotong sehingga instruksi sistem tidak hilang.
-- Konteks awal 1.024 token, maksimal 160 token jawaban pada jalur router, dan 2 thread. Ini adalah batas awal konservatif, bukan jaminan semua model akan berjalan lancar di setiap HP.
+- Input pertanyaan dibatasi 700 karakter dan konteks percakapan gabungan dibatasi 1.400 karakter di sisi Kotlin. Jika jumlah token tetap melebihi kapasitas konteks setelah instruksi sistem diperhitungkan, generasi ditolak dengan pesan agar pengguna meringkas pertanyaan; bagian awal prompt tidak dipotong sehingga instruksi sistem tidak hilang.
+- Konteks awal 1.024 token, keluaran generasi dibatasi 32–220 token sesuai pemanggil, dan 2 thread sebagai konfigurasi awal. Ini adalah batas awal konservatif, bukan jaminan semua model akan berjalan lancar di setiap HP.
 
 
 ## Konteks percakapan generatif
-- Model lokal menyimpan maksimal tiga pasangan pertanyaan-jawaban terakhir hanya di memori proses untuk membantu pertanyaan lanjutan.
+- Model lokal menyimpan maksimal dua pasangan pertanyaan-jawaban terakhir hanya di memori proses untuk membantu pertanyaan lanjutan. Setiap pesan riwayat dipotong agar tidak mendominasi konteks.
 - Konteks sementara tidak masuk SQLite, backup pengetahuan, atau penyimpanan permanen. Riwayat sementara dibersihkan ketika model dilepas dari RAM, termasuk saat aplikasi masuk background.
 - Percakapan berpola seperti sapaan dan dukungan emosi tetap dapat ditangani mesin lokal berbasis aturan; pertanyaan terbuka dan tindak lanjutnya diteruskan ke model generatif ketika model aktif.
+
+
+## Peningkatan kualitas respons (tahap awal)
+- Instruksi sistem meminta model menjawab inti pertanyaan lebih dahulu, menyesuaikan panjang jawaban, memakai riwayat hanya jika relevan, menghindari pengulangan, dan mengakui ketidakpastian.
+- Model dilarang mengarang angka, sumber, kutipan, tanggal, atau kemampuan aplikasi, serta dilarang mengklaim telah melakukan pencarian atau tindakan yang belum dilakukan.
+- Router hanya menjalankan pencarian web jika pengguna memberi perintah eksplisit melalui pola **Cari/Telusuri di internet/web**. Pertanyaan terbuka yang tidak terjawab tidak otomatis dikirim keluar perangkat.
+- Ini adalah penguatan prompt dan pengelolaan konteks, bukan jaminan kebenaran model. Akurasi tetap bergantung pada model GGUF yang dipilih dan harus diuji pada perangkat nyata.

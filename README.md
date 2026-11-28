@@ -248,3 +248,8 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 - Generator berbasis kode bukan neural network dan tidak otomatis mengetahui fakta dunia. Untuk pertanyaan faktual yang belum ada di pengetahuan lokal, Tata harus menyatakan belum tahu; pengguna dapat mengajarkan materi melalui Learning Lab atau meminta riset web secara eksplisit.
 - Model GGUF yang sudah ada di proyek menjadi jalur opsional, bukan syarat menjalankan generator berbasis kode.
 - Tahap berikutnya adalah memperluas pemahaman maksud dan penyusunan jawaban, lalu merancang tokenizer, korpus berizin, arsitektur, pipeline pelatihan, dan evaluasi untuk neural network yang benar-benar dikembangkan sendiri. Tahap neural network tersebut belum selesai dan tidak boleh diklaim sudah berjalan.
+### Peningkatan pemahaman dan pengetahuan lokal
+- Klasifikasi maksud mengenali beberapa variasi kalimat Bahasa Indonesia untuk menyusun rencana, membandingkan, menimbang keputusan, mengembangkan ide, dan tindak lanjut.
+- Pencarian pengetahuan aktif menggunakan pemeringkatan kecocokan yang lebih konservatif agar satu kata umum tidak mudah memicu jawaban yang salah.
+- Hanya pengetahuan aktif yang telah disetujui dan diterapkan yang dicari sebagai jawaban. Catatan Learning Lab berstatus menunggu/ditolak tidak dipakai sebagai fakta.
+- Klasifikasi dan pencarian ini adalah fondasi berbasis kode, bukan pemahaman neural network.

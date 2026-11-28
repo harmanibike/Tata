@@ -134,3 +134,8 @@ Trainer mendukung `--context-length` dengan default 256. Konteks lebih pendek da
 ### Pemisahan checkpoint terbaik dan checkpoint resume
 
 Trainer kini memisahkan dua keluaran: file yang ditentukan melalui `--output` adalah checkpoint terakhir untuk melanjutkan training, sedangkan nama dengan sisipan `.best` sebelum ekstensi menyimpan bobot dengan validation loss terendah. Checkpoint resume juga membawa snapshot bobot terbaik dan step-nya sehingga status best tidak hilang ketika training dilanjutkan. Penulisan kedua file memakai mekanisme atomik. Train loss, validation loss, dan gradient norm yang bukan angka finite menghentikan training agar checkpoint rusak tidak diteruskan. Evaluator dapat membaca checkpoint best karena format model dan metadata utamanya tetap kompatibel. Fitur ini sudah diuji pada level helper/path dan CI; training nyata tetap menunggu korpus berizin yang telah disetujui.
+
+
+### Early stopping dan stabilitas training
+
+Trainer mendukung `--early-stopping-patience` (default 10 evaluasi berturut-turut tanpa perbaikan; nilai 0 menonaktifkan). Saat patience tercapai, checkpoint resume terakhir tetap ditulis sebelum proses berhenti. Counter patience disimpan sehingga resume melanjutkan hitungan secara konsisten. Keluaran model terbaik disimpan terpisah berdasarkan validation loss terendah. Train loss, validation loss, dan gradient norm yang tidak finite menghentikan proses. Ini mengurangi pemborosan komputasi dan membantu menghindari melanjutkan training yang tidak stabil, tetapi tidak menjamin model bebas overfitting; test set dan evaluasi manusia tetap diperlukan.

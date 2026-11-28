@@ -1,0 +1,9 @@
+{
+  "decisions": [
+    {
+      "example_id": "GANTI_DENGAN_ID_KORPUS",
+      "action": "approve",
+      "reviewer": "nama_peninjau"
+    }
+  ]
+}

@@ -286,3 +286,11 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 python tools/corpus/validate_corpus.py corpus.jsonl
 python tools/corpus/split_corpus.py corpus.jsonl --output corpus-split.jsonl --seed tata-v1
 ```
+
+
+## Konfigurasi Transformer dan estimasi parameter
+
+- Modul `tools/model/transformer_config.py` memvalidasi konfigurasi Transformer awal dan menghitung rincian parameter tanpa dependensi machine-learning.
+- Konfigurasi baseline pada spesifikasi v0 diperkirakan tepat **1.310.400 parameter** dengan tied embeddings. Laporan dapat dibuat dengan `python tools/model/transformer_config.py --output transformer-config-report.json`.
+- Pengujian konfigurasi mencakup dimensi attention, dimensi tidak valid, perincian jumlah parameter, tied/untied output head, dan penegasan bahwa estimator tidak membuat bobot atau menjalankan training.
+- Workflow Python menguji modul konfigurasi ini bersama tes validator korpus. Fondasi ini belum menjadi implementasi Transformer, bobot model, ataupun model terlatih.

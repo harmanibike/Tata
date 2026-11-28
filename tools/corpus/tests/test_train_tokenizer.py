@@ -45,18 +45,25 @@ class CharacterBPETests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "corpus.jsonl"
             base = {
+                "schema_version": 1,
+                "example_id": "latih-1",
+                "language": "id",
+                "task": "conversation",
                 "privacy_review": "passed",
                 "quality_review": "passed",
                 "split": "train",
-                "source": {"source_id": "sumber-1", "license": "cc0"},
+                "source": {"source_id": "sumber-1", "title": "Sumber uji", "license": "cc0"},
                 "messages": [
                     {"role": "user", "content": "teks latih"},
                     {"role": "assistant", "content": "jawaban latih"},
                 ],
             }
-            pending = {**base, "quality_review": "pending"}
-            held_out = {**base, "split": "test"}
-            unassigned = {**base, "split": "unassigned"}
+            pending = {**base, "example_id": "pending-1", "quality_review": "pending",
+                       "source": {"source_id": "sumber-2", "title": "Sumber uji", "license": "cc0"}}
+            held_out = {**base, "example_id": "test-1", "split": "test",
+                        "source": {"source_id": "sumber-3", "title": "Sumber uji", "license": "cc0"}}
+            unassigned = {**base, "example_id": "unassigned-1", "split": "unassigned",
+                          "source": {"source_id": "sumber-4", "title": "Sumber uji", "license": "cc0"}}
             path.write_text(
                 "\n".join(json.dumps(item) for item in [base, pending, held_out, unassigned]),
                 encoding="utf-8",
@@ -70,10 +77,14 @@ class CharacterBPETests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "corpus.jsonl"
             record = {
+                "schema_version": 1,
+                "example_id": "lisensi-buruk",
+                "language": "id",
+                "task": "conversation",
                 "privacy_review": "passed",
                 "quality_review": "passed",
                 "split": "train",
-                "source": {"source_id": "sumber", "license": "unknown"},
+                "source": {"source_id": "sumber", "title": "Sumber uji", "license": "unknown"},
                 "messages": [
                     {"role": "user", "content": "pertanyaan"},
                     {"role": "assistant", "content": "jawaban"},

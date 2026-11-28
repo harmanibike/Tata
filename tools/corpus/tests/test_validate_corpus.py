@@ -91,7 +91,7 @@ class CorpusValidatorTests(unittest.TestCase):
     def test_rejects_corpus_over_file_size_limit(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "large.jsonl"
-            path.write_text("{}\\n", encoding="utf-8")
+            path.write_text("{}\n", encoding="utf-8")
             errors, stats = validate_file(path, max_file_bytes=1)
         self.assertTrue(any("Ukuran korpus" in error for error in errors))
         self.assertEqual(1, stats["limit_blocked"])
@@ -100,7 +100,7 @@ class CorpusValidatorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "many.jsonl"
             line = json.dumps(sample_record(), ensure_ascii=False)
-            path.write_text(line + "\\n" + line + "\\n", encoding="utf-8")
+            path.write_text(line + "\n" + line + "\n", encoding="utf-8")
             errors, stats = validate_file(path, max_records=1)
         self.assertTrue(any("Jumlah record melebihi batas" in error for error in errors))
         self.assertEqual(1, stats["records"])
@@ -108,7 +108,7 @@ class CorpusValidatorTests(unittest.TestCase):
     def test_rejects_oversized_jsonl_line(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "line.jsonl"
-            path.write_text(json.dumps(sample_record(), ensure_ascii=False) + "\\n", encoding="utf-8")
+            path.write_text(json.dumps(sample_record(), ensure_ascii=False) + "\n", encoding="utf-8")
             errors, stats = validate_file(path, max_line_bytes=10)
         self.assertTrue(any("ukuran record melebihi batas" in error for error in errors))
         self.assertEqual(1, stats["limit_blocked"])

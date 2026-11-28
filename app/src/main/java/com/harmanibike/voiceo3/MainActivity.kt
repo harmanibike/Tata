@@ -462,8 +462,16 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         applyVoiceForConnection(isInternetValidated())
     }
 
-    private fun showLearningLab() {
-        val records = knowledgeStore.getLearningRecords()
+    private fun showLearningLab(filterStatus: String? = null) {
+        val allRecords = knowledgeStore.getLearningRecords()
+        val records = if (filterStatus == null) allRecords else allRecords.filter { it.status == filterStatus }
+        val filterLabel = when (filterStatus) {
+            "perlu_ditinjau" -> "Perlu ditinjau"
+            "diterima" -> "Diterima"
+            "ditolak" -> "Ditolak"
+            "sudah_diuji" -> "Sudah diuji"
+            else -> "Semua"
+        }
         val labels = records.map { record ->
             val status = when (record.status) {
                 "diterima" -> "Diterima untuk ditinjau sebagai pengetahuan"
@@ -471,31 +479,36 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 "sudah_diuji" -> "Sudah diuji"
                 else -> "Perlu ditinjau"
             }
-            "${record.question.take(58)}\n$status"
+            "${record.question.take(58)}\\n$status"
         }.toTypedArray()
         val dialog = AlertDialog.Builder(this)
-            .setTitle("Learning Lab · Lokal (${records.size})")
+            .setTitle("Learning Lab · $filterLabel (${records.size}/${allRecords.size})")
             .setItems(labels) { _, which -> showLearningRecordDetail(records[which]) }
             .setPositiveButton("Tambah koreksi", null)
             .setNegativeButton("Tutup", null)
-            .setNeutralButton("Tentang", null)
+            .setNeutralButton("Filter", null)
             .create()
-        if (records.isEmpty()) dialog.setMessage("Belum ada catatan pembelajaran. Catatan hanya disimpan setelah kamu menekan Simpan.")
+        if (records.isEmpty()) dialog.setMessage(
+            if (allRecords.isEmpty()) "Belum ada catatan pembelajaran. Catatan hanya disimpan setelah kamu menekan Simpan."
+            else "Tidak ada catatan pada filter ini."
+        )
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 dialog.dismiss()
                 showLearningRecordEditor()
             }
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                AlertDialog.Builder(this).setTitle("Tentang Learning Lab")
-                    .setMessage("Learning Lab menyimpan koreksi secara lokal di HP ini. Catatan tidak otomatis mengubah pengetahuan aktif, tidak dikirim ke internet, dan belum melatih bobot model AI. Untuk menjadikan koreksi sebagai pengetahuan Tata, gunakan tindakan Terima sebagai pengetahuan.")
-                    .setPositiveButton("Mengerti", null).show()
+                val filterLabels = arrayOf("Semua", "Perlu ditinjau", "Diterima", "Ditolak", "Sudah diuji")
+                val filterValues = arrayOf(null, "perlu_ditinjau", "diterima", "ditolak", "sudah_diuji")
+                AlertDialog.Builder(this).setTitle("Filter catatan Learning Lab")
+                    .setItems(filterLabels) { _, which -> showLearningLab(filterValues[which]) }
+                    .setNegativeButton("Batal", null).show()
             }
         }
         dialog.show()
     }
 
-    private fun showLearningRecordEditor(initialQuestion: String = "", previousAnswer: String = "") {
+    private fun showLearningRecordEditor(initialQuestion: String = "", previousAnswer: String = "", editingRecord: LearningRecord? = null) {
         val form = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(8), dp(20), dp(4)) }
         fun input(hintText: String, lines: Int): EditText = EditText(this).apply {
             hint = hintText; textSize = 15f; minLines = lines; maxLines = if (lines == 1) 2 else 5
@@ -503,14 +516,14 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             gravity = if (lines > 1) Gravity.TOP else Gravity.CENTER_VERTICAL
         }
         val question = input("Pertanyaan atau konteks yang dijawab Tata", 2).apply { setText(initialQuestion) }
-        val correction = input("Koreksi atau jawaban yang lebih tepat", 4)
-        val source = input("Sumber/referensi (opsional)", 1)
+        val correction = input("Koreksi atau jawaban yang lebih tepat", 4).apply { editingRecord?.let { setText(it.correction) } }
+        val source = input("Sumber/referensi (opsional)", 1).apply { editingRecord?.let { setText(it.source) } }
         form.addView(question); form.addView(correction); form.addView(source)
         val explanation = buildString {
             append("Data hanya disimpan jika kamu menekan Simpan. Tidak dikirim dan tidak otomatis menjadi pengetahuan aktif.")
             if (previousAnswer.isNotBlank()) append("\n\nJawaban Tata sebelumnya:\n").append(previousAnswer.take(1800))
         }
-        val dialog = AlertDialog.Builder(this).setTitle("Koreksi jawaban Tata")
+        val dialog = AlertDialog.Builder(this).setTitle(if (editingRecord == null) "Koreksi jawaban Tata" else "Edit catatan pembelajaran")
             .setMessage(explanation)
             .setView(form).setPositiveButton("Simpan lokal", null).setNegativeButton("Batal", null).create()
         dialog.setOnShowListener {
@@ -520,9 +533,13 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 AlertDialog.Builder(this).setTitle("Simpan koreksi di HP ini?")
                     .setMessage("Koreksi dan sumber yang kamu masukkan akan disimpan ke Learning Lab lokal. Tidak dibagikan dan tidak melatih model secara otomatis.")
                     .setPositiveButton("Ya, simpan") { _, _ ->
-                        knowledgeStore.addLearningRecord(q, a, source.text.toString())
+                        if (editingRecord == null) {
+                            knowledgeStore.addLearningRecord(q, a, source.text.toString())
+                        } else {
+                            knowledgeStore.updateLearningRecord(editingRecord.id, q, a, source.text.toString())
+                        }
                         dialog.dismiss()
-                        Toast.makeText(this, "Koreksi tersimpan secara lokal.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, if (editingRecord == null) "Koreksi tersimpan secara lokal." else "Catatan diperbarui.", Toast.LENGTH_SHORT).show()
                     }.setNegativeButton("Periksa lagi", null).show()
             }
         }
@@ -538,7 +555,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             append("\n\nStatus: ").append(statusLabel)
             append("\n\nCatatan ini masih terpisah dari pengetahuan aktif Tata.")
         }
-        val options = when (record.status) {
+        val options = arrayOf("Edit catatan") + when (record.status) {
             "perlu_ditinjau" -> arrayOf("Terima sebagai pengetahuan", "Tandai ditolak", "Hapus catatan")
             "diterima" -> arrayOf("Masukkan ke pengetahuan Tata", "Tandai sudah diuji", "Hapus catatan")
             "ditolak" -> arrayOf("Kembalikan untuk ditinjau", "Hapus catatan")
@@ -547,6 +564,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         AlertDialog.Builder(this).setTitle("Detail pembelajaran").setMessage(message)
             .setItems(options) { _, which ->
                 when (options[which]) {
+                    "Edit catatan" -> showLearningRecordEditor(record.question, editingRecord = record)
                     "Terima sebagai pengetahuan" -> { knowledgeStore.updateLearningStatus(record.id, "diterima"); Toast.makeText(this, "Catatan diterima untuk ditinjau.", Toast.LENGTH_SHORT).show() }
                     "Tandai ditolak" -> knowledgeStore.updateLearningStatus(record.id, "ditolak")
                     "Tandai sudah diuji" -> knowledgeStore.updateLearningStatus(record.id, "sudah_diuji")

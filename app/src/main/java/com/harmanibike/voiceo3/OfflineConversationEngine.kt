@@ -43,6 +43,11 @@ class OfflineConversationEngine {
                 "Asyik! Itu kabar baik. Cerita sedikit, yuk, apa yang membuatmu bahagia?",
                 "Ikut merayakan kabar baikmu. Semoga suasana menyenangkan ini bertahan sepanjang hari."
             )
+            containsAny(text, "aku marah sama kamu", "saya marah sama kamu", "aku marah padamu", "jawabanmu membuatku marah", "kamu membuatku marah", "aku kesal dengan kamu") -> reply("angry_at_tata",
+                "Maaf kalau jawabanku membuatmu kesal. Aku tidak ingin memperburuk keadaan. Bisa tunjukkan bagian yang keliru atau tidak sesuai harapan? Aku akan mencoba memperbaikinya.",
+                "Aku dengar kamu kecewa dengan jawabanku. Terima kasih sudah memberi tahu. Mari kita periksa lagi bagian yang membuatmu marah.",
+                "Maaf, sepertinya aku belum membantu dengan baik. Ceritakan apa yang perlu kuperbaiki; aku akan menanggapinya dengan tenang."
+            )
             containsAny(text, "aku marah", "saya marah", "lagi marah", "sedang marah", "aku kesal", "saya kesal", "jengkel", "naik darah", "emosi sekali", "aku emosi") -> reply("angry",
                 "Aku menangkap kamu sedang marah. Perasaan itu bisa muncul saat sesuatu terasa tidak adil atau melelahkan. Kalau kamu bersedia, apa yang paling membuatmu kesal?",
                 "Sepertinya ada hal yang benar-benar mengganggumu. Kita pelan-pelan saja. Mau cerita dulu, atau mengambil jeda sebentar untuk menenangkan diri?",
@@ -115,6 +120,7 @@ class OfflineConversationEngine {
         return when (lastTopic) {
             "sad" -> "Aku masih mendengarkan. Bagian mana yang paling mengganggu pikiranmu saat ini?"
             "happy" -> "Apa ada hal lain dari kejadian itu yang membuatmu merasa senang?"
+            "angry_at_tata" -> "Bagian mana dari jawabanku yang paling perlu kuperbaiki?"
             "angry" -> "Aku masih mendengarkan. Apa yang kamu butuhkan sekarang: didengarkan, mencari solusi, atau mengambil jeda?"
             "anxious" -> "Mari fokus pada satu hal yang bisa kamu kendalikan sekarang. Apa langkah kecil yang terasa mungkin dilakukan?"
             "disappointed" -> "Apa bagian yang paling membuatmu kecewa? Kita bisa memisahkan fakta, harapan, dan pilihan berikutnya."

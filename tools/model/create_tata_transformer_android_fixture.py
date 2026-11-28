@@ -25,8 +25,10 @@ from tools.model.transformer_config import TransformerConfig
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("output", type=Path)
+    parser.add_argument("--parity-output", type=Path, required=True)
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.parity_output.parent.mkdir(parents=True, exist_ok=True)
 
     config = TransformerConfig(
         vocab_size=8,
@@ -72,7 +74,24 @@ def main() -> None:
         }, checkpoint_path)
 
         result = export(checkpoint_path, tokenizer_path, args.output)
+        model.eval()
+        parity = {}
+        with torch.no_grad():
+            samples = {
+                "1x4": [[4, 5, 6, 7]],
+                "2x5": [[4, 5, 6, 7, 4], [5, 6, 7, 4, 5]],
+            }
+            for name, values in samples.items():
+                parity[name] = {
+                    "input_ids": values,
+                    "logits": model(torch.tensor(values, dtype=torch.long)).tolist(),
+                }
+        import json
+        args.parity_output.write_text(
+            json.dumps(parity, separators=(",", ":")) + "\n", encoding="utf-8"
+        )
         print(f"Generated synthetic Tata Transformer ONNX fixture: {result['model']}")
+        print(f"Generated PyTorch parity reference: {args.parity_output}")
         print(f"SHA-256: {result['sha256']}")
 
 

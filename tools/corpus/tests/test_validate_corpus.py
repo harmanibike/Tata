@@ -52,6 +52,30 @@ class CorpusValidatorTests(unittest.TestCase):
         record["messages"][0]["role"] = "system"
         self.assertTrue(any("role" in error for error in validate_record(record, 1)))
 
+    def test_rejects_consecutive_same_speaker(self):
+        record = sample_record()
+        record["messages"].insert(1, {"role": "user", "content": "Pertanyaan lanjutan"})
+        self.assertTrue(any("bergantian" in error for error in validate_record(record, 1)))
+
+    def test_rejects_source_split_leakage(self):
+        first = sample_record()
+        first["quality_review"] = "passed"
+        first["split"] = "train"
+        second = sample_record()
+        second["example_id"] = "contoh-002"
+        second["quality_review"] = "passed"
+        second["split"] = "test"
+        second["messages"][0]["content"] = "Pertanyaan berbeda"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "leakage.jsonl"
+            path.write_text(
+                json.dumps(first, ensure_ascii=False) + "\\n"
+                + json.dumps(second, ensure_ascii=False) + "\\n",
+                encoding="utf-8",
+            )
+            errors, _ = validate_file(path)
+        self.assertTrue(any("tersebar pada split" in error for error in errors))
+
     def test_file_detects_duplicate_examples_and_blank_lines(self):
         record = sample_record()
         with tempfile.TemporaryDirectory() as directory:

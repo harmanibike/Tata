@@ -143,7 +143,7 @@ class TrainingDataTests(unittest.TestCase):
     def test_training_permission_no_or_unclear_is_rejected(self):
         self.write_register(["source-train"], permission="unclear")
         self.write_records([self.record("blocked", "train", source_id="source-train")])
-        with self.assertRaisesRegex(ValueError, "izin training bukan yes"):
+        with self.assertRaisesRegex(ValueError, "training_permission bukan yes"):
             self.load("train")
 
     def test_source_metadata_must_match_register(self):

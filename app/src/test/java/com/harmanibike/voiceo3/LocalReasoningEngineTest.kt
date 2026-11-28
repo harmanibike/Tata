@@ -272,4 +272,29 @@ class LocalReasoningEngineTest {
         assertEquals("sejarah Kediri", ResearchIntent.cleanQuery("Cari di internet tentang sejarah Kediri"))
         assertEquals("harga sepeda", ResearchIntent.cleanQuery("tolong telusuri web harga sepeda"))
     }
+
+    @Test
+    fun codeBasedGenerativeEngineCreatesGoalSpecificPlansWithoutInventingFacts() {
+        val answer = TataGenerativeEngine().respond("Buatkan rencana untuk belajar Kotlin")
+        assertNotNull(answer)
+        assertTrue(answer!!.contains("belajar Kotlin"))
+        assertTrue(answer.contains("Tentukan hasil"))
+        assertTrue(answer.contains("target pertama"))
+    }
+
+    @Test
+    fun codeBasedGenerativeEngineBuildsComparisonFrameworkAndRequestsMissingOptions() {
+        val answer = TataGenerativeEngine().respond("Bandingkan Android dan iPhone")
+        assertNotNull(answer)
+        assertTrue(answer!!.contains("Android dan iPhone"))
+        assertTrue(answer.contains("kelebihan"))
+        assertTrue(answer.contains("Sebutkan dua pilihan"))
+    }
+
+    @Test
+    fun codeBasedGenerativeEngineDoesNotInterceptOrdinaryFactualQuestions() {
+        val generator = TataGenerativeEngine()
+        assertEquals(null, generator.respond("Siapa presiden Indonesia?"))
+        assertEquals(null, generator.respond("Apa itu fotosintesis?"))
+    }
 }

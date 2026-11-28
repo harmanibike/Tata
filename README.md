@@ -268,7 +268,7 @@ Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim 
 ## Dataset sintetis dan eksperimen tokenizer
 - Fixture awal delapan contoh Bahasa Indonesia sintetis tersedia di `tools/corpus/examples/synthetic_sample.jsonl`. Contoh ini bukan percakapan pengguna atau korpus produksi; status tinjauan kualitasnya masih **pending**.
 - Prototipe Character-BPE mandiri tersedia di `tools/corpus/train_tokenizer.py`. Script memakai Python standard library, deterministik, dapat menyimpan/memuat tokenizer JSON, dan tidak memakai API atau layanan eksternal.
-- Loader tokenizer hanya mengambil contoh dengan tinjauan privasi dan kualitas berstatus **passed**, serta tidak mengambil split validation/test. Contoh pending tidak akan melatih tokenizer.
+- Loader tokenizer hanya mengambil contoh dengan tinjauan privasi dan kualitas berstatus **passed**, serta tidak mengambil split validation/test. Contoh pending tidak akan melatih tokenizer. Penanda peran dan newline eksplisit menjaga batas antar-giliran konsisten pada tokenizer, training, dan evaluator.
 - Tes otomatis meliputi round-trip teks Unicode Indonesia, determinisme, token tak dikenal, penyimpanan/pemuatan atomik, batas ukuran kosakata, validasi struktur merge, pencegahan token duplikat, integritas ukuran vocabulary, dan pemisahan data yang belum ditinjau/held-out. Loader tokenizer, training, dan evaluator juga menolak korpus yang gagal validasi.
 - Prototipe ini masih tokenizer karakter-BPE untuk eksperimen fondasi, bukan tokenizer produksi dan bukan model neural network. Korpus yang besar, berizin, dan ditinjau tetap diperlukan sebelum pelatihan model.
 - Petunjuk teknis dan tahap berikutnya ada di [docs/OWN_NEURAL_NETWORK_ROADMAP.md](docs/OWN_NEURAL_NETWORK_ROADMAP.md).

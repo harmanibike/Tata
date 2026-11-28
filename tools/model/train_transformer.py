@@ -179,6 +179,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", type=Path, required=True)
     parser.add_argument("--tokenizer", type=Path, required=True)
+    parser.add_argument("--source-register", type=Path, required=True,
+                        help="CSV register sumber dengan izin training yang disetujui")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--steps", type=int, default=1000)
     parser.add_argument("--batch-size", type=int, default=8)
@@ -213,10 +215,10 @@ def main() -> int:
         parser.error("CUDA diminta tetapi tidak tersedia")
     device = ("cuda" if torch.cuda.is_available() else "cpu") if args.device == "auto" else args.device
     train_sequences, train_meta = load_reviewed_sequences(
-        args.corpus, args.tokenizer, "train"
+        args.corpus, args.tokenizer, "train", args.source_register
     )
     validation_sequences, validation_meta = load_reviewed_sequences(
-        args.corpus, args.tokenizer, "validation"
+        args.corpus, args.tokenizer, "validation", args.source_register
     )
     config = TransformerConfig(
         vocab_size=train_meta["vocab_size"],
@@ -266,8 +268,12 @@ def main() -> int:
             parser.error("Hash korpus train berubah; checkpoint tidak dapat dilanjutkan")
         if checkpoint.get("train_meta", {}).get("tokenizer_sha256") != train_meta["tokenizer_sha256"]:
             parser.error("Tokenizer berubah; checkpoint tidak dapat dilanjutkan")
+        if checkpoint.get("train_meta", {}).get("source_register_sha256") != train_meta["source_register_sha256"]:
+            parser.error("Register izin sumber berubah; checkpoint tidak dapat dilanjutkan")
         if checkpoint.get("validation_meta", {}).get("corpus_sha256") != validation_meta["corpus_sha256"]:
             parser.error("Hash korpus validation berubah; checkpoint tidak dapat dilanjutkan")
+        if checkpoint.get("validation_meta", {}).get("source_register_sha256") != validation_meta["source_register_sha256"]:
+            parser.error("Register izin sumber validation berubah; checkpoint tidak dapat dilanjutkan")
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         start_step = int(checkpoint["step"])

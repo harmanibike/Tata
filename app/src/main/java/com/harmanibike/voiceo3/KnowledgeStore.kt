@@ -272,18 +272,78 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     @Synchronized
     fun update(index: Int, question: String, keywords: List<String>, answer: String) {
         val id = getIdAt(index) ?: return
-        val values = ContentValues().apply {
-            put("question", question.trim())
-            put("keywords", keywords.joinToString("|") { it.trim() }.trim('|'))
-            put("answer", answer.trim())
+        val db = writableDatabase
+        val previous = getKnowledgeSnapshot(id) ?: return
+        val nextQuestion = question.trim()
+        val nextKeywords = keywords.joinToString("|") { it.trim() }.trim('|')
+        val nextAnswer = answer.trim()
+        if (previous.question != nextQuestion || previous.keywords != nextKeywords || previous.answer != nextAnswer) {
+            saveKnowledgeRevision(db, id, previous.question, previous.keywords, previous.answer, "sebelum_diedit")
         }
-        writableDatabase.update("knowledge", values, "id=?", arrayOf(id.toString()))
+        val values = ContentValues().apply {
+            put("question", nextQuestion)
+            put("keywords", nextKeywords)
+            put("answer", nextAnswer)
+        }
+        db.update("knowledge", values, "id=?", arrayOf(id.toString()))
     }
 
     @Synchronized
     fun delete(index: Int) {
         val id = getIdAt(index) ?: return
-        writableDatabase.delete("knowledge", "id=?", arrayOf(id.toString()))
+        val db = writableDatabase
+        val previous = getKnowledgeSnapshot(id) ?: return
+        saveKnowledgeRevision(db, id, previous.question, previous.keywords, previous.answer, "sebelum_dihapus")
+        db.delete("knowledge", "id=?", arrayOf(id.toString()))
+    }
+
+    private data class KnowledgeSnapshot(val question: String, val keywords: String, val answer: String)
+
+    private fun getKnowledgeSnapshot(id: Long): KnowledgeSnapshot? =
+        readableDatabase.rawQuery("SELECT question, keywords, answer FROM knowledge WHERE id=?", arrayOf(id.toString())).use { cursor ->
+            if (cursor.moveToFirst()) KnowledgeSnapshot(cursor.getString(0), cursor.getString(1), cursor.getString(2)) else null
+        }
+
+    private fun saveKnowledgeRevision(db: SQLiteDatabase, knowledgeId: Long, question: String, keywords: String, answer: String, type: String) {
+        val values = ContentValues().apply {
+            put("knowledge_id", knowledgeId); put("question", question); put("keywords", keywords)
+            put("answer", answer); put("revision_type", type); put("created_at", System.currentTimeMillis())
+        }
+        db.insertOrThrow("knowledge_revisions", null, values)
+    }
+
+    @Synchronized
+    fun getKnowledgeRevisions(): List<KnowledgeRevision> {
+        val result = mutableListOf<KnowledgeRevision>()
+        readableDatabase.rawQuery("SELECT id, knowledge_id, question, keywords, answer, revision_type, created_at FROM knowledge_revisions ORDER BY created_at DESC, id DESC", null).use { cursor ->
+            while (cursor.moveToNext()) result += KnowledgeRevision(cursor.getLong(0), cursor.getLong(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5), cursor.getLong(6))
+        }
+        return result
+    }
+
+    @Synchronized
+    fun restoreKnowledgeRevision(revisionId: Long): Boolean {
+        val revision = getKnowledgeRevisions().firstOrNull { it.id == revisionId } ?: return false
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val current = getKnowledgeSnapshot(revision.knowledgeId)
+            if (current != null) {
+                saveKnowledgeRevision(db, revision.knowledgeId, current.question, current.keywords, current.answer, "sebelum_pemulihan")
+                val values = ContentValues().apply { put("question", revision.question); put("keywords", revision.keywords); put("answer", revision.answer) }
+                db.update("knowledge", values, "id=?", arrayOf(revision.knowledgeId.toString()))
+            } else {
+                val values = ContentValues().apply {
+                    put("question", revision.question); put("keywords", revision.keywords); put("answer", revision.answer)
+                    put("created_at", System.currentTimeMillis())
+                }
+                db.insertOrThrow("knowledge", null, values)
+            }
+            db.setTransactionSuccessful()
+            return true
+        } finally {
+            db.endTransaction()
+        }
     }
 
     /** Catatan koreksi hanya dibuat setelah pengguna menekan Simpan di Learning Lab. */

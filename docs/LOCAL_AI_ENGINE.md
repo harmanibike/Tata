@@ -96,3 +96,8 @@ Pengembangan tidak mewajibkan GGUF. Jalur hibrida dibagi menjadi tiga lapisan ya
 
 ### Batasan yang harus dinyatakan
 Generator berbasis kode **bukan neural network dan belum setara ChatGPT**. Ia menghasilkan kalimat baru dengan menggabungkan struktur respons dan informasi yang benar-benar diberikan pengguna atau tersedia di pengetahuan lokal. Untuk menghasilkan bahasa yang fleksibel dan pengetahuan umum luas, tahap neural network milik Tata masih membutuhkan data pelatihan, proses training, dan pengujian tersendiri. Jangan menyebut tahap awal ini sebagai model bahasa yang sudah dilatih.
+### Tahap peningkatan pemahaman dan pencarian pengetahuan
+- `TataIntentClassifier` mengenali beberapa parafrasa Bahasa Indonesia untuk rencana, perbandingan, keputusan, ide, dan tindak lanjut. Klasifikasi hanya membantu memilih alur respons; bukan bukti atau pemahaman semantik setara model bahasa.
+- `KnowledgeMatcher` memberi peringkat berdasarkan kecocokan kata yang konservatif, mengabaikan kata umum, dan menolak kecocokan lemah. `KnowledgeStore.search()` hanya mengambil pengetahuan aktif yang sudah disetujui/diterapkan; catatan Learning Lab yang masih menunggu atau ditolak tidak ikut dijadikan jawaban.
+- Pencarian lokal dapat mengembalikan beberapa entri relevan untuk pengembangan sintesis berikutnya. Pada tahap ini jawaban pengetahuan yang cocok tetap diambil dari entri aktif, bukan dibuat dengan menambahkan fakta yang tidak ada.
+- Unit test mencakup variasi kalimat, tindak lanjut, pencocokan pengetahuan yang kuat, serta penolakan tabrakan kata umum.

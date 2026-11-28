@@ -20,6 +20,14 @@ data class NewsSource(
     val enabled: Boolean
 )
 
+data class AssistantCapability(
+    val key: String,
+    val displayName: String,
+    val description: String,
+    val version: Int,
+    val enabled: Boolean
+)
+
 /**
  * Penyimpanan lokal baru Tata AI.
  * Database dibuat bersih pada instalasi baru; data contoh/JSON lama tidak dimigrasikan.
@@ -34,6 +42,7 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
         // Reset penyimpanan lama sesuai permintaan: tidak mengimpor data knowledge.json.
         context.applicationContext.deleteFile("knowledge.json")
         writableDatabase
+        ensureDefaultCapabilities()
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -106,6 +115,57 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
             "INSERT OR IGNORE INTO news_sources (name, feed_url, enabled, created_at) VALUES (?, ?, 1, ?)",
             arrayOf("CNA Indonesia", "https://www.cna.id/api/v1/rss-outbound-feed?_format=xml", System.currentTimeMillis())
         )
+    }
+
+    @Synchronized
+    private fun ensureDefaultCapabilities() {
+        val defaults = listOf(
+            Triple("self_identity", "Identitas Tata", "Tata AI adalah asisten digital Android berbasis Kotlin. AI berarti Artificial Intelligence atau kecerdasan buatan."),
+            Triple("emotional_intelligence", "Kecerdasan emosional", "Mengenali petunjuk emosi dari teks seperti sedih, senang, marah, cemas, kecewa, dan kesepian; merespons dengan empati tanpa menghakimi."),
+            Triple("offline_conversation", "Percakapan offline", "Percakapan lokal berbasis pola dan pengetahuan yang disimpan pengguna; bukan model bahasa generatif."),
+            Triple("temporary_research", "Riset sementara", "Membuka pencarian internet atau AI lain secara manual dan merangkum teks tempelan sementara tanpa menyimpannya.")
+        )
+        val db = writableDatabase
+        defaults.forEach { (key, name, description) ->
+            val values = ContentValues().apply {
+                put("capability_key", key)
+                put("display_name", name)
+                put("description", description)
+                put("version", 1)
+                put("enabled", 1)
+                put("config_json", "{}")
+                put("updated_at", System.currentTimeMillis())
+            }
+            db.insertWithOnConflict("assistant_capabilities", null, values, SQLiteDatabase.CONFLICT_IGNORE)
+        }
+    }
+
+    @Synchronized
+    fun getAssistantCapabilities(): List<AssistantCapability> {
+        val items = mutableListOf<AssistantCapability>()
+        readableDatabase.rawQuery(
+            "SELECT capability_key, display_name, description, version, enabled FROM assistant_capabilities ORDER BY id ASC",
+            null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                items += AssistantCapability(
+                    cursor.getString(0), cursor.getString(1), cursor.getString(2),
+                    cursor.getInt(3), cursor.getInt(4) == 1
+                )
+            }
+        }
+        return items
+    }
+
+    @Synchronized
+    fun updateCapabilityDescription(key: String, description: String) {
+        require(description.isNotBlank()) { "Deskripsi kemampuan tidak boleh kosong." }
+        val values = ContentValues().apply {
+            put("description", description.trim())
+            put("version", 2)
+            put("updated_at", System.currentTimeMillis())
+        }
+        writableDatabase.update("assistant_capabilities", values, "capability_key=?", arrayOf(key))
     }
 
     @Synchronized

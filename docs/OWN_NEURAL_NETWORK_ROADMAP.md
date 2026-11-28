@@ -139,3 +139,6 @@ Trainer kini memisahkan dua keluaran: file yang ditentukan melalui `--output` ad
 ### Early stopping dan stabilitas training
 
 Trainer mendukung `--early-stopping-patience` (default 10 evaluasi berturut-turut tanpa perbaikan; nilai 0 menonaktifkan). Saat patience tercapai, checkpoint resume terakhir tetap ditulis sebelum proses berhenti. Counter patience disimpan sehingga resume melanjutkan hitungan secara konsisten. Keluaran model terbaik disimpan terpisah berdasarkan validation loss terendah. Train loss, validation loss, dan gradient norm yang tidak finite menghentikan proses. Ini mengurangi pemborosan komputasi dan membantu menghindari melanjutkan training yang tidak stabil, tetapi tidak menjamin model bebas overfitting; test set dan evaluasi manusia tetap diperlukan.
+
+
+Training log juga menampilkan rata-rata train loss sejak evaluasi terakhir dan selisih validation loss minus train loss. Selisih ini hanya indikator diagnostik untuk ditinjau bersama kurva beberapa evaluasi; ia bukan bukti otomatis overfitting maupun ukuran kualitas jawaban.

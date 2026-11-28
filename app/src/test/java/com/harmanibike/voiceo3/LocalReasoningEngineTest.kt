@@ -11,7 +11,7 @@ class LocalReasoningEngineTest {
     @Test
     fun calculatesIndonesianAdditionAndMultiplicationPrecedence() {
         assertEquals("Hasil perhitungannya adalah 200.", engine.calculate("berapa 125 tambah 75"))
-        assertEquals("Hasil perhitungannya adalah 100.", engine.calculate("hitung 20 tambah 5 kali 4"))
+        assertEquals("Hasil perhitungannya adalah 40.", engine.calculate("hitung 20 tambah 5 kali 4"))
     }
 
     @Test

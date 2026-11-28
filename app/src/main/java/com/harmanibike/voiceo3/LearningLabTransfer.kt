@@ -106,7 +106,7 @@ object LearningLabTransfer {
     fun fingerprint(question: String, correction: String): String {
         val canonical = normalize(question) + "\u0000" + normalize(correction)
         val bytes = MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
-        return bytes.joinToString("") { "%02x".format(it) }
+        return bytes.joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 
     private fun normalize(value: String): String =

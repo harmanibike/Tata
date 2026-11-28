@@ -51,6 +51,8 @@ jobs:
           python -m pip install onnx==1.19.1
           python tools/model/create_onnx_android_fixture.py onnx-poc/src/androidTest/assets/tiny_identity.onnx
           python tools/model/create_tata_transformer_android_fixture.py onnx-poc/src/androidTest/assets/tata_transformer_synthetic.onnx --parity-output onnx-poc/src/androidTest/assets/tata_transformer_pytorch_reference.json
+          mkdir -p onnx-poc/src/main/assets
+          python tools/model/create_tata_transformer_android_fixture.py onnx-poc/src/main/assets/tata_transformer_synthetic.onnx --parity-output /tmp/tata_transformer_pytorch_reference.json
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

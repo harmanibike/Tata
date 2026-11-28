@@ -39,12 +39,6 @@ def load_approved_source_register(register_path: Path) -> dict[str, dict[str, st
     approved: dict[str, dict[str, str]] = {}
     with register_path.open("r", encoding="utf-8-sig", newline="") as handle:
         for row in csv.DictReader(handle):
-            if row["decision"].strip().lower() != "approved":
-                continue
-            if row["training_permission"].strip().lower() != "yes":
-                raise ValueError(
-                    f"Sumber {row['source_id']} belum memiliki izin training yang jelas"
-                )
             approved[row["source_id"]] = {
                 "title": row["title"].strip(),
                 "canonical_uri": row["canonical_uri"].strip(),
@@ -54,8 +48,6 @@ def load_approved_source_register(register_path: Path) -> dict[str, dict[str, st
                 "commercial_use": row["commercial_use"].strip().lower(),
                 "decision": row["decision"].strip().lower(),
             }
-    if not approved:
-        raise ValueError("Register sumber tidak memiliki sumber approved dengan izin training.")
     return approved
 
 
@@ -99,9 +91,9 @@ def load_reviewed_sequences(
                     f"source_id {source_id} tidak ada dalam register approved pada baris {line_number}"
                 )
             if registered["decision"] != "approved":
-                raise ValueError(f"Sumber {source_id} belum disetujui")
+                raise ValueError(f"Sumber {source_id} belum disetujui untuk training")
             if registered["training_permission"] != "yes":
-                raise ValueError(f"Sumber {source_id}: izin training bukan yes")
+                raise ValueError(f"Sumber {source_id}: training_permission bukan yes")
             if source.get("title") != registered["title"] or source.get("uri") != registered["canonical_uri"]:
                 raise ValueError(
                     f"metadata source (title/uri) tidak cocok dengan register pada baris {line_number}"
@@ -139,7 +131,7 @@ def load_reviewed_sequences(
         "split": split,
         "records": record_count,
         "source_groups": len(source_ids),
-        "registered_approved_sources": len(approved_sources),
+        "registered_approved_sources": sum(1 for item in approved_sources.values() if item["decision"] == "approved" and item["training_permission"] == "yes"),
         "corpus_sha256": digest,
         "tokenizer_sha256": tokenizer_digest,
         "source_register_sha256": register_digest,

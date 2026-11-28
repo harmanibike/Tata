@@ -138,6 +138,9 @@ def load_training_texts(jsonl_path: Path) -> list[str]:
         if not line.strip():
             continue
         record = json.loads(line)
+        # Hanya contoh yang lolos tinjauan privasi dan kualitas boleh melatih tokenizer.
+        if record.get("privacy_review") != "passed" or record.get("quality_review") != "passed":
+            continue
         if record.get("split") not in {"unassigned", "train"}:
             continue
         for message in record.get("messages", []):

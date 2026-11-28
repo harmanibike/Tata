@@ -141,7 +141,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(dp(14), dp(12), dp(14), dp(8))
-            background = rounded(Color.rgb(250, 250, 252), 34)
+            background = null
+            elevation = 0f
         }
         val stateLabel = TextView(this).apply {
             text = "Siap mendengarkan"
@@ -155,7 +156,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
         val micButton = CircleSpectrumView(this).apply {
             contentDescription = "Spektrum suara Tata. Ketuk untuk mulai atau menghentikan obrolan."
-            elevation = dp(8).toFloat()
+            background = null
+            elevation = 0f
             setOnClickListener { toggleConversationMode() }
         }
         listenButton = micButton

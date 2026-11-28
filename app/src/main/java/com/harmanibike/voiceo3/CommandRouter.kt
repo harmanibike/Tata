@@ -82,7 +82,11 @@ class CommandRouter(
                     val conversationalAnswer = offlineConversation.respond(rawCommand)
                     if (conversationalAnswer != null) conversationalAnswer
                     else {
-                        val webAnswer = networkHelper.searchWeb(rawCommand)
+                        val webQuery = rawCommand.replace(
+                            Regex("(?i)^\\s*(tolong\\s+)?(cari|telusuri|search)\\s+(di\\s+)?(internet|web)\\s*(tentang|mengenai)?\\s*"),
+                            ""
+                        ).trim().ifBlank { rawCommand }
+                        val webAnswer = networkHelper.searchWeb(webQuery)
                         if (!webAnswer.isNullOrBlank()) webAnswer
                         else withContext(Dispatchers.IO) { localLlmEngine.generate(rawCommand) }
                             ?: (UNKNOWN_QUERY_PREFIX + rawCommand)

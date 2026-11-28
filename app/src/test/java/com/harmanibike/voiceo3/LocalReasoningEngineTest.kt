@@ -107,6 +107,14 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun keepsStorageReserveWhenImportingLocalModels() {
+        val reserve = 256L * 1024L * 1024L
+        assertEquals(0L, LocalModelStore.safeImportLimit(reserve))
+        assertEquals(0L, LocalModelStore.safeImportLimit(reserve - 1L))
+        assertEquals(1024L * 1024L, LocalModelStore.safeImportLimit(reserve + 1024L * 1024L))
+    }
+
+    @Test
     fun ignoresNonMathQuestions() {
         assertEquals(null, engine.calculate("siapa nama kamu"))
     }

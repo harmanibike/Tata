@@ -27,7 +27,7 @@
 - Jika izin ditolak, percakapan tetap tampil selama aplikasi berjalan tetapi tidak disimpan sebagai riwayat.
 - Pertanyaan yang belum dapat dijawab Tata ditampilkan sebagai sesi pencarian sementara. Pertanyaan tersebut dan pemberitahuan pencarian tidak ditulis ke tabel `knowledge` maupun `chat_messages`, walaupun izin penyimpanan riwayat chat sedang aktif.
 - Jika pengguna memilih pencarian internet atau AI lain, Tata membuka browser. Untuk ChatGPT/Gemini, pertanyaan disalin ke clipboard agar pengguna dapat menempelkannya sendiri. Tidak ada API AI yang dipanggil dan hasil pencarian tidak otomatis dipelajari atau disimpan.
-- Dialog pencarian menyediakan opsi **Tempel jawaban untuk diringkas**. Pengguna dapat menempel teks hasil pencarian/AI (maksimal 12.000 karakter); Tata membuat ringkasan awal secara lokal dengan mengambil beberapa kalimat pertama, menampilkan dan membacakannya tanpa menyimpan teks sumber maupun ringkasan ke database.
+- Dialog pencarian menyediakan opsi **Tempel jawaban untuk diringkas**. Pengguna dapat menempel teks hasil pencarian/AI (maksimal 12.000 karakter); Tata membuat ringkasan awal secara lokal dengan mengambil beberapa kalimat pertama, menampilkan dan membacakannya tanpa menyimpan teks sumber maupun ringkasan ke database. Dari ringkasan, pengguna dapat memilih **Ajari Tata**; Tata membuka formulir berisi pertanyaan dan jawaban awal untuk diperiksa/diedit. Pengetahuan baru hanya masuk database setelah pengguna secara sadar menekan **Simpan** pada formulir.
 - Ringkasan sementara bukan pemahaman generatif atau verifikasi fakta. Tata memberi catatan bahwa sumber belum diverifikasi; kemampuan merangkum ini sengaja ringan agar berjalan offline tanpa API.
 - Izin penyimpanan riwayat dapat diubah melalui tombol **Privasi**.
 - Pengetahuan baru hanya tersimpan setelah pengguna mengisi dan menekan **Simpan**. Impor JSON juga hanya berjalan setelah pengguna memilih file dan memulai proses impor.
@@ -69,6 +69,7 @@
 - Ekspor menyimpan `pengetahuan-tata.json` melalui pemilih file Android.
 - Impor memvalidasi struktur serta pertanyaan/jawaban wajib, lalu mengganti daftar pengetahuan lokal dengan isi file cadangan.
 - Ukuran file impor dibatasi maksimal 2 MB.
+- Hasil riset sementara dapat dijadikan pengetahuan hanya melalui alur **Ajari Tata > periksa/edit formulir > Simpan**. Membuka opsi Ajari Tata saja belum menyimpan data.
 - Cadangan dapat dipindahkan ke perangkat lain secara manual; sinkronisasi otomatis antarperangkat belum tersedia.
 
 ## Batasan saat ini

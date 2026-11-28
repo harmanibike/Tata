@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from evaluate_transformer import score_sequences
+from tools.model.evaluate_transformer import score_sequences
 
 
 class FakeTensor:

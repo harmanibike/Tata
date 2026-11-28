@@ -205,3 +205,10 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Menu `Pengetahuan Tata` menyediakan `Riwayat` untuk melihat snapshot dan memulihkan versi lama setelah konfirmasi.
 - Pemulihan menyimpan versi aktif sebelum menggantinya; jika data sebelumnya telah dihapus, pemulihan membuat kembali entri pengetahuan. Catatan revisi tetap dipertahankan.
 - Riwayat ini mulai merekam perubahan sejak fitur tersedia; tidak dapat merekonstruksi perubahan sebelum fitur dipasang.
+
+
+### Jawaban identitas Tata yang ringkas
+- Pertanyaan identitas dasar ditangani oleh `TataIdentity`, terpisah dari profil lengkap pada menu Tentang Tata AI.
+- Jawaban dipilih menurut maksud: siapa Tata, arti AI, versi aplikasi, atau kemampuan Tata.
+- Pertanyaan umum yang tidak berkaitan dengan identitas tidak boleh ditangkap oleh pengenal identitas.
+- Pengujian unit mencakup variasi pertanyaan, tanda baca, dan jawaban ringkas yang sesuai.

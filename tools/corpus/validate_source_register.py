@@ -19,6 +19,7 @@ REQUIRED_COLUMNS = {
 }
 YES_NO_UNCLEAR = {"yes", "no", "unclear"}
 DECISIONS = {"pending", "approved", "rejected"}
+PLACEHOLDER_VALUES = {"", "-", "n/a", "na", "none", "null", "todo", "tbd", "unknown", "belum diisi"}
 
 
 def is_inspectable_http_url(value: str) -> bool:
@@ -29,7 +30,6 @@ def is_inspectable_http_url(value: str) -> bool:
             return False
         if parsed.username is not None or parsed.password is not None:
             return False
-        # Accessing .port validates malformed and out-of-range port values.
         if parsed.port is not None and not 1 <= parsed.port <= 65535:
             return False
         return True
@@ -37,19 +37,29 @@ def is_inspectable_http_url(value: str) -> bool:
         return False
 
 
+def is_meaningful(value: str | None) -> bool:
+    """Reject empty and common placeholder text in approval metadata."""
+    return (value or "").strip().casefold() not in PLACEHOLDER_VALUES
+
+
 def validate_register(path: Path) -> tuple[list[str], dict]:
     errors: list[str] = []
     stats = {"sources": 0, "approved": 0, "pending": 0, "rejected": 0}
     try:
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
-            reader = csv.DictReader(handle)
-            columns = set(reader.fieldnames or [])
+            reader = csv.DictReader(handle, restkey="__extra_columns__")
+            raw_columns = reader.fieldnames or []
+            if len(raw_columns) != len(set(raw_columns)):
+                return ["Header CSV memiliki nama kolom duplikat."], stats
+            columns = set(raw_columns)
             missing = sorted(REQUIRED_COLUMNS - columns)
             if missing:
                 return [f"Kolom wajib tidak ada: {', '.join(missing)}"], stats
             seen: set[str] = set()
             for line_number, row in enumerate(reader, start=2):
                 stats["sources"] += 1
+                if row.get("__extra_columns__"):
+                    errors.append(f"baris {line_number}: jumlah kolom melebihi header CSV")
                 source_id = (row.get("source_id") or "").strip()
                 if not source_id:
                     errors.append(f"baris {line_number}: source_id wajib diisi")
@@ -58,8 +68,8 @@ def validate_register(path: Path) -> tuple[list[str], dict]:
                 seen.add(source_id)
 
                 for field in ("title", "owner", "declared_license", "reviewer", "privacy_screen"):
-                    if not (row.get(field) or "").strip():
-                        errors.append(f"baris {line_number}: {field} wajib diisi")
+                    if not is_meaningful(row.get(field)):
+                        errors.append(f"baris {line_number}: {field} wajib diisi dengan nilai nyata, bukan placeholder")
 
                 for field in ("canonical_uri", "license_evidence_uri"):
                     value = (row.get(field) or "").strip()
@@ -91,10 +101,14 @@ def validate_register(path: Path) -> tuple[list[str], dict]:
                     blockers = []
                     if (row.get("training_permission") or "").strip().lower() != "yes":
                         blockers.append("training_permission bukan yes")
-                    if not (row.get("license_evidence_uri") or "").strip():
-                        blockers.append("bukti lisensi/izin tidak ada")
-                    if not (row.get("decision_notes") or "").strip():
+                    if not is_inspectable_http_url((row.get("license_evidence_uri") or "").strip()):
+                        blockers.append("bukti lisensi/izin tidak valid")
+                    if not is_meaningful(row.get("decision_notes")):
                         blockers.append("decision_notes wajib menjelaskan dasar persetujuan")
+                    if not is_meaningful(row.get("privacy_screen")):
+                        blockers.append("privacy_screen wajib berisi hasil pemeriksaan nyata")
+                    if not is_meaningful(row.get("reviewer")):
+                        blockers.append("reviewer wajib diisi dengan peninjau yang nyata")
                     if blockers:
                         errors.append(
                             f"baris {line_number}: sumber tidak boleh approved: " + "; ".join(blockers)

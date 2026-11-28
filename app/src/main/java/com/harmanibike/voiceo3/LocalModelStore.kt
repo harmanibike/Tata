@@ -3,6 +3,7 @@ package com.harmanibike.voiceo3
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.os.StatFs
 import java.io.File
 import java.io.FileOutputStream
 
@@ -24,14 +25,37 @@ class LocalModelStore(context: Context) {
         .sortedByDescending { it.lastModified() }
         .map { LocalModelFile(it.name, it, it.length()) }
 
+    fun availableBytes(): Long = runCatching {
+        StatFs(modelDirectory.absolutePath).availableBytes
+    }.getOrDefault(0L)
+
     fun importFromUri(uri: Uri): LocalModelFile {
         val resolver = appContext.contentResolver
-        val displayName = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-            ?.use { cursor ->
-                if (cursor.moveToFirst()) cursor.getString(0) else null
+        var reportedSize: Long? = null
+        val displayName = resolver.query(
+            uri,
+            arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) reportedSize = cursor.getLong(sizeIndex)
+                cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+            } else null
+        }?.takeIf { it.isNotBlank() } ?: "model.gguf"
+
+        val freeBytes = availableBytes()
+        val importLimit = (freeBytes - MINIMUM_FREE_SPACE_BYTES).coerceAtLeast(0L)
+        require(importLimit > 0L) {
+            "Ruang penyimpanan hampir habis. Sisakan minimal 256 MB sebelum mengimpor model."
+        }
+        if (reportedSize != null && reportedSize!! > 0L) {
+            require(reportedSize!! <= importLimit) {
+                "Ukuran model ${reportedSize!! / (1024 * 1024)} MB melebihi ruang aman yang tersedia."
             }
-            ?.takeIf { it.isNotBlank() }
-            ?: "model.gguf"
+        }
         val safeBaseName = displayName.substringAfterLast('/').substringAfterLast('\\')
             .replace(Regex("[^A-Za-z0-9._-]"), "_")
             .take(100)
@@ -55,10 +79,16 @@ class LocalModelStore(context: Context) {
                     }
                     require(isGgufHeader(header)) { "Format tidak dikenali. Tata hanya menerima model GGUF." }
                     output.write(header)
+                    var copiedBytes = header.size.toLong()
+                    require(copiedBytes <= importLimit) { "Ukuran model melebihi ruang penyimpanan yang aman." }
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     while (true) {
                         val count = input.read(buffer)
                         if (count < 0) break
+                        copiedBytes += count
+                        require(copiedBytes <= importLimit) {
+                            "Impor dihentikan agar tersisa minimal 256 MB ruang penyimpanan."
+                        }
                         output.write(buffer, 0, count)
                     }
                     output.fd.sync()
@@ -85,6 +115,8 @@ class LocalModelStore(context: Context) {
     }
 
     companion object {
+        private const val MINIMUM_FREE_SPACE_BYTES = 256L * 1024L * 1024L
+
         fun isGgufHeader(header: ByteArray): Boolean =
             header.size >= 4 &&
                 header[0] == 'G'.code.toByte() &&

@@ -103,4 +103,4 @@ Tidak ada klaim model siap digunakan sebelum melewati evaluasi dan uji perangkat
 6. Android: inferensi offline diuji pada perangkat fisik.
 
 ## Langkah implementasi berikutnya
-Validator korpus JSONL awal sudah dibuat di `tools/corpus/validate_corpus.py` dan diuji lewat workflow CI Python. Langkah selanjutnya adalah memperluas manifest provenance, membuat laporan sumber dan lisensi, lalu menyiapkan dataset contoh sintetis/non-pribadi untuk menguji pipeline tanpa memasukkan percakapan pengguna.
+Validator korpus JSONL awal sudah dibuat di `tools/corpus/validate_corpus.py`. Generator manifest di `tools/corpus/build_manifest.py` membuat hash korpus, inventaris sumber/lisensi, jumlah contoh, dan pembagian dataset setelah validasi lulus. Langkah selanjutnya adalah menyiapkan dataset sintetis/non-pribadi dan uji pipeline tokenisasi tanpa memasukkan percakapan pengguna.

@@ -2,11 +2,14 @@ import random
 import sys
 import tempfile
 import unittest
+import contextlib
+import io
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import train_transformer
 from train_transformer import best_checkpoint_path, early_stop_reached, load_resume_checkpoint, atomic_save
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 class BestCheckpointPathTests(unittest.TestCase):
@@ -25,6 +28,43 @@ class BestCheckpointPathTests(unittest.TestCase):
         self.assertFalse(early_stop_reached(3, 2))
         self.assertTrue(early_stop_reached(3, 3))
         self.assertTrue(early_stop_reached(3, 4))
+
+
+
+class TrainingResumeIntegrationTests(unittest.TestCase):
+    def test_training_checkpoint_can_resume_and_continue_steps(self):
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("PyTorch tidak tersedia pada environment ini")
+        train_meta = {"vocab_size": 8, "records": 2, "corpus_sha256": "train-hash",
+                      "tokenizer_sha256": "tokenizer-hash", "source_register_sha256": "register-hash"}
+        validation_meta = {"vocab_size": 8, "records": 2, "corpus_sha256": "validation-hash",
+                           "source_register_sha256": "register-hash"}
+        def fake_load(corpus, tokenizer, split, register):
+            return [[1, 2, 3], [2, 3, 4], [3, 4, 5]], train_meta if split == "train" else validation_meta
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "resume.pt"
+            common = ["--corpus", str(root / "corpus.jsonl"), "--tokenizer", str(root / "tokenizer.json"),
+                      "--source-register", str(root / "sources.csv"), "--output", str(output),
+                      "--steps", "2", "--batch-size", "1", "--context-length", "2",
+                      "--eval-interval", "1", "--checkpoint-interval", "1",
+                      "--early-stopping-patience", "0", "--device", "cpu"]
+            with patch.object(train_transformer, "load_reviewed_sequences", side_effect=fake_load):
+                with patch.object(sys, "argv", ["train_transformer.py", *common]):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(train_transformer.main(), 0)
+                first = load_resume_checkpoint(torch, output, "cpu")
+                self.assertEqual(first["step"], 2)
+                with patch.object(sys, "argv", ["train_transformer.py", *common, "--resume"]):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(train_transformer.main(), 0)
+            resumed = load_resume_checkpoint(torch, output, "cpu")
+            self.assertEqual(resumed["step"], 4)
+            self.assertTrue(train_transformer.best_checkpoint_path(output).exists())
+            self.assertEqual(resumed["train_meta"]["corpus_sha256"], "train-hash")
+            self.assertEqual(resumed["validation_meta"]["corpus_sha256"], "validation-hash")
 
 
 class SafeCheckpointLoadingTests(unittest.TestCase):

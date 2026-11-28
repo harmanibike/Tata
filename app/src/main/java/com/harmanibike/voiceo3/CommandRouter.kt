@@ -77,7 +77,7 @@ class CommandRouter(
                     networkHelper.getTodayNews()
                 } else {
                     offlineConversation.respond(rawCommand)
-                        ?: "Saya belum memahami maksudnya. Kamu bisa bertanya dengan kalimat lain, meminta bantuan, atau mengajari saya melalui menu Pengetahuan. Saya tidak akan menyimpan hal baru tanpa izinmu."
+                        ?: offlineConversation.unknownResponse()
                 }
             }
         }

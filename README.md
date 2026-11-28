@@ -225,3 +225,7 @@ Urutan penanganan pesan Tata AI:
 7. Jika tidak ada jawaban, Tata menawarkan alur riset manual. Pertanyaan yang belum terjawab tidak otomatis disimpan sebagai pengetahuan.
 
 Riwayat konteks model lokal bersifat sementara di RAM dan dibatasi pada beberapa pasangan percakapan terakhir. Riwayat tersebut dibersihkan saat model dilepas dari memori.
+
+### Privasi pencarian web
+
+Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim pertanyaan umum ke pencarian web secara otomatis. Pencarian web hanya dijalankan setelah pengguna menyatakan permintaan secara jelas, misalnya dengan awalan “cari di internet” atau “telusuri web”. Jika model lokal tidak aktif dan pengguna tidak meminta pencarian web, Tata menawarkan pilihan riset manual; pertanyaan tersebut tidak otomatis disimpan sebagai pengetahuan.

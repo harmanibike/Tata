@@ -21,6 +21,7 @@ class CommandRouter(
 ) {
     private val offlineConversation = OfflineConversationEngine()
     private val localReasoning = LocalReasoningEngine()
+    private val tataGenerativeEngine = TataGenerativeEngine()
 
     suspend fun handle(rawCommand: String): String = withContext(Dispatchers.Main) {
         val command = rawCommand.lowercase(Locale("id", "ID")).trim()
@@ -37,12 +38,12 @@ class CommandRouter(
                 command.contains("kosongkan seluruh pengetahuan") ->
                 CONFIRM_CLEAR_KNOWLEDGE
             command == "bantuan" || command == "fitur" || command == "apa yang bisa kamu lakukan" ->
-                "Saya bisa memberi tahu jam dan tanggal, mengecek baterai, membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, peta, browser, Galeri, dan catatan. Saya juga bisa membaca berita terbaru hari ini dari sumber berita online. Mode ngobrol AI yang lebih luas sedang disiapkan."
+                "Saya bisa memberi tahu jam dan tanggal, mengecek baterai, membuka WhatsApp, YouTube, kamera, Pengaturan, Telepon, peta, browser, Galeri, dan catatan. Saya juga bisa membantu menyusun rencana, membandingkan pilihan, menimbang keputusan, menggunakan pengetahuan lokal, dan melakukan penalaran hitung. Pertanyaan faktual bergantung pada pengetahuan yang tersedia atau riset yang Anda minta."
             command in listOf("halo", "hai", "hello", "assalamualaikum", "selamat pagi", "selamat siang", "selamat sore", "selamat malam") ->
                 "Halo! Saya Tata, asisten suara Anda. Ada yang bisa saya bantu?"
             command.contains("siapa nama kamu") || command.contains("siapa namamu") ||
                 command.contains("nama kamu") || command.contains("siapa kamu") ->
-                "Nama saya Tata, asisten suara Tata AI."
+                "Nama saya Tata, asisten digital Tata AI."
             command.contains("cek baterai") || command.contains("berapa baterai") ||
                 command.contains("persen baterai") ->
                 getBatteryStatus()
@@ -84,20 +85,22 @@ class CommandRouter(
                     command.contains("kabar hari ini") || command.contains("headline")) {
                     networkHelper.getTodayNews()
                 } else {
-                    // Pertahankan respons sosial/emosional yang dikenali secara lokal.
                     val conversationalAnswer = offlineConversation.respond(rawCommand)
                     if (conversationalAnswer != null) conversationalAnswer
                     else {
-                        // Untuk pertanyaan terbuka, prioritaskan model generatif di perangkat.
-                        // Pencarian internet hanya menjadi cadangan jika model belum aktif/gagal.
-                        val localAnswer = withContext(Dispatchers.IO) {
+                        val modelAnswer = withContext(Dispatchers.IO) {
                             localLlmEngine.generate(rawCommand)
                         }?.takeIf { it.isNotBlank() }
-                        if (localAnswer != null) localAnswer
-                        else if (!localLlmEngine.isLoaded) {
-                            "Saya belum bisa menjawab pertanyaan terbuka ini karena model AI generatif lokal belum diaktifkan. Buka menu ☰ > Model AI lokal, impor model GGUF yang kompatibel, lalu pilih Aktifkan model. Pertanyaan dan percakapan tetap diproses di perangkat; saya tidak mengirimnya ke layanan AI lain."
-                        } else {
-                            "Model AI lokal sedang aktif, tetapi belum berhasil menyusun jawaban. Coba tanyakan dengan kalimat lebih sederhana atau periksa kecocokan file model."
+                        if (modelAnswer != null) modelAnswer
+                        else {
+                            // Code-based generative fallback: structured language composition,
+                            // not a pretrained neural language model and not a source of facts.
+                            val composedAnswer = tataGenerativeEngine.respond(rawCommand)
+                            composedAnswer ?: if (!localLlmEngine.isLoaded) {
+                                "Saya belum menemukan jawaban faktual yang tersimpan untuk pertanyaan itu. Saya tidak ingin mengarang. Anda bisa mengajari saya melalui Learning Lab, atau meminta secara jelas: 'Cari di internet tentang ...'. Saya tetap bisa membantu menyusun rencana, membandingkan pilihan, dan menimbang keputusan secara offline."
+                            } else {
+                                "Model AI lokal belum berhasil menyusun jawaban. Coba gunakan kalimat yang lebih sederhana atau periksa kecocokan model."
+                            }
                         }
                     }
                 }

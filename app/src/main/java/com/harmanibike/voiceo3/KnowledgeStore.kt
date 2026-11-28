@@ -242,6 +242,13 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     }
 
     @Synchronized
+    fun findKnowledgeByQuestion(question: String): List<KnowledgeEntry> {
+        val target = normalize(question)
+        if (target.isBlank()) return emptyList()
+        return getAll().filter { normalize(it.question) == target }
+    }
+
+    @Synchronized
     fun add(question: String, keywords: List<String>, answer: String) {
         val values = ContentValues().apply {
             put("question", question.trim())
@@ -349,7 +356,7 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
 
     @Synchronized
     fun updateLearningStatus(id: Long, status: String) {
-        require(status in setOf("perlu_ditinjau", "diterima", "ditolak", "sudah_diuji"))
+        require(status in setOf("perlu_ditinjau", "diterima", "ditolak", "diterapkan", "sudah_diuji"))
         val values = ContentValues().apply {
             put("status", status)
             put("updated_at", System.currentTimeMillis())

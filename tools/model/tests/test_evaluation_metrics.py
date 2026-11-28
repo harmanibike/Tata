@@ -11,6 +11,9 @@ class FakeTensor:
     def reshape(self, *shape):
         return self
 
+    def numel(self):
+        return len(self.values)
+
 
 class FakeModel:
     def eval(self):
@@ -51,6 +54,9 @@ class FakeConfig:
 
 class FakeLogits:
     def __getitem__(self, key):
+        return self
+
+    def reshape(self, *shape):
         return self
 
 

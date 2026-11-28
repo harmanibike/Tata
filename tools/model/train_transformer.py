@@ -171,7 +171,7 @@ def main() -> int:
     if args.device == "cuda" and not torch.cuda.is_available():
         parser.error("CUDA diminta tetapi tidak tersedia")
     device = ("cuda" if torch.cuda.is_available() else "cpu") if args.device == "auto" else args.device
-    config = TransformerConfig()
+    config = TransformerConfig(vocab_size=train_meta["vocab_size"])
     config.validate()
     if config.vocab_size <= 0:
         parser.error("Konfigurasi vocabulary tidak valid")
@@ -217,9 +217,17 @@ def main() -> int:
             parser.error("Hash korpus train berubah; checkpoint tidak dapat dilanjutkan")
         if checkpoint.get("train_meta", {}).get("tokenizer_sha256") != train_meta["tokenizer_sha256"]:
             parser.error("Tokenizer berubah; checkpoint tidak dapat dilanjutkan")
+        if checkpoint.get("validation_meta", {}).get("corpus_sha256") != validation_meta["corpus_sha256"]:
+            parser.error("Hash korpus validation berubah; checkpoint tidak dapat dilanjutkan")
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         start_step = int(checkpoint["step"])
+        if "python_rng_state" in checkpoint:
+            rng.setstate(checkpoint["python_rng_state"])
+        if "torch_rng_state" in checkpoint:
+            torch.set_rng_state(checkpoint["torch_rng_state"].cpu())
+        if device == "cuda" and checkpoint.get("cuda_rng_state") is not None:
+            torch.cuda.set_rng_state_all(checkpoint["cuda_rng_state"])
 
     best_validation = math.inf
     model.train()
@@ -260,6 +268,9 @@ def main() -> int:
                 "config": config.report(),
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
+                "python_rng_state": rng.getstate(),
+                "torch_rng_state": torch.get_rng_state(),
+                "cuda_rng_state": torch.cuda.get_rng_state_all() if device == "cuda" else None,
                 "train_meta": train_meta,
                 "validation_meta": validation_meta,
                 "best_validation_loss": best_validation,

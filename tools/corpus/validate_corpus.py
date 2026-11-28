@@ -96,6 +96,10 @@ def validate_record(record: Any, line_number: int) -> list[str]:
         errors.append(f"{prefix}: pesan pertama harus dari user")
     if valid_messages and valid_messages[-1]["role"] != "assistant":
         errors.append(f"{prefix}: pesan terakhir harus dari assistant")
+    for index in range(1, len(valid_messages)):
+        if valid_messages[index]["role"] == valid_messages[index - 1]["role"]:
+            errors.append(f"{prefix}: giliran pesan harus bergantian user dan assistant")
+            break
     return errors
 
 
@@ -104,6 +108,7 @@ def validate_file(path: Path) -> tuple[list[str], dict[str, int]]:
     stats = {"records": 0, "duplicates": 0, "privacy_blocked": 0}
     seen_ids: set[str] = set()
     seen_fingerprints: set[str] = set()
+    source_splits: dict[str, str] = {}
 
     try:
         content = path.read_text(encoding="utf-8")
@@ -127,6 +132,25 @@ def validate_file(path: Path) -> tuple[list[str], dict[str, int]]:
             stats["privacy_blocked"] += 1
 
         if isinstance(record, dict):
+            source = record.get("source")
+            split = record.get("split", "unassigned")
+            if (
+                record.get("privacy_review") == "passed"
+                and record.get("quality_review") == "passed"
+                and isinstance(source, dict)
+                and isinstance(source.get("source_id"), str)
+                and split in {"train", "validation", "test"}
+            ):
+                source_id = source["source_id"]
+                previous_split = source_splits.get(source_id)
+                if previous_split is not None and previous_split != split:
+                    errors.append(
+                        f"baris {line_number}: source_id yang sama tersebar pada "
+                        f"split {previous_split} dan {split}"
+                    )
+                else:
+                    source_splits[source_id] = split
+
             example_id = record.get("example_id")
             if isinstance(example_id, str) and example_id:
                 if example_id in seen_ids:

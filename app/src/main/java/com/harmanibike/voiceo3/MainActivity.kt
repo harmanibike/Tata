@@ -42,6 +42,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var router: CommandRouter
     private lateinit var knowledgeStore: KnowledgeStore
     private lateinit var localModelStore: LocalModelStore
+    private lateinit var localLlmEngine: LocalLlmEngine
     private lateinit var logView: LinearLayout
     private lateinit var messageInput: EditText
     private lateinit var listenButton: CircleSpectrumView
@@ -72,7 +73,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
         knowledgeStore = KnowledgeStore(this)
         localModelStore = LocalModelStore(this)
-        router = CommandRouter(this, knowledgeStore, NetworkHelper(this, knowledgeStore))
+        localLlmEngine = LocalLlmEngine()
+        router = CommandRouter(this, knowledgeStore, NetworkHelper(this, knowledgeStore), localLlmEngine)
         connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         textToSpeech = TextToSpeech(this, this)
         buildInterface()
@@ -818,36 +820,65 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun showLocalModelsManager() {
         val models = localModelStore.listModels()
-        val labels = models.map { "${it.name} • ${formatModelSize(it.sizeBytes)}" }.toTypedArray()
+        val activeName = localLlmEngine.activeModelPath?.let { java.io.File(it).name }
+        val labels = models.map {
+            it.name + " • " + formatModelSize(it.sizeBytes) +
+                if (it.name == activeName && localLlmEngine.isLoaded) " • AKTIF" else ""
+        }.toTypedArray()
+        val nativeStatus = if (localLlmEngine.isAvailable) {
+            "Mesin inferensi lokal tersedia." 
+        } else {
+            "Pustaka mesin AI lokal belum tersedia di APK ini. Perbarui APK setelah build native berhasil."
+        }
+        val loadedStatus = if (localLlmEngine.isLoaded) {
+            "Model aktif: ${activeName ?: "model lokal"}."
+        } else {
+            "Belum ada model yang dimuat ke RAM."
+        }
         val dialog = AlertDialog.Builder(this)
             .setTitle("Model AI lokal")
             .setMessage(
-                "Impor file model GGUF ke penyimpanan privat Tata. File tidak dikirim ke internet dan tidak dimasukkan ke APK.\n" +
-                    "Ruang kosong saat ini: ${formatModelSize(localModelStore.availableBytes())}. Tata menjaga minimal 256 MB tetap kosong saat impor.\n\n" +
-                    if (models.isEmpty()) "Belum ada model yang diimpor." else "Model tersimpan: ${models.size}.\nPilih model untuk melihat opsi penghapusan.\n\nCatatan: mesin inferensi lokal belum diaktifkan; tahap ini baru menyiapkan pengelolaan file model."
+                "Model diproses sepenuhnya di HP dan tidak dikirim ke server. " + nativeStatus + "\n" +
+                    loadedStatus + "\n" +
+                    "Ruang kosong: ${formatModelSize(localModelStore.availableBytes())}. Tata menjaga minimal 256 MB tetap kosong saat impor.\n\n" +
+                    if (models.isEmpty()) "Belum ada file model GGUF. Impor model kecil yang kompatibel untuk memulai." else
+                        "Model tersimpan: ${models.size}. Pilih model untuk mengaktifkan atau menghapusnya."
             )
             .setItems(labels) { _, which ->
                 val selected = models[which]
+                val isActive = localLlmEngine.isLoaded && localLlmEngine.activeModelPath == selected.file.absolutePath
                 AlertDialog.Builder(this)
                     .setTitle(selected.name)
-                    .setMessage("Ukuran: ${formatModelSize(selected.sizeBytes)}\nLokasi: penyimpanan privat aplikasi.\n\nModel belum dijalankan oleh mesin AI.")
-                    .setNegativeButton("Tutup", null)
-                    .setPositiveButton("Hapus model") { _, _ ->
+                    .setMessage(
+                        "Ukuran: ${formatModelSize(selected.sizeBytes)}\n" +
+                            if (isActive) "Model ini sedang aktif di RAM." else "Model tersimpan di penyimpanan privat dan belum aktif."
+                    )
+                    .setPositiveButton(if (isActive) "Nonaktifkan" else "Aktifkan model") { _, _ ->
+                        if (isActive) deactivateLocalModel() else activateLocalModel(selected)
+                    }
+                    .setNeutralButton("Hapus model") { _, _ ->
                         AlertDialog.Builder(this)
                             .setTitle("Hapus file model?")
-                            .setMessage("File ${selected.name} akan dihapus dari penyimpanan privat Tata. Pengetahuan dan riwayat percakapan tidak ikut dihapus.")
+                            .setMessage("File ${selected.name} akan dihapus. Pengetahuan dan riwayat percakapan tidak ikut dihapus.")
                             .setPositiveButton("Ya, hapus") { _, _ ->
-                                runCatching { localModelStore.deleteModel(selected) }
-                                    .onSuccess {
-                                        Toast.makeText(this, if (it) "File model dihapus." else "File model tidak dapat dihapus.", Toast.LENGTH_LONG).show()
+                                activityScope.launch {
+                                    runCatching {
+                                        kotlinx.coroutines.withContext(Dispatchers.IO) {
+                                            if (localLlmEngine.activeModelPath == selected.file.absolutePath) localLlmEngine.unload()
+                                            localModelStore.deleteModel(selected)
+                                        }
+                                    }.onSuccess {
+                                        Toast.makeText(this@MainActivity, if (it) "File model dihapus." else "File model tidak dapat dihapus.", Toast.LENGTH_LONG).show()
+                                        showLocalModelsManager()
+                                    }.onFailure { error ->
+                                        Toast.makeText(this@MainActivity, "Gagal menghapus model: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
                                     }
-                                    .onFailure {
-                                        Toast.makeText(this, "Gagal menghapus model: ${it.localizedMessage}", Toast.LENGTH_LONG).show()
-                                    }
+                                }
                             }
                             .setNegativeButton("Batal", null)
                             .show()
                     }
+                    .setNegativeButton("Kembali", null)
                     .show()
             }
             .setPositiveButton("Impor model GGUF") { _, _ ->
@@ -857,9 +888,49 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 }
                 startActivityForResult(intent, REQUEST_IMPORT_MODEL)
             }
-            .setNegativeButton("Tutup", null)
+            .setNeutralButton(if (localLlmEngine.isLoaded) "Lepas model" else "Tutup") { _, _ ->
+                if (localLlmEngine.isLoaded) deactivateLocalModel()
+            }
             .create()
         dialog.show()
+    }
+
+    private fun activateLocalModel(model: LocalModelFile) {
+        if (!localLlmEngine.isAvailable) {
+            Toast.makeText(this, "Mesin AI lokal belum tersedia pada APK ini.", Toast.LENGTH_LONG).show()
+            return
+        }
+        Toast.makeText(this, "Memuat model ke RAM. Proses dapat memerlukan waktu.", Toast.LENGTH_LONG).show()
+        activityScope.launch {
+            val result = runCatching {
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    localLlmEngine.loadModel(model.file.absolutePath, contextSize = 1024, threads = 2)
+                }
+            }
+            result.onSuccess { message ->
+                Toast.makeText(
+                    this@MainActivity,
+                    if (message == "OK") "Model ${model.name} aktif. Tata siap menjawab secara lokal." else message,
+                    Toast.LENGTH_LONG
+                ).show()
+                showLocalModelsManager()
+            }.onFailure { error ->
+                Toast.makeText(this@MainActivity, "Gagal memuat model: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun deactivateLocalModel() {
+        activityScope.launch {
+            runCatching {
+                kotlinx.coroutines.withContext(Dispatchers.IO) { localLlmEngine.unload() }
+            }.onSuccess {
+                Toast.makeText(this@MainActivity, "Model dilepas dari RAM.", Toast.LENGTH_SHORT).show()
+                showLocalModelsManager()
+            }.onFailure { error ->
+                Toast.makeText(this@MainActivity, "Gagal melepas model: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun formatModelSize(bytes: Long): String {

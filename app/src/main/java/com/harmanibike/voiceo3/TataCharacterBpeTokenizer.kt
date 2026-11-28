@@ -52,9 +52,12 @@ class TataCharacterBpeTokenizer(
                 for (index in 0 until mergesArray.length()) {
                     val pair = mergesArray.getJSONArray(index)
                     require(pair.length() == 2) { "Setiap merge harus berisi dua token" }
-                    val left = pair.getString(0)
-                    val right = pair.getString(1)
-                    merges.add(left to right)
+                    val leftValue = pair.get(0)
+                    val rightValue = pair.get(1)
+                    require(leftValue is String && rightValue is String) {
+                        "Setiap bagian merge harus berupa teks"
+                    }
+                    merges.add(leftValue to rightValue)
                 }
 
                 val tokenizer = TataCharacterBpeTokenizer(alphabet, merges)

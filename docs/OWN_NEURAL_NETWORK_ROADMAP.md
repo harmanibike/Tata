@@ -119,3 +119,8 @@ Loop pelatihan lokal tersedia di `tools/model/train_transformer.py`, dengan load
 ## Evaluasi model
 
 Evaluator held-out tersedia di `tools/model/evaluate_transformer.py`, dengan test set yang terpisah dari training dan validation. Rubrik penilaian manual ada di `docs/MODEL_EVALUATION_RUBRIC.md`. Perplexity tidak cukup untuk menyatakan model layak; evaluasi manusia, audit privasi/keamanan, dan pengujian perangkat target wajib dilakukan sebelum integrasi Android.
+
+
+### Evaluasi tokenizer sebelum model training
+
+Tool `tools/corpus/evaluate_tokenizer.py` menyediakan probe tetap untuk imbuhan Indonesia, reduplikasi, format rupiah, tanggal/jam, tanda baca, campuran bahasa, nama lokal, dan karakter emoji. Catat unknown rate, token-per-character, dan round-trip; bandingkan tokenizer pada korpus train yang sama. Probe ini hanya untuk evaluasi, tidak boleh digabung ke data training. Rasio token lebih kecil bukan bukti model lebih pintar atau lebih akurat.

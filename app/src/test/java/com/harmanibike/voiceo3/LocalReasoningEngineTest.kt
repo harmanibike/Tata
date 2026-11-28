@@ -33,6 +33,22 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun convertsLengthMassVolumeAndTimeUnits() {
+        assertEquals("2 km = 2.000 m.", engine.calculate("berapa 2 km ke meter"))
+        assertEquals("500 g = 0,5 kg.", engine.calculate("ubah 500 gram ke kilogram"))
+        assertEquals("2 l = 2.000 ml.", engine.calculate("konversi 2 liter ke ml"))
+        assertEquals("120 menit = 2 jam.", engine.calculate("hitung 120 menit ke jam"))
+        assertEquals("1,5 m = 150 cm.", engine.calculate("ubah 1,5 meter ke sentimeter"))
+    }
+
+    @Test
+    fun rejectsIncompatibleUnitDimensions() {
+        val result = engine.calculate("ubah 2 km ke kilogram")
+        assertNotNull(result)
+        assertTrue(result!!.contains("tidak sejenis"))
+    }
+
+    @Test
     fun calculatesDiscountAndFinalPrice() {
         assertEquals(
             "Diskon 10% dari Rp150.000 = Rp15.000. Harga setelah diskon: Rp135.000.",

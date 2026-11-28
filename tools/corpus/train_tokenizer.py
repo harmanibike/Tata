@@ -141,7 +141,8 @@ def load_training_texts(jsonl_path: Path) -> list[str]:
         # Hanya contoh yang lolos tinjauan privasi dan kualitas boleh melatih tokenizer.
         if record.get("privacy_review") != "passed" or record.get("quality_review") != "passed":
             continue
-        if record.get("split") not in {"unassigned", "train"}:
+        # Unassigned data must be split and reviewed before any tokenizer training.
+        if record.get("split") != "train":
             continue
         for message in record.get("messages", []):
             content = message.get("content")

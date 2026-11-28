@@ -70,7 +70,7 @@ Setiap perubahan korpus menghasilkan manifest versi baru, jumlah contoh, hash fi
 - Loader tokenizer hanya menerima contoh yang lolos tinjauan privasi dan kualitas serta sudah ditetapkan ke split `train`. Contoh `unassigned`, validation, dan test tidak boleh ikut melatih tokenizer.
 - Mulai dengan eksperimen tokenizer subword BPE atau Unigram yang dilatih dari korpus berizin Tata sendiri.
 - Ukuran kosakata awal 8.000 token adalah hipotesis eksperimen, bukan keputusan final; bandingkan dengan 4.000 dan 16.000 berdasarkan efisiensi token, kualitas ejaan, angka, imbuhan, nama, dan ukuran embedding.
-- Simpan tokenizer, konfigurasi normalisasi, versi korpus, dan hash dalam satu paket versi.
+- Simpan tokenizer, konfigurasi normalisasi, versi korpus, dan hash dalam satu paket versi. Penanda peran dan newline dipertahankan sebagai batas giliran yang sama pada tokenizer, training, prompt generasi, dan evaluator.
 - Uji kata berimbuhan, kata ulang, singkatan, nama lokal, angka rupiah, tanda baca, campuran Indonesia/Inggris, serta teks suara yang umum.
 - Tes awal mencakup round-trip Unicode, determinisme, token tidak dikenal, penyimpanan atomik, validasi urutan merge, simbol yang harus sudah tersedia, larangan token hasil merge duplikat, kecocokan ukuran vocabulary, dan pemisahan data yang belum ditinjau atau held-out. Loader pada tokenizer/training/evaluator juga menjalankan validasi korpus sebelum membaca data.
 - Jalankan smoke test setelah dataset sintetis ditinjau: `python tools/corpus/validate_corpus.py tools/corpus/examples/synthetic_sample.jsonl` lalu `python tools/corpus/train_tokenizer.py tools/corpus/examples/synthetic_sample.jsonl --output /tmp/tata-tokenizer.json`.

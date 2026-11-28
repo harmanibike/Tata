@@ -98,3 +98,28 @@ gradle assembleDebug --no-daemon
 
 Artifact:
 `app/build/outputs/apk/debug/app-debug.apk`
+
+
+## Prinsip arsitektur: kemampuan dan pengetahuan dipisahkan
+
+Aturan ini menjadi prinsip tetap pengembangan Tata AI:
+
+### 1. Kemampuan AI (kode aplikasi)
+- Kemampuan adalah fungsi/program yang benar-benar dapat dilakukan Tata, misalnya memahami perintah, percakapan, penalaran, membaca dokumen, riset, pengenalan gambar, dan pengelolaan tugas.
+- Implementasi kemampuan harus berada di source code aplikasi (Kotlin/Android) dan menjadi bagian dari APK. Kemampuan tidak dibuat dengan menambahkan baris pengetahuan ke database.
+- Mengubah, menambah, atau memperbaiki implementasi kemampuan memerlukan perubahan script dan build APK baru.
+- Tabel `assistant_capabilities` hanya boleh dipakai sebagai katalog/deskripsi, status, atau metadata kemampuan. Mengedit deskripsi di database tidak menciptakan, menghapus, atau mengubah implementasi kode kemampuan.
+- Tidak menggunakan API AI eksternal atau layanan AI berbayar. Kemampuan AI yang membutuhkan model generatif harus menggunakan model lokal/on-device jika perangkat mendukungnya.
+
+### 2. Pengetahuan (data yang dapat diperbarui)
+- Pengetahuan faktual, definisi, panduan, koreksi, dan materi yang dipelajari disimpan terpisah dalam database pengetahuan.
+- Pengetahuan dapat ditambah, diperbarui, dikoreksi, diekspor, diimpor, atau dihapus tanpa membangun ulang APK.
+- Tata harus meminta persetujuan sebelum menyimpan informasi baru atau menghapus pengetahuan. Perintah hapus seluruh pengetahuan memerlukan konfirmasi khusus.
+- Informasi riset atau teks sementara tidak otomatis menjadi pengetahuan permanen.
+
+### 3. Memori pengguna dan data sementara
+- Memori tentang pengguna disimpan terpisah dari pengetahuan umum dan hanya setelah pengguna memberi izin.
+- Konteks percakapan sementara boleh digunakan selama sesi untuk menjaga kesinambungan percakapan, tetapi tidak otomatis disimpan ke database.
+- Menghapus pengetahuan umum tidak boleh diam-diam menghapus atau mengubah memori pengguna maupun riwayat percakapan; setiap jenis data dikelola secara terpisah.
+
+**Ringkasnya:** script menentukan apa yang Tata mampu lakukan; database pengetahuan menentukan apa yang Tata ketahui. Memperbarui pengetahuan tidak memerlukan APK baru, sedangkan menambah kemampuan yang benar-benar baru memerlukan perubahan kode dan build APK.

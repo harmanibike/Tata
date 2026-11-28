@@ -207,6 +207,7 @@ def main() -> int:
         )
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     start_step = 0
+    best_validation = math.inf
     if args.resume:
         if not args.output.exists():
             parser.error("--resume dipakai tetapi checkpoint tidak ditemukan")
@@ -222,6 +223,7 @@ def main() -> int:
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         start_step = int(checkpoint["step"])
+        best_validation = float(checkpoint.get("best_validation_loss", math.inf))
         if "python_rng_state" in checkpoint:
             rng.setstate(checkpoint["python_rng_state"])
         if "torch_rng_state" in checkpoint:
@@ -229,7 +231,6 @@ def main() -> int:
         if device == "cuda" and checkpoint.get("cuda_rng_state") is not None:
             torch.cuda.set_rng_state_all(checkpoint["cuda_rng_state"])
 
-    best_validation = math.inf
     model.train()
     for step in range(start_step + 1, start_step + args.steps + 1):
         inputs, targets = batch_from_sequences(

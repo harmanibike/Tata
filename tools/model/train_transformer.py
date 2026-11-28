@@ -157,7 +157,18 @@ def evaluate(torch, model, sequences, config, device, max_batches=32):
                 logits.reshape(-1, config.vocab_size), y.reshape(-1)
             ).item())
     model.train()
-    return sum(losses) / len(losses)
+    mean_loss = sum(losses) / len(losses)
+    if not math.isfinite(mean_loss):
+        raise ValueError("Validation loss tidak finite; training dihentikan")
+    return mean_loss
+
+
+def best_checkpoint_path(output: Path) -> Path:
+    return output.with_name(output.stem + ".best" + output.suffix)
+
+
+def clone_state_to_cpu(state):
+    return {name: value.detach().cpu().clone() for name, value in state.items()}
 
 
 def main() -> int:
@@ -175,6 +186,8 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=20261128)
     parser.add_argument("--eval-interval", type=int, default=100)
     parser.add_argument("--checkpoint-interval", type=int, default=250)
+    parser.add_argument("--early-stopping-patience", type=int, default=10,
+                        help="jumlah evaluasi tanpa perbaikan sebelum berhenti; 0 menonaktifkan")
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
@@ -182,6 +195,8 @@ def main() -> int:
         parser.error("steps, batch-size, eval-interval, dan checkpoint-interval harus positif")
     if args.learning_rate <= 0:
         parser.error("learning-rate harus positif")
+    if args.early_stopping_patience < 0:
+        parser.error("early-stopping-patience tidak boleh negatif")
     if args.context_length < 2:
         parser.error("context-length minimal 2 token")
 
@@ -234,6 +249,9 @@ def main() -> int:
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     start_step = 0
     best_validation = math.inf
+    best_model_state = None
+    best_step = None
+    evaluations_without_improvement = 0
     if args.resume:
         if not args.output.exists():
             parser.error("--resume dipakai tetapi checkpoint tidak ditemukan")
@@ -250,6 +268,12 @@ def main() -> int:
         optimizer.load_state_dict(checkpoint["optimizer"])
         start_step = int(checkpoint["step"])
         best_validation = float(checkpoint.get("best_validation_loss", math.inf))
+        best_model_state = checkpoint.get("best_model")
+        best_step = checkpoint.get("best_step")
+        evaluations_without_improvement = int(checkpoint.get("evaluations_without_improvement", 0))
+        if best_model_state is None:
+            best_model_state = clone_state_to_cpu(model.state_dict())
+            best_step = start_step
         if "python_rng_state" in checkpoint:
             rng.setstate(checkpoint["python_rng_state"])
         if "torch_rng_state" in checkpoint:
@@ -267,6 +291,8 @@ def main() -> int:
         loss = torch.nn.functional.cross_entropy(
             logits.reshape(-1, config.vocab_size), targets.reshape(-1)
         )
+        if not math.isfinite(float(loss.item())):
+            raise RuntimeError(f"Training loss tidak finite pada step {step}; training dihentikan")
         loss.backward()
         gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         if not math.isfinite(float(gradient_norm)):
@@ -278,20 +304,51 @@ def main() -> int:
             validation_loss = evaluate(
                 torch, model, validation_sequences, config, device
             )
-            best_validation = min(best_validation, validation_loss)
+            improved = validation_loss < best_validation
+            if improved:
+                best_validation = validation_loss
+                best_step = step
+                best_model_state = clone_state_to_cpu(model.state_dict())
+                evaluations_without_improvement = 0
+            else:
+                evaluations_without_improvement += 1
             print(json.dumps({
                 "step": step,
                 "train_loss": round(float(loss.item()), 6),
                 "validation_loss": round(validation_loss, 6),
                 "best_validation_loss": round(best_validation, 6),
+                "best_step": best_step,
+                "evaluations_without_improvement": evaluations_without_improvement,
                 "perplexity": round(math.exp(min(validation_loss, 20)), 4),
                 "device": device,
             }, ensure_ascii=False), flush=True)
+            if improved:
+                best_payload = {
+                    "format": "tata-transformer-checkpoint",
+                    "format_version": 1,
+                    "checkpoint_role": "best_validation",
+                    "step": step,
+                    "seed": args.seed,
+                    "config": config.report(),
+                    "model": best_model_state,
+                    "optimizer": optimizer.state_dict(),
+                    "train_meta": train_meta,
+                    "validation_meta": validation_meta,
+                    "best_validation_loss": best_validation,
+                    "best_step": best_step,
+                    "training": {"learning_rate": args.learning_rate,
+                                 "batch_size": args.batch_size,
+                                 "device": device,
+                                 "initialization": "random",
+                                 "pretrained_weights": False},
+                }
+                atomic_save(torch, best_payload, best_checkpoint_path(args.output))
 
         if step % args.checkpoint_interval == 0 or step == start_step + args.steps:
             payload = {
                 "format": "tata-transformer-checkpoint",
                 "format_version": 1,
+                "checkpoint_role": "latest_resume",
                 "step": step,
                 "seed": args.seed,
                 "config": config.report(),
@@ -303,6 +360,9 @@ def main() -> int:
                 "train_meta": train_meta,
                 "validation_meta": validation_meta,
                 "best_validation_loss": best_validation,
+                "best_step": best_step,
+                "best_model": best_model_state,
+                "evaluations_without_improvement": evaluations_without_improvement,
                 "training": {
                     "learning_rate": args.learning_rate,
                     "batch_size": args.batch_size,
@@ -313,9 +373,19 @@ def main() -> int:
             }
             atomic_save(torch, payload, args.output)
 
+        if (args.early_stopping_patience > 0 and should_evaluate
+                and evaluations_without_improvement >= args.early_stopping_patience):
+            print(json.dumps({"status": "early_stopping", "step": step,
+                              "best_step": best_step,
+                              "best_validation_loss": best_validation}, ensure_ascii=False), flush=True)
+            break
+
     print(json.dumps({
         "status": "training_finished",
         "checkpoint": str(args.output),
+        "best_checkpoint": str(best_checkpoint_path(args.output)),
+        "best_step": best_step,
+        "best_validation_loss": best_validation,
         "parameters": actual_parameters,
         "train_records": train_meta["records"],
         "validation_records": validation_meta["records"],

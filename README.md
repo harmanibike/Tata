@@ -169,4 +169,9 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Koreksi tetap berstatus **Perlu ditinjau** dan tidak otomatis mengubah pengetahuan aktif maupun bobot model.
 - Untuk mengaktifkan koreksi sebagai pengetahuan, pengguna harus meninjau dan menyetujui tindakan terpisah di Learning Lab.
 - Konteks pertanyaan terakhir yang dipakai tombol koreksi hanya berada di memori Activity dan tidak menambah penyimpanan otomatis.
+### Navigasi tersembunyi bergaya chat
 
+- Navigasi utama dipindahkan dari navbar bawah ke menu tersembunyi yang dibuka melalui ikon ☰ pada header.
+- Menu menyediakan akses ke percakapan, mode suara, riwayat, pengetahuan, Learning Lab, model AI lokal, dan pengaturan.
+- Area bawah tidak lagi ditempati navbar; kolom percakapan dan input pesan menjadi lebih lega.
+- Lingkaran spektrum/equalizer tetap dipertahankan sebagai kontrol utama interaksi suara.

@@ -50,6 +50,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private var networkCallbackRegistered = false
     private var activityDestroyed = false
     private var selectedVoiceNetworkMode: Boolean? = null
+    private var lastSpeechText: String? = null
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) { refreshConnectionStatus() }
         override fun onLost(network: Network) { refreshConnectionStatus() }
@@ -337,7 +338,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val selected = voices.indexOfFirst { it.name == savedName }.let { if (it >= 0) it else 0 }
         val labels = voices.map { voice ->
             val quality = if (voice.quality >= android.speech.tts.Voice.QUALITY_HIGH) " • kualitas tinggi" else ""
-            "${voice.name} (${voice.locale.displayName})$quality"
+            val mode = if (voice.isNetworkConnectionRequired) " • online" else " • offline"
+            "${voice.name} (${voice.locale.displayName})$quality$mode"
         }.toTypedArray()
 
         AlertDialog.Builder(this)
@@ -706,6 +708,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             if (conversationModeActive) conversationHandler.postDelayed({ if (conversationModeActive) startListening() }, 500)
             return
         }
+        lastSpeechText = message
         textToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, "tata-conversation-" + System.nanoTime())
     }
 
@@ -958,7 +961,24 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     }
                     @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
-                        conversationHandler.post { if (conversationModeActive) startListening() }
+                        conversationHandler.post {
+                            if (utteranceId?.startsWith("tata-conversation-") == true &&
+                                selectedVoiceNetworkMode == true && !activityDestroyed
+                            ) {
+                                val retryText = lastSpeechText
+                                applyVoiceForConnection(false)
+                                if (!retryText.isNullOrBlank()) {
+                                    textToSpeech.speak(
+                                        retryText,
+                                        TextToSpeech.QUEUE_FLUSH,
+                                        null,
+                                        "tata-offline-retry-" + System.nanoTime()
+                                    )
+                                    return@post
+                                }
+                            }
+                            if (conversationModeActive && !activityDestroyed) startListening()
+                        }
                     }
                 })
             }        } else {

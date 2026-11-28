@@ -147,3 +147,8 @@ Training log juga menampilkan rata-rata train loss sejak evaluasi terakhir dan s
 ### Audit kesiapan dataset tanpa membocorkan isi
 
 Tool `tools/corpus/audit_dataset.py` merangkum status review, jumlah contoh dan kelompok sumber, distribusi train/validation/test/unassigned, lisensi, bahasa, serta task. Laporan tidak mencetak isi pesan. Gerbang minimum tiga sumber disetujui dan split train/validation/test terisi hanya membuat dataset berstatus `ready_for_pilot_review`; ini bukan klaim dataset representatif. Peringatan diberikan bila sumber kurang dari 20 atau contoh disetujui kurang dari 1.000. Dataset sintetis saat ini tetap pending dan tidak boleh dilatih.
+
+
+### Statistik panjang dan kecocokan konteks
+
+Audit dataset juga menghitung distribusi karakter per contoh. Jika file tokenizer disediakan, audit menghitung distribusi token per contoh, median, persentil ke-90, rata-rata, nilai minimum/maksimum, dan jumlah contoh yang lebih panjang dari context length eksperimen. Statistik bersifat agregat dan tidak menampilkan teks mentah. Contoh yang melebihi context length tidak otomatis dihapus; trainer membentuk jendela konteks. Perlu pemeriksaan manual agar pemotongan jendela tidak menghilangkan giliran dialog yang penting.

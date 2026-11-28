@@ -47,7 +47,7 @@ class LocalModelStore(context: Context) {
         }?.takeIf { it.isNotBlank() } ?: "model.gguf"
 
         val freeBytes = availableBytes()
-        val importLimit = (freeBytes - MINIMUM_FREE_SPACE_BYTES).coerceAtLeast(0L)
+        val importLimit = safeImportLimit(freeBytes)
         require(importLimit > 0L) {
             "Ruang penyimpanan hampir habis. Sisakan minimal 256 MB sebelum mengimpor model."
         }
@@ -116,6 +116,9 @@ class LocalModelStore(context: Context) {
 
     companion object {
         private const val MINIMUM_FREE_SPACE_BYTES = 256L * 1024L * 1024L
+
+        fun safeImportLimit(freeBytes: Long): Long =
+            (freeBytes - MINIMUM_FREE_SPACE_BYTES).coerceAtLeast(0L)
 
         fun isGgufHeader(header: ByteArray): Boolean =
             header.size >= 4 &&

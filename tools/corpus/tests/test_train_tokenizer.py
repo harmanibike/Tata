@@ -52,7 +52,7 @@ class CharacterBPETests(unittest.TestCase):
             }
             pending = {**base, "quality_review": "pending"}
             held_out = {**base, "split": "test"}
-            unassigned = {**base, "messages": [{"role": "user", "content": "belum dibagi"}]}
+            unassigned = {**base, "split": "unassigned", "messages": [{"role": "user", "content": "belum dibagi"}]}
             path.write_text(
                 "\n".join(json.dumps(item) for item in [base, pending, held_out, unassigned]),
                 encoding="utf-8",

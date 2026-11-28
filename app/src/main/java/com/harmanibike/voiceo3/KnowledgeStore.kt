@@ -160,9 +160,13 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
     @Synchronized
     fun updateCapabilityDescription(key: String, description: String) {
         require(description.isNotBlank()) { "Deskripsi kemampuan tidak boleh kosong." }
+        val currentVersion = readableDatabase.rawQuery(
+            "SELECT version FROM assistant_capabilities WHERE capability_key=?",
+            arrayOf(key)
+        ).use { cursor -> if (cursor.moveToFirst()) cursor.getInt(0) else 0 }
         val values = ContentValues().apply {
             put("description", description.trim())
-            put("version", 2)
+            put("version", currentVersion + 1)
             put("updated_at", System.currentTimeMillis())
         }
         writableDatabase.update("assistant_capabilities", values, "capability_key=?", arrayOf(key))

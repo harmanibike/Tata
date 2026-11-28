@@ -22,7 +22,7 @@ class CharacterBPETests(unittest.TestCase):
                 writer.writerow({
                     "source_id": source_id, "title": "Sumber uji", "owner": "Tata",
                     "canonical_uri": "https://example.org/" + source_id,
-                    "accessed_at": "2026-11-28", "declared_license": "CC0",
+                    "accessed_at": "2026-11-28", "declared_license": "cc0",
                     "license_evidence_uri": "https://example.org/license",
                     "training_permission": "yes", "commercial_use": "unclear",
                     "derivative_permission": "yes", "attribution_required": "Tidak ada",
@@ -145,6 +145,22 @@ class CharacterBPETests(unittest.TestCase):
                 ["user: teks latih\n", "assistant: jawaban latih\n"],
                 load_training_texts(path, register),
             )
+
+    def test_training_loader_rejects_license_mismatch_with_register(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "corpus.jsonl"
+            register = Path(directory) / "sources.csv"
+            self.write_register(register, ["sumber"])
+            record = {
+                "schema_version": 1, "example_id": "license-mismatch",
+                "language": "id", "task": "conversation",
+                "privacy_review": "passed", "quality_review": "passed", "split": "train",
+                "source": {"source_id": "sumber", "title": "Sumber uji", "license": "cc_by", "uri": "https://example.org/sumber"},
+                "messages": [{"role": "user", "content": "pertanyaan"}, {"role": "assistant", "content": "jawaban"}],
+            }
+            path.write_text(json.dumps(record), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Lisensi korpus tidak cocok"):
+                load_training_texts(path, register)
 
     def test_training_loader_rejects_unapproved_license(self):
         with tempfile.TemporaryDirectory() as directory:

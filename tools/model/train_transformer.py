@@ -120,27 +120,43 @@ def batch_from_sequences(torch, sequences, batch_size, context_length, device, r
     )
 
 
+def select_validation_windows(sequences, context_length, max_batches=32):
+    if context_length < 1 or max_batches < 1:
+        raise ValueError("context_length dan max_batches harus positif")
+    windows = []
+    for sequence in sequences:
+        for start in range(0, len(sequence) - context_length, context_length):
+            window = sequence[start:start + context_length + 1]
+            if len(window) == context_length + 1:
+                windows.append(window)
+    if len(windows) <= max_batches:
+        return windows
+    if max_batches == 1:
+        return [windows[0]]
+    indexes = [
+        round(index * (len(windows) - 1) / (max_batches - 1))
+        for index in range(max_batches)
+    ]
+    return [windows[index] for index in indexes]
+
+
 def evaluate(torch, model, sequences, config, device, max_batches=32):
+    windows = select_validation_windows(
+        sequences, config.context_length, max_batches
+    )
+    if not windows:
+        raise ValueError("Validation tidak memiliki sequence cukup panjang untuk context_length")
     model.eval()
     losses = []
     with torch.no_grad():
-        for sequence in sequences:
-            for start in range(0, len(sequence) - config.context_length, config.context_length):
-                window = sequence[start:start + config.context_length + 1]
-                if len(window) != config.context_length + 1:
-                    continue
-                x = torch.tensor([window[:-1]], dtype=torch.long, device=device)
-                y = torch.tensor([window[1:]], dtype=torch.long, device=device)
-                logits = model(x)
-                losses.append(torch.nn.functional.cross_entropy(
-                    logits.reshape(-1, config.vocab_size), y.reshape(-1)
-                ).item())
-                if len(losses) >= max_batches:
-                    model.train()
-                    return sum(losses) / len(losses)
+        for window in windows:
+            x = torch.tensor([window[:-1]], dtype=torch.long, device=device)
+            y = torch.tensor([window[1:]], dtype=torch.long, device=device)
+            logits = model(x)
+            losses.append(torch.nn.functional.cross_entropy(
+                logits.reshape(-1, config.vocab_size), y.reshape(-1)
+            ).item())
     model.train()
-    if not losses:
-        raise ValueError("Validation tidak memiliki sequence cukup panjang untuk context_length")
     return sum(losses) / len(losses)
 
 
@@ -152,6 +168,10 @@ def main() -> int:
     parser.add_argument("--steps", type=int, default=1000)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
+    parser.add_argument(
+        "--context-length", type=int, default=256,
+        help="panjang konteks eksperimen; boleh lebih kecil untuk korpus pilot",
+    )
     parser.add_argument("--seed", type=int, default=20261128)
     parser.add_argument("--eval-interval", type=int, default=100)
     parser.add_argument("--checkpoint-interval", type=int, default=250)
@@ -162,6 +182,8 @@ def main() -> int:
         parser.error("steps, batch-size, eval-interval, dan checkpoint-interval harus positif")
     if args.learning_rate <= 0:
         parser.error("learning-rate harus positif")
+    if args.context_length < 2:
+        parser.error("context-length minimal 2 token")
 
     try:
         import torch
@@ -177,7 +199,10 @@ def main() -> int:
     validation_sequences, validation_meta = load_reviewed_sequences(
         args.corpus, args.tokenizer, "validation"
     )
-    config = TransformerConfig(vocab_size=train_meta["vocab_size"])
+    config = TransformerConfig(
+        vocab_size=train_meta["vocab_size"],
+        context_length=args.context_length,
+    )
     config.validate()
     if config.vocab_size <= 0:
         parser.error("Konfigurasi vocabulary tidak valid")

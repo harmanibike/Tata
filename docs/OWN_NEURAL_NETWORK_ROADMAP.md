@@ -129,3 +129,8 @@ Tool `tools/corpus/evaluate_tokenizer.py` menyediakan probe tetap untuk imbuhan 
 ### Konteks pilot dan sampling validation
 
 Trainer mendukung `--context-length` dengan default 256. Konteks lebih pendek dapat dipakai untuk eksperimen pipeline pada contoh yang lebih pendek, tetapi hasilnya tidak boleh dibandingkan langsung dengan model berkonteks 256 tanpa mencatat konfigurasi. Validation memilih jendela yang tersebar merata dari seluruh kumpulan jendela penuh (maksimal 32 per evaluasi), bukan hanya jendela awal. Resume checkpoint tetap terikat pada konfigurasi yang sama.
+
+
+### Pemisahan checkpoint terbaik dan checkpoint resume
+
+Trainer kini memisahkan dua keluaran: file yang ditentukan melalui `--output` adalah checkpoint terakhir untuk melanjutkan training, sedangkan nama dengan sisipan `.best` sebelum ekstensi menyimpan bobot dengan validation loss terendah. Checkpoint resume juga membawa snapshot bobot terbaik dan step-nya sehingga status best tidak hilang ketika training dilanjutkan. Penulisan kedua file memakai mekanisme atomik. Train loss dan validation loss yang bukan angka finite menghentikan training agar checkpoint rusak tidak diteruskan. Evaluator dapat membaca checkpoint best karena format model dan metadata utamanya tetap kompatibel. Fitur ini sudah diuji pada level helper/path dan CI; training nyata tetap menunggu korpus berizin yang telah disetujui.

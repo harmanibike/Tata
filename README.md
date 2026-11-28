@@ -37,6 +37,9 @@
 - Menu **Privasi** menyediakan pengaturan penyimpanan riwayat, penghapusan seluruh riwayat percakapan, dan penghapusan seluruh pengetahuan. Penghapusan riwayat dan pengetahuan merupakan tindakan terpisah.
 
 ## Fitur yang tersedia
+- Profil kemampuan Tata disimpan pada tabel `assistant_capabilities` dan ditampilkan melalui **Pengaturan > Tentang Tata AI > Kemampuan & profil**. Deskripsi kemampuan dapat diubah pengguna; perubahan hanya tersimpan setelah tombol **Simpan** ditekan dan nomor versi kemampuan dinaikkan. Data ini adalah konfigurasi profil, terpisah dari pengetahuan yang dipelajari.
+- Kecerdasan emosional lokal mengenali petunjuk teks tentang sedih, senang/bahagia, marah/kesal, takut/cemas, kecewa, dan kesepian. Tata memberi respons empatik, pertanyaan lanjutan, dan pilihan untuk didengarkan atau mencari langkah berikutnya. Konteks emosi hanya dipakai sementara selama sesi percakapan dan tidak disimpan sebagai profil emosi pengguna.
+- Pengenalan emosi saat ini berdasarkan kata/kalimat yang diketik atau dikenali oleh speech-to-text Android. Tata tidak membaca ekspresi wajah atau mengukur emosi dari suara, tidak dapat memastikan perasaan seseorang, dan bukan alat diagnosis kesehatan mental. Jika ada ancaman keselamatan langsung, pengguna perlu menghubungi orang tepercaya atau layanan darurat setempat.
 - Identitas Tata tersedia melalui **Pengaturan > Tentang Tata AI** dan pertanyaan suara/teks seperti “Siapa kamu?” atau “Versi berapa?”. Tata menjelaskan bahwa AI berarti *Artificial Intelligence* atau kecerdasan buatan, serta membaca versionName dan versionCode langsung dari metadata APK yang sedang berjalan.
 - Deskripsi diri menjelaskan platform Android/Kotlin, kemampuan offline dan online, batas percakapan lokal non-generatif, kebijakan tanpa API AI eksternal, serta prinsip bahwa pengetahuan tidak disimpan tanpa izin.
 - Setelah ringkasan teks tempelan, pengguna dapat memilih **Tanya isi teks**. Tata mencari hingga tiga kalimat berdasarkan kecocokan kata dari teks yang masih berada di memori sesi Activity. Ini pencarian sederhana, bukan penalaran generatif atau pemeriksaan fakta; teks dan pertanyaan lanjutan tidak disimpan ke database dan hilang saat sesi Activity berakhir.
@@ -45,7 +48,7 @@
 - Karakter suara perempuan muda dipilih berdasarkan metadata suara yang disediakan mesin TTS; jika metadata gender tidak tersedia, Tata memilih suara Indonesia dengan kualitas tertinggi yang tersedia. Pitch dan tempo disetel lembut.
 - Suara online pada tahap ini memakai voice network-enabled dari mesin TTS Android (misalnya Google Speech Services jika tersedia), bukan layanan AI TTS cloud khusus. Kualitas, ketersediaan, dan karakter suara bergantung pada mesin TTS serta paket suara yang terpasang di HP.
 - Tombol Bicara, input teks, dan percakapan.
-- Mesin percakapan lokal berbasis aturan untuk sapaan, kabar, ucapan terima kasih, dukungan saat pengguna sedih/bosan, motivasi, lelucon ringan, identitas, jam, dan tanggal.
+- Mesin percakapan lokal berbasis aturan untuk sapaan, kabar, ucapan terima kasih, dukungan emosional (sedih, senang, marah, cemas, kecewa, kesepian), motivasi, lelucon ringan, identitas, jam, dan tanggal.
 - Pengetahuan lokal pengguna diperiksa sebelum jawaban percakapan bawaan, sehingga jawaban yang sudah diajarkan dapat diprioritaskan.
 - Mesin percakapan lokal tidak mengirim pesan ke server dan tidak menyimpan pengetahuan secara otomatis. Pengguna tetap harus menyimpan pengetahuan secara eksplisit melalui menu Pengetahuan.
 - Perintah sapaan, identitas Tata, bantuan fitur, jam, tanggal, dan persentase baterai.

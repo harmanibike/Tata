@@ -136,7 +136,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setOnClickListener { toggleConversationMode() }
         }
         listenButton = micButton
-        panel.addView(micButton, LinearLayout.LayoutParams(dp(124), dp(124)).apply {
+        panel.addView(micButton, LinearLayout.LayoutParams(dp(148), dp(148)).apply {
             topMargin = dp(3); bottomMargin = dp(8)
         })
 
@@ -159,17 +159,30 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setPadding(0, dp(4), 0, dp(4))
         }
         fun roundControl(label: String, icon: String, action: () -> Unit) {
-            val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
-            val button = Button(this).apply {
-                text = icon
-                textSize = 18f
-                isAllCaps = false
-                setTextColor(white)
-                background = rounded(Color.rgb(160, 160, 164), 50)
+            val column = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                isClickable = true
+                isFocusable = true
                 setOnClickListener { action() }
             }
-            column.addView(button, LinearLayout.LayoutParams(dp(52), dp(52)))
-            val caption = TextView(this).apply { text = label; textSize = 10f; setTextColor(muted); gravity = Gravity.CENTER }
+            val iconView = TextView(this).apply {
+                text = icon
+                textSize = 34f
+                includeFontPadding = false
+                gravity = Gravity.CENTER
+                setTextColor(purple)
+                background = null
+                elevation = dp(5).toFloat()
+                contentDescription = label
+            }
+            column.addView(iconView, LinearLayout.LayoutParams(dp(66), dp(58)))
+            val caption = TextView(this).apply {
+                text = label
+                textSize = 12f
+                setTextColor(muted)
+                gravity = Gravity.CENTER
+            }
             column.addView(caption)
             controlRow.addView(column, LinearLayout.LayoutParams(0, -2, 1f))
         }

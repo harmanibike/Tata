@@ -99,7 +99,7 @@ class TrainingDataTests(unittest.TestCase):
         sequences, metadata = self.load("train")
         self.assertEqual(metadata["records"], 1)
         self.assertEqual(len(sequences), 1)
-        self.assertEqual(1, metadata["registered_approved_sources"])
+        self.assertEqual(4, metadata["registered_approved_sources"])
         _, token_to_id = tokenizer_vocabulary(self.tokenizer)
         newline_tokens = self.tokenizer.encode("\n")
         self.assertEqual(1, len(newline_tokens))

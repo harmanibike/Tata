@@ -22,7 +22,7 @@ object KnowledgeMatcher {
     fun rank(query: String, entries: List<KnowledgeEntry>, limit: Int = 3): List<KnowledgeMatch> {
         val queryNormalized = normalize(query)
         val queryTokens = tokens(query)
-        if (queryNormalized.isBlank() || queryTokens.isEmpty() || limit <= 0) return emptyList()
+        if (queryNormalized.isBlank() || limit <= 0) return emptyList()
 
         return entries.mapNotNull { entry ->
             val questionNormalized = normalize(entry.question)
@@ -40,7 +40,8 @@ object KnowledgeMatcher {
                 overlap.isEmpty() -> 0.0
                 else -> coverage * 10.0 + specificity
             }
-            val enoughEvidence = exactPhrase || containsPhrase ||
+            val enoughEvidence = exactPhrase ||
+                (queryTokens.isNotEmpty() && containsPhrase) ||
                 (overlap.size >= 2 && coverage >= 0.5) ||
                 (queryTokens.size == 1 && overlap.size == 1 && queryTokens.first().length >= 6)
             if (enoughEvidence && score > 0.0) KnowledgeMatch(entry, score) else null

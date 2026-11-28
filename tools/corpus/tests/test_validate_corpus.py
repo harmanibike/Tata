@@ -69,8 +69,8 @@ class CorpusValidatorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "leakage.jsonl"
             path.write_text(
-                json.dumps(first, ensure_ascii=False) + "\\n"
-                + json.dumps(second, ensure_ascii=False) + "\\n",
+                json.dumps(first, ensure_ascii=False) + "\n"
+                + json.dumps(second, ensure_ascii=False) + "\n",
                 encoding="utf-8",
             )
             errors, _ = validate_file(path)

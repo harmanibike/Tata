@@ -1,0 +1,44 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+from train_tokenizer import CharacterBPE
+
+
+class CharacterBPETests(unittest.TestCase):
+    def test_round_trip_indonesian_text(self):
+        texts = [
+            "Tata belajar Bahasa Indonesia.",
+            "Belajar bahasa Indonesia bersama Tata.",
+            "Angka 10.000 dan kata berimbuhan membaca."
+        ]
+        tokenizer = CharacterBPE.train(texts, vocab_size=128, min_frequency=2)
+        sample = "Tata belajar Bahasa Indonesia."
+        self.assertEqual(sample, tokenizer.decode(tokenizer.encode(sample)))
+
+    def test_training_is_deterministic(self):
+        texts = ["membaca buku", "membaca cerita", "buku cerita"]
+        first = CharacterBPE.train(texts, vocab_size=64, min_frequency=2)
+        second = CharacterBPE.train(texts, vocab_size=64, min_frequency=2)
+        self.assertEqual(first.to_dict(), second.to_dict())
+
+    def test_unknown_character_uses_unknown_token(self):
+        tokenizer = CharacterBPE.train(["tata ai"], vocab_size=32)
+        self.assertIn("<unk>", tokenizer.encode("tata 🧩"))
+
+    def test_save_and_load_preserves_encoding(self):
+        tokenizer = CharacterBPE.train(["kata-kata sederhana", "kata yang sederhana"], vocab_size=64)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "tokenizer.json"
+            tokenizer.save(path)
+            loaded = CharacterBPE.load(path)
+        self.assertEqual(tokenizer.encode("kata sederhana"), loaded.encode("kata sederhana"))
+        self.assertEqual(tokenizer.to_dict(), loaded.to_dict())
+
+    def test_rejects_too_small_vocabulary(self):
+        with self.assertRaises(ValueError):
+            CharacterBPE.train(["Indonesia"], vocab_size=4)
+
+
+if __name__ == "__main__":
+    unittest.main()

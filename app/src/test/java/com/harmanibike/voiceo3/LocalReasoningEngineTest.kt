@@ -410,4 +410,14 @@ class LocalReasoningEngineTest {
             )
         )
     }
+
+    @Test
+    fun knowledgeMatcherAllowsExactQuestionsMadeOnlyOfShortWords() {
+        val entries = listOf(
+            KnowledgeEntry("Apa itu AI?", emptyList(), "AI adalah kecerdasan buatan.")
+        )
+        val matches = KnowledgeMatcher.rank("Apa itu AI?", entries)
+        assertEquals(1, matches.size)
+        assertEquals("AI adalah kecerdasan buatan.", matches.first().entry.answer)
+    }
 }

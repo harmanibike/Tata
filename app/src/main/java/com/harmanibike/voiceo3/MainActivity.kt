@@ -948,7 +948,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private fun buildIdentityDescription(): String {
         val packageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName = packageInfo.versionName ?: "versi belum ditentukan"
-        val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) packageInfo.longVersionCode else @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
+        @Suppress("DEPRECATION")
+        val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) packageInfo.longVersionCode else packageInfo.versionCode.toLong()
         return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya dapat membantu perintah dasar, percakapan lokal berpola, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. Saya tidak memakai API AI eksternal; kemampuan percakapan bebas saya masih terbatas dan terus dikembangkan. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
     }
 

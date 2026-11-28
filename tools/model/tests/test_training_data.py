@@ -15,7 +15,7 @@ class TrainingDataTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.corpus = self.root / "corpus.jsonl"
         self.tokenizer_path = self.root / "tokenizer.json"
-        self.tokenizer = CharacterBPE.train(["user: halo tata assistant: halo"], vocab_size=64)
+        self.tokenizer = CharacterBPE.train(["user: halo tata\nassistant: halo\n"], vocab_size=64)
         self.tokenizer.save(self.tokenizer_path)
 
     def tearDown(self):
@@ -56,6 +56,10 @@ class TrainingDataTests(unittest.TestCase):
         )
         self.assertEqual(metadata["records"], 1)
         self.assertEqual(len(sequences), 1)
+        _, token_to_id = tokenizer_vocabulary(self.tokenizer)
+        newline_tokens = self.tokenizer.encode("\n")
+        self.assertEqual(1, len(newline_tokens))
+        self.assertIn(token_to_id[newline_tokens[0]], sequences[0])
 
     def test_test_split_is_never_loadable(self):
         with self.assertRaises(ValueError):

@@ -310,3 +310,15 @@ Contoh setelah korpus dan tokenizer sudah ditinjau:
 python tools/corpus/train_tokenizer.py corpus-split.jsonl --output tata-tokenizer.json --vocab-size 4096
 python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --output checkpoints/tata-v0.pt --steps 1000 --device auto
 ```
+
+
+## Evaluasi held-out Tata Transformer
+
+- Evaluator tersedia di `tools/model/evaluate_transformer.py`. Evaluator hanya membaca contoh `split=test` yang lulus tinjauan privasi, kualitas, dan lisensi.
+- Test set tidak dimuat oleh loop training atau validation. Evaluator mencatat hash korpus/tokenizer, jumlah contoh/sumber, token yang dievaluasi, test loss, dan perplexity.
+- Prompt opsional dapat digunakan untuk menghasilkan contoh teks greedy sebagai bahan tinjauan manusia. Hasil generasi tidak otomatis dinilai benar atau aman.
+- Perintah evaluasi setelah checkpoint tersedia:
+```bash
+python tools/model/evaluate_transformer.py --checkpoint checkpoints/tata-v0.pt --corpus corpus-split.jsonl --tokenizer tata-tokenizer.json --report reports/tata-v0-test.json --prompt "Jelaskan fotosintesis dengan sederhana"
+```
+- Perplexity bukan ukuran kebenaran, keamanan, atau kemampuan asisten. Evaluasi manual Bahasa Indonesia, halusinasi, privasi, bias, pengulangan, serta uji perangkat tetap wajib.

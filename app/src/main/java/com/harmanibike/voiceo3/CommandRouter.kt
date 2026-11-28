@@ -79,9 +79,14 @@ class CommandRouter(
                     command.contains("kabar hari ini") || command.contains("headline")) {
                     networkHelper.getTodayNews()
                 } else {
-                    offlineConversation.respond(rawCommand)
-                        ?: withContext(Dispatchers.IO) { localLlmEngine.generate(rawCommand) }
-                        ?: (UNKNOWN_QUERY_PREFIX + rawCommand)
+                    val conversationalAnswer = offlineConversation.respond(rawCommand)
+                    if (conversationalAnswer != null) conversationalAnswer
+                    else {
+                        val webAnswer = networkHelper.searchWeb(rawCommand)
+                        if (!webAnswer.isNullOrBlank()) webAnswer
+                        else withContext(Dispatchers.IO) { localLlmEngine.generate(rawCommand) }
+                            ?: (UNKNOWN_QUERY_PREFIX + rawCommand)
+                    }
                 }
             }
         }

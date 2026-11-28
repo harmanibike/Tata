@@ -58,3 +58,10 @@ Dokumentasi resmi llama.cpp menyediakan contoh Android dan jalur kompilasi NDK u
 - Model dapat dilepas dari RAM dan dihapus dengan persetujuan.
 - Fitur lama, izin simpan data, dan tanda tangan APK tetap terjaga.
 - Tes CI dan build APK lulus. Uji pada perangkat fisik tetap diperlukan untuk mengukur kualitas, suhu, kecepatan, dan RAM.
+
+
+## Pengamanan penggunaan RAM dan prompt
+- Model hanya dimuat setelah pengguna memilih **Aktifkan model**.
+- Saat aplikasi masuk background (`onStop`), Tata meminta generasi berhenti dan melepas model dari RAM melalui thread IO. Pengguna perlu mengaktifkan ulang model saat kembali.
+- Input prompt dibatasi 1.800 karakter di sisi Kotlin. Jika jumlah token tetap melebihi kapasitas konteks setelah instruksi sistem diperhitungkan, generasi ditolak dengan pesan agar pengguna meringkas pertanyaan; bagian awal prompt tidak dipotong sehingga instruksi sistem tidak hilang.
+- Konteks awal 1.024 token, maksimal 160 token jawaban pada jalur router, dan 2 thread. Ini adalah batas awal konservatif, bukan jaminan semua model akan berjalan lancar di setiap HP.

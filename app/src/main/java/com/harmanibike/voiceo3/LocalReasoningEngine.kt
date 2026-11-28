@@ -12,7 +12,7 @@ import java.util.Locale
 class LocalReasoningEngine {
     fun calculate(rawText: String): String? {
         val normalizedText = rawText.lowercase(Locale("id", "ID")).trim()
-        val percentMatch = Regex(
+        convertUnit(normalizedText)?.let { return it }\n\n        val percentMatch = Regex(
             "^(?:tolong\\s+)?(?:hitung|berapa|coba hitung)?\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(?:%|persen)\\s+dari\\s+([0-9]+(?:[.,][0-9]+)?)$"
         ).matchEntire(normalizedText)
         if (percentMatch != null) {

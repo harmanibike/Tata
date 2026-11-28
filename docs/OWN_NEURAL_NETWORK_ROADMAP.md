@@ -152,3 +152,7 @@ Tool `tools/corpus/audit_dataset.py` merangkum status review, jumlah contoh dan 
 ### Statistik panjang dan kecocokan konteks
 
 Audit dataset juga menghitung distribusi karakter per contoh. Jika file tokenizer disediakan, audit menghitung distribusi token per contoh, median, persentil ke-90, rata-rata, nilai minimum/maksimum, dan jumlah contoh yang lebih panjang dari context length eksperimen. Statistik bersifat agregat dan tidak menampilkan teks mentah. Contoh yang melebihi context length tidak otomatis dihapus; trainer membentuk jendela konteks. Perlu pemeriksaan manual agar pemotongan jendela tidak menghilangkan giliran dialog yang penting.
+
+
+### Dataset quality and balance diagnostics
+The dataset audit reports aggregate character/token lengths by split, task distribution per split, largest-source concentration, short user prompts, short assistant responses, long examples, and groups of identical answers repeated at least three times. These heuristics only flag material for human review; they do not establish semantic correctness or detect every near-duplicate. Raw conversation text is never included in the audit report. Training remains blocked until approved and properly split data exists.

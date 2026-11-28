@@ -30,6 +30,20 @@ class CharacterBPETests(unittest.TestCase):
                     "reviewer": "reviewer", "decision": "approved",
                     "decision_notes": "Izin training eksplisit."
                 })
+    def test_shared_python_kotlin_parity_fixture(self):
+        repository_root = Path(__file__).resolve().parents[3]
+        fixture_path = repository_root / "app/src/test/resources/character_bpe_parity.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        tokenizer = CharacterBPE.from_dict(fixture["tokenizer"])
+        ordered_tokens = list(SPECIAL_TOKENS) + list(tokenizer.alphabet)
+        ordered_tokens.extend(left + right for left, right in tokenizer.merges)
+        token_to_id = {token: index for index, token in enumerate(ordered_tokens)}
+        for sample in fixture["samples"]:
+            with self.subTest(text=sample["text"]):
+                tokens = tokenizer.encode(sample["text"])
+                self.assertEqual(sample["token_ids"], [token_to_id[token] for token in tokens])
+                self.assertEqual(sample["decoded"], tokenizer.decode(tokens))
+
     def test_round_trip_indonesian_text(self):
         texts = [
             "Tata belajar Bahasa Indonesia.",

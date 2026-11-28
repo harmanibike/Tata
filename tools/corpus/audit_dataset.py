@@ -97,7 +97,8 @@ def near_duplicate_prompt_stats(records: list[dict], threshold: float = 0.82, ma
             inverted[gram].add(index)
     candidate_pairs = set()
     truncated = False
-    for index, (grams, _, _) in enumerate(items):
+    for index, item in enumerate(items):
+        grams = item[0]
         possible = set()
         for gram in grams:
             possible.update(inverted[gram])

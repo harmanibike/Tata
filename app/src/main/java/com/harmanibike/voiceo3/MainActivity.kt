@@ -981,7 +981,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val normalized = spoken.lowercase(Locale("id", "ID")).trim()
         if (isIdentityQuestion(normalized)) {
             appendLog("Anda", spoken)
-            val identity = buildIdentityDescription()
+            val identity = buildIdentityAnswer(normalized)
             appendLog("Tata AI", identity)
             speakAssistant(identity)
             return
@@ -1314,9 +1314,33 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         speakAssistant(answer)
     }
 
-    private fun isIdentityQuestion(command: String): Boolean =
-        listOf("siapa kamu", "siapa nama kamu", "siapa namamu", "nama kamu", "identitas kamu", "tentang dirimu", "informasi tentang dirimu", "ceritakan tentang dirimu", "apa itu tata ai", "apa arti ai", "apa itu ai", "jelaskan ai", "versi berapa", "versi tata", "kamu versi apa", "apa kemampuanmu", "kemampuan kamu", "kamu bisa apa", "fitur apa yang kamu punya")
-            .any { command.contains(it) }
+    private fun isIdentityQuestion(command: String): Boolean {
+        val text = command.replace(Regex("[^\\p{L}\\p{N} ]"), " ").replace(Regex("\\s+"), " ").trim()
+        return listOf(
+            "siapa tata", "siapa tata ai", "tata ai itu siapa", "siapa kamu",
+            "siapa nama kamu", "siapa namamu", "nama kamu", "identitas kamu",
+            "tentang dirimu", "informasi tentang dirimu", "ceritakan tentang dirimu",
+            "perkenalkan dirimu", "apa itu tata ai", "apa arti ai", "apa itu ai",
+            "jelaskan ai", "versi berapa", "versi tata", "kamu versi apa",
+            "apa kemampuanmu", "kemampuan kamu", "kamu bisa apa", "fitur apa yang kamu punya"
+        ).any { text == it || text.startsWith("$it ") }
+    }
+
+    private fun buildIdentityAnswer(command: String): String {
+        val text = command.replace(Regex("[^\\p{L}\\p{N} ]"), " ").replace(Regex("\\s+"), " ").trim()
+        return when {
+            text.contains("versi") -> {
+                val info = packageManager.getPackageInfo(packageName, 0)
+                "Saya Tata AI, asisten digital untuk Android. Versi aplikasi saat ini " + (info.versionName ?: "belum diketahui") + "."
+            }
+            text.contains("kemampuan") || text.contains("bisa apa") || text.contains("fitur apa") ->
+                "Saya Tata AI. Saya dapat membantu perintah dasar Android, menjawab dari pengetahuan lokal, melakukan penalaran sederhana, mencari informasi web saat online, dan menggunakan model AI lokal jika model sudah dipasang dan diaktifkan."
+            text.contains("arti ai") || text == "apa itu ai" || text == "jelaskan ai" ->
+                "AI adalah singkatan dari Artificial Intelligence, yaitu kecerdasan buatan."
+            else ->
+                "Saya Tata AI, asisten digital Android yang sedang dikembangkan. Saya dirancang untuk membantu melalui perintah, pengetahuan lokal, dan fitur AI yang tersedia di perangkat."
+        }
+    }
 
     private fun buildIdentityDescription(): String {
         val packageInfo = packageManager.getPackageInfo(packageName, 0)

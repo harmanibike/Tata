@@ -30,7 +30,7 @@ class TataOnnxRuntimeDeviceTest {
     fun opensLocalSyntheticModelAndRunsIdentityInferenceOffline() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val modelFile = File(context.cacheDir, "tiny_identity.onnx")
-        context.assets.open("tiny_identity.onnx").use { input ->
+        InstrumentationRegistry.getInstrumentation().context.assets.open("tiny_identity.onnx").use { input ->
             modelFile.outputStream().use { output -> input.copyTo(output) }
         }
 

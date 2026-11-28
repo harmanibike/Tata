@@ -480,7 +480,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
-    private fun showKnowledgeEditor(index: Int?) {
+    private fun showKnowledgeEditor(index: Int?, initialQuestion: String = "", initialAnswer: String = "") {
         val existing = index?.let { knowledgeStore.getAll().getOrNull(it) }
         val form = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -502,9 +502,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 }
             }
         }
-        val question = field("Pertanyaan, contoh: siapa pemilik toko?", existing?.question.orEmpty())
+        val question = field("Pertanyaan, contoh: siapa pemilik toko?", existing?.question ?: initialQuestion)
         val keywords = field("Kata kunci, pisahkan dengan koma", existing?.keywords?.joinToString(", ").orEmpty())
-        val answer = field("Jawaban yang akan disampaikan Tata", existing?.answer.orEmpty(), true)
+        val answer = field("Jawaban yang akan disampaikan Tata", existing?.answer ?: initialAnswer, true)
         form.addView(question)
         form.addView(keywords)
         form.addView(answer)
@@ -874,9 +874,19 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         appendLog("Tata AI", result, persist = false)
         AlertDialog.Builder(this)
             .setTitle("Ringkasan sementara")
-            .setMessage("Pertanyaan: $question\n\n$summary\n\nCatatan: ini ringkasan awal berdasarkan bagian teks yang ditempel, bukan verifikasi fakta. Tidak disimpan ke database.")
+            .setMessage("Pertanyaan: $question\n\n$summary\n\nCatatan: ini ringkasan awal berdasarkan bagian teks yang ditempel, bukan verifikasi fakta. Belum disimpan ke database.")
             .setPositiveButton("Mengerti", null)
             .setNeutralButton("Tanya isi teks") { _, _ -> showTemporaryFollowUpInput() }
+            .setNegativeButton("Ajari Tata") { _, _ ->
+                AlertDialog.Builder(this)
+                    .setTitle("Simpan sebagai pengetahuan?")
+                    .setMessage("Tata akan membuka formulir agar Anda memeriksa dan mengedit pertanyaan serta jawaban terlebih dahulu. Tidak ada data yang disimpan sampai Anda menekan tombol Simpan.")
+                    .setPositiveButton("Lanjut ke formulir") { _, _ ->
+                        showKnowledgeEditor(null, question, summary)
+                    }
+                    .setNegativeButton("Batal", null)
+                    .show()
+            }
             .show()
         speakAssistant("Berikut ringkasan awal dari teks yang Anda tempel. $summary. Perlu diingat, saya belum memverifikasi kebenaran sumbernya dan tidak menyimpan teks ini.")
     }

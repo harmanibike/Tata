@@ -564,12 +564,13 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             append("\n\nKoreksi:\n").append(record.correction)
             if (record.source.isNotBlank()) append("\n\nSumber:\n").append(record.source)
             append("\n\nStatus: ").append(statusLabel)
-            append("\n\nCatatan ini masih terpisah dari pengetahuan aktif Tata.")
+            append(if (record.status == "diterapkan" || record.status == "sudah_diuji") "\n\nStatus pengetahuan: ${if (record.status == "diterapkan") "sudah aktif" else "sudah diuji"}." else "\n\nCatatan ini masih terpisah dari pengetahuan aktif Tata.")
         }
         val options = arrayOf("Edit catatan") + when (record.status) {
             "perlu_ditinjau" -> arrayOf("Terima sebagai pengetahuan", "Tandai ditolak", "Hapus catatan")
             "diterima" -> arrayOf("Masukkan ke pengetahuan Tata", "Tandai sudah diuji", "Hapus catatan")
             "diterapkan" -> arrayOf("Tandai sudah diuji", "Kembalikan untuk ditinjau", "Hapus catatan")
+            "sudah_diuji" -> arrayOf("Masukkan ke pengetahuan Tata", "Kembalikan untuk ditinjau", "Hapus catatan")
             "ditolak" -> arrayOf("Kembalikan untuk ditinjau", "Hapus catatan")
             else -> arrayOf("Kembalikan untuk ditinjau", "Hapus catatan")
         }
@@ -583,7 +584,10 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                     "Kembalikan untuk ditinjau" -> knowledgeStore.updateLearningStatus(record.id, "perlu_ditinjau")
                     "Masukkan ke pengetahuan Tata" -> {
                         val matches = knowledgeStore.findKnowledgeByQuestion(record.question)
-                        val exact = matches.any { it.answer.trim().equals(record.correction.trim(), ignoreCase = true) }
+                        val exact = matches.any {
+                            it.answer.trim().replace(Regex("\\s+"), " ")
+                                .equals(record.correction.trim().replace(Regex("\\s+"), " "), ignoreCase = true)
+                        }
                         when {
                             exact -> {
                                 knowledgeStore.updateLearningStatus(record.id, "diterapkan")

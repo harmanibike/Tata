@@ -32,12 +32,12 @@ def distribution(values: list[int]) -> dict:
     }
 
 
-def normalized_answer_hash(record: dict) -> str:
-    answer = "\n".join(
+def normalized_message_hash(record: dict, role: str) -> str:
+    value = "\\n".join(
         message["content"].casefold().strip()
-        for message in record["messages"] if message["role"] == "assistant"
+        for message in record["messages"] if message["role"] == role
     )
-    normalized = " ".join(answer.split())
+    normalized = " ".join(value.split())
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
@@ -117,7 +117,11 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
                     short_assistant_examples += 1
                 if len(user_text) + len(assistant_text) > 4000:
                     long_examples += 1
-                answer_hash_counts[normalized_answer_hash(record)] += 1
+                prompt_hash = normalized_message_hash(record, "user")
+                answer_hash = normalized_message_hash(record, "assistant")
+                prompt_hash_counts[prompt_hash] += 1
+                prompt_to_answers[prompt_hash].add(answer_hash)
+                answer_hash_counts[answer_hash] += 1
                 char_count, token_count = record_lengths(record, tokenizer)
                 chars_by_split[split].append(char_count)
                 if token_count is not None:
@@ -149,8 +153,14 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
         warnings.append("Ada contoh gabungan di atas 4.000 karakter; periksa kualitas dan batas konteksnya")
 
     repeated_answer_groups = sum(1 for count in answer_hash_counts.values() if count >= 3)
+    repeated_prompt_groups = sum(1 for count in prompt_hash_counts.values() if count >= 2)
+    conflicting_prompt_groups = sum(1 for answers in prompt_to_answers.values() if len(answers) > 1)
     if repeated_answer_groups:
         warnings.append("Ada jawaban identik yang dipakai pada tiga atau lebih contoh; tinjau kemungkinan pola jawaban berulang")
+    if repeated_prompt_groups:
+        warnings.append("Ada pertanyaan identik yang muncul berulang; tinjau apakah duplikat perlu digabung")
+    if conflicting_prompt_groups:
+        warnings.append("Ada pertanyaan identik dengan jawaban berbeda; tinjau konsistensi atau konteks sumber sebelum training")
     max_source_examples = max(source_example_counts.values(), default=0)
     source_concentration = round(max_source_examples / approved_examples, 4) if approved_examples else 0.0
     if source_concentration > 0.5:
@@ -197,6 +207,9 @@ def audit_dataset(path: Path, context_length: int = 256, tokenizer_path: Path | 
             "short_assistant_examples_under_20_chars": short_assistant_examples,
             "long_examples_over_4000_chars": long_examples,
             "groups_of_identical_answers_repeated_at_least_3_times": repeated_answer_groups,
+            "groups_of_identical_prompts_repeated_at_least_2_times": repeated_prompt_groups,
+            "groups_of_identical_prompts_with_different_answers": conflicting_prompt_groups,
+            "similarity_method": "exact normalized text hashes; not semantic or paraphrase similarity",
             "task_counts_by_split": {
                 split: dict(sorted(split_tasks[split].items())) for split in ("train", "validation", "test")
             },

@@ -166,3 +166,13 @@ Audit kini membandingkan trigram karakter menggunakan cosine similarity untuk me
 
 ### Antrean peninjauan kandidat data
 Audit kini menyertakan antrean kandidat pertanyaan mirip berisi pasangan `example_id`, skor kemiripan leksikal, dan penanda apakah jawaban berbeda. Isi pesan mentah tidak disertakan. Peninjau harus membuka sumber korpus lokal, memeriksa konteks dan lisensi, lalu memutuskan secara manual; laporan ini tidak mengubah status, mengoreksi, atau menghapus contoh secara otomatis. Kandidat hasil trigram adalah petunjuk, bukan keputusan semantik.
+
+
+### Tinjauan manusia dan salinan korpus
+Tool `tools/corpus/review_corpus.py` menerapkan keputusan eksplisit `approve`, `reject`, atau `correct` dari file JSON keputusan ke salinan korpus baru. Contoh penggunaan:
+
+```bash
+python tools/corpus/review_corpus.py corpus.jsonl --decisions review-decisions.json --output corpus-reviewed.jsonl
+```
+
+File keputusan menggunakan objek `decisions` berisi `example_id`, `action`, dan `reviewer`; aksi `correct` juga wajib menyertakan array `messages` yang telah diperbaiki. Output yang sudah ada tidak pernah ditimpa dan file sumber tidak diubah. Persetujuan kualitas hanya diizinkan jika tinjauan privasi berstatus `passed`. Penolakan memberi status kualitas `rejected`, yang tidak dapat masuk loader training. Koreksi mengembalikan privasi dan kualitas ke `pending` serta split ke `unassigned`; setelah itu contoh harus ditinjau ulang dan dibagi ulang. Status pending dapat disimpan oleh validator, tetapi tidak dapat masuk tokenizer atau training karena loader hanya menerima status passed. Catatan riwayat menyimpan reviewer dan jenis keputusan, bukan teks pribadi atau komentar bebas.

@@ -107,6 +107,33 @@ class LocalReasoningEngineTest {
     }
 
     @Test
+    fun parsesSupportedGgufHeaderAndRejectsInvalidStructure() {
+        val valid = java.nio.ByteBuffer.allocate(GgufHeaderReader.HEADER_SIZE)
+            .order(java.nio.ByteOrder.LITTLE_ENDIAN)
+            .put(byteArrayOf(71, 71, 85, 70))
+            .putInt(3)
+            .putLong(32)
+            .putLong(12)
+            .array()
+        val parsed = GgufHeaderReader.parse(valid)
+        assertNotNull(parsed)
+        assertEquals(3L, parsed!!.version)
+        assertEquals(32L, parsed.tensorCount)
+        assertEquals(12L, parsed.metadataCount)
+
+        val invalidVersion = valid.copyOf().also {
+            java.nio.ByteBuffer.wrap(it).order(java.nio.ByteOrder.LITTLE_ENDIAN).putInt(4, 9)
+        }
+        assertEquals(null, GgufHeaderReader.parse(invalidVersion))
+
+        val emptyModel = valid.copyOf().also {
+            java.nio.ByteBuffer.wrap(it).order(java.nio.ByteOrder.LITTLE_ENDIAN).putLong(8, 0L)
+        }
+        assertEquals(null, GgufHeaderReader.parse(emptyModel))
+        assertEquals(null, GgufHeaderReader.parse(byteArrayOf(71, 71, 85, 70)))
+    }
+
+    @Test
     fun keepsStorageReserveWhenImportingLocalModels() {
         val reserve = 256L * 1024L * 1024L
         assertEquals(0L, LocalModelStore.safeImportLimit(reserve))

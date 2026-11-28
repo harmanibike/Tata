@@ -124,7 +124,8 @@ class KnowledgeStore(context: Context) : SQLiteOpenHelper(
             Triple("emotional_intelligence", "Kecerdasan emosional", "Mengenali petunjuk emosi dari teks seperti sedih, senang, marah, cemas, kecewa, dan kesepian; merespons dengan empati tanpa menghakimi."),
             Triple("offline_conversation", "Percakapan offline", "Percakapan lokal berbasis pola dan pengetahuan yang disimpan pengguna; bukan model bahasa generatif."),
             Triple("temporary_research", "Riset sementara", "Membuka pencarian internet atau AI lain secara manual dan merangkum teks tempelan sementara tanpa menyimpannya."),
-            Triple("local_reasoning", "Penalaran hitung lokal", "Menghitung ekspresi aritmetika dasar secara lokal dari script aplikasi, tanpa API dan tanpa menyimpan hasil ke database.")
+            Triple("local_reasoning", "Penalaran hitung lokal", "Menghitung ekspresi aritmetika dasar secara lokal dari script aplikasi, tanpa API dan tanpa menyimpan hasil ke database."),
+            Triple("local_llm", "Model bahasa generatif lokal", "Menjalankan percakapan terbuka menggunakan model GGUF yang dipilih pengguna dan diproses langsung di perangkat melalui llama.cpp; tidak memakai API AI eksternal.")
         )
         val db = writableDatabase
         defaults.forEach { (key, name, description) ->

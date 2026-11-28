@@ -100,7 +100,7 @@ object LearningLabTransfer {
         existing: List<LearningRecord>
     ): LearningImportPreview {
         val existingFingerprints = existing.map { fingerprint(it.question, it.correction) }.toHashSet()
-        val seenQuestions = existing.map { normalize(it.question) }.toHashSet()
+        val seenQuestions = existing.map { questionIdentity(it.question) }.toHashSet()
         val seenIncoming = HashSet<String>()
         val newRecords = mutableListOf<TransferLearningRecord>()
         val conflicts = mutableListOf<TransferLearningRecord>()
@@ -121,9 +121,13 @@ object LearningLabTransfer {
     fun fingerprint(record: TransferLearningRecord): String =
         fingerprint(record.question, record.correction)
 
-    fun fingerprint(question: String, correction: String): String {
-        val canonical = normalize(question) + "\u0000" + normalize(correction)
-        val bytes = MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
+    fun fingerprint(question: String, correction: String): String =
+        sha256(normalize(question) + "\u0000" + normalize(correction))
+
+    fun questionIdentity(question: String): String = sha256(normalize(question))
+
+    private fun sha256(value: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
         return bytes.joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 

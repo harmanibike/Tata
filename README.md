@@ -90,7 +90,7 @@
 - Penandatanganan APK tidak menghapus database aplikasi. Namun, tetap lakukan backup sebelum pembaruan besar.
 
 ## Build APK
-Workflow GitHub Actions berjalan saat push ke branch `main` atau melalui `workflow_dispatch`.
+Workflow GitHub Actions berjalan saat push ke branch `main` atau melalui `workflow_dispatch`. Job Debug menjalankan pengujian unit penalaran lokal terlebih dahulu; job Release bertanda tangan baru berjalan jika pengujian dan build Debug berhasil.
 
 Perintah build:
 ```bash

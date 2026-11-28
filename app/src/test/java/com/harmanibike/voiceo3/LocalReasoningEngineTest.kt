@@ -71,7 +71,7 @@ class LocalReasoningEngineTest {
             engine.calculate("harga 100000 turun 20 persen")
         )
         assertEquals(
-            "Harga Rp100.000 naik 5%: perubahan Rp5.000. Harga baru: Rp105.000.",
+            "Perubahan 5% dari Rp100.000 adalah Rp5.000. Harga baru: Rp105.000.",
             engine.calculate("naik 5 persen dari 100000")
         )
     }

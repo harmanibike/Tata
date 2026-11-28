@@ -49,6 +49,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var connectivityManager: ConnectivityManager
     private var networkCallbackRegistered = false
     private var activityDestroyed = false
+    private var selectedVoiceNetworkMode: Boolean? = null
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) { refreshConnectionStatus() }
         override fun onLost(network: Network) { refreshConnectionStatus() }
@@ -290,6 +291,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 if (connected) Color.rgb(19, 184, 126) else Color.rgb(110, 110, 118),
                 18
             )
+            if (selectedVoiceNetworkMode != connected && ttsReady) {
+                applyVoiceForConnection(connected)
+            }
         }
     }
 
@@ -366,22 +370,60 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         textToSpeech.setSpeechRate(0.94f)
     }
 
+    private fun voiceGenderScore(voice: android.speech.tts.Voice): Int {
+        val description = (voice.name + " " + voice.features.joinToString(" ")).lowercase(Locale.ROOT)
+        return when {
+            listOf("female", "woman", "perempuan", "wanita").any { description.contains(it) } -> 3
+            listOf("child", "young", "youth", "girl").any { description.contains(it) } -> 2
+            else -> 0
+        }
+    }
+
+    /**
+     * Uses the Android TTS engine's network voice when online and a locally
+     * installed Indonesian voice when offline. Availability depends on the
+     * TTS engine and downloaded voice packages on the device.
+     */
+    private fun applyVoiceForConnection(online: Boolean) {
+        if (!ttsReady || !::textToSpeech.isInitialized) return
+        val voices = availableIndonesianVoices()
+        if (voices.isEmpty()) {
+            selectedVoiceNetworkMode = online
+            applyFriendlyVoiceStyle()
+            return
+        }
+
+        val matchingMode = voices.filter { it.isNetworkConnectionRequired == online }
+        val candidates = if (matchingMode.isNotEmpty()) matchingMode else voices.filter {
+            !it.isNetworkConnectionRequired
+        }
+        val selected = candidates.sortedWith(
+            compareByDescending<android.speech.tts.Voice> { voiceGenderScore(it) }
+                .thenByDescending { it.quality }
+                .thenBy { it.name }
+        ).firstOrNull()
+
+        if (selected != null && textToSpeech.setVoice(selected) == TextToSpeech.SUCCESS) {
+            selectedVoiceNetworkMode = online
+            applyFriendlyVoiceStyle()
+            if (online && !selected.isNetworkConnectionRequired) {
+                appendLog("Sistem", "Suara online khusus belum tersedia. Tata memakai suara offline sebagai cadangan.")
+            }
+        } else {
+            selectedVoiceNetworkMode = online
+            applyFriendlyVoiceStyle()
+        }
+    }
+
     private fun restorePreferredVoice() {
         if (!::textToSpeech.isInitialized) return
-        val voices = availableIndonesianVoices()
-        val savedName = getSharedPreferences(PREFS_VOICE, MODE_PRIVATE)
-            .getString(KEY_VOICE_NAME, null)
-        val savedVoice = voices.firstOrNull { it.name == savedName }
-        val suggestedFemaleVoice = voices.firstOrNull { voice ->
-            val description = (voice.name + " " + voice.features.joinToString(" ")).lowercase(Locale.ROOT)
-            listOf("female", "woman", "perempuan", "wanita").any { description.contains(it) }
-        }
-        val preferred = savedVoice ?: suggestedFemaleVoice
-        if (preferred != null && textToSpeech.setVoice(preferred) == TextToSpeech.SUCCESS) {
-            getSharedPreferences(PREFS_VOICE, MODE_PRIVATE).edit()
-                .putString(KEY_VOICE_NAME, preferred.name).apply()
-        }
-        applyFriendlyVoiceStyle()
+        val online = runCatching {
+            val active = connectivityManager.activeNetwork
+            val caps = active?.let { connectivityManager.getNetworkCapabilities(it) }
+            caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        }.getOrDefault(false)
+        applyVoiceForConnection(online)
     }
 
     private fun showKnowledgeManager() {

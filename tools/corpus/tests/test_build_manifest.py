@@ -32,9 +32,12 @@ class ManifestTests(unittest.TestCase):
     def test_manifest_contains_hash_source_provenance_and_split_counts(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "corpus.jsonl"
+            second = record("ex-2", "validation")
+            second["messages"][0]["content"] = "Bagaimana energi digunakan?"
+            second["messages"][1]["content"] = "Energi dapat digunakan untuk melakukan kerja."
             path.write_text(
                 json.dumps(record(), ensure_ascii=False) + "\n"
-                + json.dumps(record("ex-2", "validation"), ensure_ascii=False) + "\n",
+                + json.dumps(second, ensure_ascii=False) + "\n",
                 encoding="utf-8",
             )
             manifest = create_manifest(path)

@@ -352,3 +352,6 @@ Jalankan `python tools/corpus/audit_dataset.py path/korpus.jsonl` sebelum membag
 
 
 Audit dataset juga dapat mengukur panjang karakter per contoh dan, bila tokenizer tersedia, distribusi token per contoh serta jumlah contoh yang melebihi context length. Contoh: `python tools/corpus/audit_dataset.py path/korpus.jsonl --tokenizer path/tokenizer.json --context-length 256`. Laporan hanya berisi statistik agregat; teks contoh tidak ditampilkan. Contoh yang lebih panjang dari context bukan otomatis dibuang, karena trainer menggunakan jendela konteks.
+
+
+Dataset readiness audit (`tools/corpus/audit_dataset.py`) also reports aggregate-only quality signals: short prompts/answers, long examples, repeated identical answers, task counts by split, and source concentration. These are manual-review warnings, not automatic judgments of semantic quality.

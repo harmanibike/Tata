@@ -50,7 +50,7 @@
 - Menu **Privasi** menyediakan pengaturan penyimpanan riwayat, penghapusan seluruh riwayat percakapan, dan penghapusan seluruh pengetahuan. Penghapusan riwayat dan pengetahuan merupakan tindakan terpisah.
 
 ## Fitur yang tersedia
-- Pengelolaan file model GGUF lokal tersedia melalui **Pengaturan > Model AI lokal**. Impor memakai pemilih dokumen Android, memvalidasi magic header `GGUF`, menyalin file ke direktori privat aplikasi, dan menampilkan nama serta ukuran. Penghapusan memerlukan konfirmasi dan hanya menghapus file model yang dipilih. Ini belum merupakan fitur inferensi AI; model belum dapat dijalankan sampai native engine llama.cpp/JNI selesai diintegrasikan.
+- Pengelolaan file model GGUF lokal tersedia melalui **Pengaturan > Model AI lokal**. Impor memakai pemilih dokumen Android, memvalidasi struktur awal header, menyalin file ke direktori privat aplikasi, dan menampilkan nama serta ukuran. Bridge llama.cpp/JNI sudah terintegrasi untuk memuat dan menjalankan model yang kompatibel secara lokal. Pengguna tetap harus mengimpor dan mengaktifkan model sendiri; build CI belum membuktikan inferensi pada HP fisik.
 
 - Profil kemampuan Tata disimpan pada tabel `assistant_capabilities` dan ditampilkan melalui **Pengaturan > Tentang Tata AI > Kemampuan & profil**. Deskripsi kemampuan dapat diubah pengguna; perubahan hanya tersimpan setelah tombol **Simpan** ditekan dan nomor versi kemampuan dinaikkan. Data ini adalah konfigurasi profil, terpisah dari pengetahuan yang dipelajari.
 - Kecerdasan emosional lokal mengenali petunjuk teks tentang sedih, senang/bahagia, marah/kesal, takut/cemas, kecewa, dan kesepian. Tata memberi respons empatik, pertanyaan lanjutan, dan pilihan untuk didengarkan atau mencari langkah berikutnya. Konteks emosi hanya dipakai sementara selama sesi percakapan dan tidak disimpan sebagai profil emosi pengguna.
@@ -88,7 +88,7 @@
 - Cadangan dapat dipindahkan ke perangkat lain secara manual; sinkronisasi otomatis antarperangkat belum tersedia.
 
 ## Batasan saat ini
-- Percakapan offline memakai mesin aturan dan pencocokan pengetahuan lokal, bukan model bahasa generatif. Tata dapat menangani obrolan umum yang dikenali, tetapi tidak dapat menjawab pertanyaan bebas seluas model AI besar tanpa model lokal tambahan.
+- Percakapan offline memakai mesin aturan dan pencocokan pengetahuan lokal sebagai fondasi. Jika pengguna mengimpor dan mengaktifkan model GGUF yang kompatibel, pertanyaan terbuka dapat dijawab oleh model generatif llama.cpp di perangkat. Tanpa model aktif, Tata tetap memakai kemampuan lokal yang terbatas dan menawarkan pencarian web hanya melalui perintah eksplisit.
 - Database kemampuan dan sumber berita saat ini berada di SQLite lokal. Pembaruan konfigurasi dari server online, cache berita offline, dan antarmuka untuk mengelola sumber berita masih menjadi pekerjaan tahap berikutnya.
 - Berita membutuhkan internet dan bergantung pada ketersediaan feed RSS. Jika feed gagal diakses atau tidak memuat artikel bertanggal hari ini, Tata akan memberi tahu pengguna.
 - Riwayat chat dan pengetahuan merupakan dua jenis data terpisah. Menghapus pengetahuan tidak otomatis menghapus riwayat chat.
@@ -229,3 +229,10 @@ Riwayat konteks model lokal bersifat sementara di RAM dan dibatasi pada beberapa
 ### Privasi pencarian web
 
 Pertanyaan terbuka diproses oleh model lokal jika tersedia. Tata tidak mengirim pertanyaan umum ke pencarian web secara otomatis. Pencarian web hanya dijalankan setelah pengguna menyatakan permintaan secara jelas, misalnya dengan awalan “cari di internet” atau “telusuri web”. Jika model lokal tidak aktif dan pengguna tidak meminta pencarian web, Tata menawarkan pilihan riset manual; pertanyaan tersebut tidak otomatis disimpan sebagai pengetahuan.
+
+
+## Kualitas jawaban dan privasi riset
+- Prompt sistem model lokal menekankan jawaban langsung, bahasa Indonesia, panjang sesuai kebutuhan, klarifikasi bila ambigu, dan pemisahan fakta/perkiraan/ketidakpastian. Model dilarang mengarang sumber atau mengklaim tindakan yang tidak dilakukan.
+- Konteks percakapan generatif dibatasi pada dua pasangan tanya-jawab terakhir dengan pemotongan panjang per pesan agar lebih sesuai untuk context window perangkat RAM rendah. Konteks hanya berada di memori aplikasi dan dibersihkan ketika model dilepas.
+- Perintah riset web harus diawali permintaan eksplisit seperti **“Cari di internet tentang …”** atau **“Telusuri web …”**. Pertanyaan biasa yang belum terjawab tidak otomatis dikirim ke internet; Tata menampilkan alur pilihan riset sementara.
+- Berita hari ini tetap memakai sumber RSS sebagai data berita, bukan API inferensi AI.

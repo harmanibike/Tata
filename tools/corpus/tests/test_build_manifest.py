@@ -33,6 +33,7 @@ class ManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "corpus.jsonl"
             second = record("ex-2", "validation")
+            second["source"]["source_id"] = "source-2"
             second["messages"][0]["content"] = "Bagaimana energi digunakan?"
             second["messages"][1]["content"] = "Energi dapat digunakan untuk melakukan kerja."
             path.write_text(
@@ -42,7 +43,7 @@ class ManifestTests(unittest.TestCase):
             )
             manifest = create_manifest(path)
         self.assertEqual(2, manifest["record_count"])
-        self.assertEqual(1, manifest["source_count"])
+        self.assertEqual(2, manifest["source_count"])
         self.assertEqual({"train": 1, "validation": 1}, manifest["split_counts"])
         self.assertEqual("passed", manifest["validation"]["status"])
         self.assertEqual(64, len(manifest["corpus_sha256"]))

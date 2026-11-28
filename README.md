@@ -169,6 +169,8 @@ Aturan ini menjadi prinsip tetap pengembangan Tata AI:
 - Koreksi tetap berstatus **Perlu ditinjau** dan tidak otomatis mengubah pengetahuan aktif maupun bobot model.
 - Untuk mengaktifkan koreksi sebagai pengetahuan, pengguna harus meninjau dan menyetujui tindakan terpisah di Learning Lab.
 - Konteks pertanyaan terakhir yang dipakai tombol koreksi hanya berada di memori Activity dan tidak menambah penyimpanan otomatis.
+- Catatan dapat diedit kembali tanpa membuat duplikat, dan daftar dapat difilter menurut status: Perlu ditinjau, Diterima, Ditolak, atau Sudah diuji.
+- Perubahan isi catatan tidak otomatis mengubah pengetahuan aktif; tindakan aktivasi tetap memerlukan persetujuan terpisah.
 ### Navigasi tersembunyi bergaya chat
 
 - Navigasi utama dipindahkan dari navbar bawah ke menu tersembunyi yang dibuka melalui ikon ☰ pada header.

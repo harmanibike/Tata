@@ -200,6 +200,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         }
         roundControl("Obrolan", "◉") { toggleConversationMode() }
         roundControl("Keyboard", "⌨") { messageInput.requestFocus(); (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).showSoftInput(messageInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT) }
+        roundControl("Hentikan AI", "■") { localLlmEngine.cancel(); Toast.makeText(this, "Permintaan menghentikan generasi dikirim.", Toast.LENGTH_SHORT).show() }
         panel.addView(controlRow)
 
         val hint = TextView(this).apply {
@@ -770,6 +771,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             appendLog("Anda", spoken)
             conversationModeActive = false
             conversationHandler.removeCallbacksAndMessages(null)
+            localLlmEngine.cancel()
             if (recognizerReady) runCatching { speechRecognizer.cancel() }
             speakAssistant("Baik, mode ngobrol saya hentikan. Sampai nanti.")
             updateListenButton("▶  Mulai ngobrol otomatis")
@@ -1105,7 +1107,12 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
         val capabilities = knowledgeStore.getAssistantCapabilities()
             .filter { it.enabled }
             .joinToString(" ") { it.displayName + ": " + it.description }
-        return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya tidak memakai API AI eksternal. Kemampuan saya saat ini: $capabilities Saya juga dapat membantu perintah dasar, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. Percakapan saya masih berbasis aturan dan pencocokan teks, bukan model bahasa generatif. Saya tidak memiliki perasaan seperti manusia. Saya mengenali petunjuk emosi dari kata-kata dan merespons dengan empati, tetapi tidak bisa mengetahui perasaan seseorang secara pasti. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
+        val localModelStatus = if (localLlmEngine.isLoaded) {
+            "Model bahasa generatif lokal sedang aktif dan dapat menjawab pertanyaan terbuka tanpa API."
+        } else {
+            "Percakapan dasar masih berbasis aturan dan pencocokan teks. Model generatif lokal dapat diaktifkan dari menu Model AI lokal."
+        }
+        return "Halo, saya Tata AI. AI adalah singkatan dari Artificial Intelligence, dalam bahasa Indonesia berarti kecerdasan buatan. Saya adalah asisten digital Android yang dikembangkan dengan Kotlin. Versi aplikasi saya $versionName, kode versi $versionCode. Saya tidak memakai API AI eksternal. Kemampuan saya saat ini: $capabilities Saya juga dapat membantu perintah dasar, membaca pengetahuan yang Anda simpan dengan izin, mengelola suara, dan membaca berita RSS saat internet tersedia. Saat offline, fitur lokal tetap dapat digunakan. $localModelStatus Saya tidak memiliki perasaan seperti manusia. Saya mengenali petunjuk emosi dari kata-kata dan merespons dengan empati, tetapi tidak bisa mengetahui perasaan seseorang secara pasti. Saya tidak menyimpan pengetahuan baru tanpa izin Anda."
     }
 
     private fun showAboutTata() {

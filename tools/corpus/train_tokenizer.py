@@ -147,7 +147,8 @@ def load_training_texts(jsonl_path: Path) -> list[str]:
         for message in record.get("messages", []):
             content = message.get("content")
             if isinstance(content, str) and content:
-                texts.append(content)
+                # Sertakan penanda peran agar model dapat mempelajari giliran dialog.
+                texts.append(message["role"] + ": " + content)
     return texts
 
 

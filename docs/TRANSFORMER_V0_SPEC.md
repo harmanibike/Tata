@@ -67,7 +67,7 @@ Sebelum menulis loop training, selesaikan dan tinjau: validator, deduplikasi, sp
 
 ## Estimator konfigurasi dan parameter
 
-Script `tools/model/transformer_config.py` memvalidasi dimensi konfigurasi dan menghitung estimasi parameter secara analitis tanpa framework machine learning. Baseline saat ini menghasilkan **1.310.400 parameter** dengan token embedding dan output head yang diikat (tied embeddings), bias aktif, dan dimensi pada tabel di atas.
+Script `tools/model/transformer_config.py` memvalidasi dimensi konfigurasi dan menghitung estimasi parameter secara analitis tanpa framework machine learning. Baseline saat ini menghasilkan **1.350.400 parameter** dengan token embedding dan output head yang diikat (tied embeddings), bias aktif, dan dimensi pada tabel di atas.
 
 Perintah:
 ```bash

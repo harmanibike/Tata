@@ -6,42 +6,95 @@ import java.util.Locale
 
 /**
  * Mesin percakapan lokal berbasis aturan.
+ * Variasi dan konteks sesi disimpan di memori aplikasi saja.
  * Tidak mengirim teks pengguna ke internet dan tidak menyimpan pengetahuan otomatis.
- * Ini bukan model bahasa generatif; jawaban dibatasi pada pola yang dikenali.
+ * Ini belum model bahasa generatif; jawaban dibatasi pada pola yang dikenali.
  */
 class OfflineConversationEngine {
+    private val responseIndexes = mutableMapOf<String, Int>()
+    private var lastTopic: String? = null
+
     fun respond(rawText: String): String? {
         val text = normalize(rawText)
         if (text.isBlank()) return null
 
+        if (containsAny(text, "lanjut", "terus", "ceritakan lebih lanjut", "jelaskan lebih lanjut", "lalu bagaimana", "terus bagaimana")) {
+            return followUp()
+        }
+
         return when {
-            containsAny(text, "apa kabar", "bagaimana kabarmu", "kabar kamu") ->
-                "Saya baik dan siap membantu. Kalau kamu sendiri bagaimana kabarnya?"
-            containsAny(text, "terima kasih", "makasih", "thanks") ->
-                "Sama-sama. Senang bisa membantu. Ada hal lain yang ingin kamu bahas?"
-            containsAny(text, "aku sedih", "saya sedih", "lagi sedih", "merasa sedih") ->
-                "Aku ikut prihatin kamu sedang merasa sedih. Kalau kamu mau, ceritakan apa yang terjadi. Aku akan mendengarkan."
-            containsAny(text, "aku senang", "saya senang", "lagi bahagia", "merasa bahagia") ->
-                "Wah, ikut senang mendengarnya. Apa yang membuat harimu terasa menyenangkan?"
-            containsAny(text, "aku bosan", "saya bosan", "lagi bosan") ->
-                "Kita bisa ngobrol, bermain tebak-tebakan sederhana, atau membahas hal yang kamu sukai. Mau mulai dari topik apa?"
-            containsAny(text, "cerita lucu", "lelucon", "buat lelucon", "joke") ->
-                "Kenapa komputer suka kedinginan? Karena terlalu banyak membuka Windows. Hehe."
-            containsAny(text, "motivasi", "semangati aku", "beri semangat", "butuh semangat") ->
-                "Pelan-pelan tidak apa-apa. Yang penting tetap bergerak. Satu langkah kecil hari ini tetap lebih baik daripada tidak mencoba sama sekali."
+            containsAny(text, "apa kabar", "bagaimana kabarmu", "kabar kamu") -> reply("greeting",
+                "Saya baik, terima kasih sudah bertanya. Kamu sendiri bagaimana hari ini?",
+                "Baik! Saya siap menemani obrolanmu. Bagaimana keadaanmu?",
+                "Aku baik dan siap membantu. Semoga harimu juga menyenangkan."
+            )
+            containsAny(text, "terima kasih", "makasih", "thanks") -> reply("thanks",
+                "Sama-sama. Senang kalau bisa membantu.",
+                "Dengan senang hati! Kalau ada yang ingin dibahas lagi, kita lanjut saja.",
+                "Sama-sama, ya. Semoga penjelasannya bermanfaat."
+            )
+            containsAny(text, "aku sedih", "saya sedih", "lagi sedih", "merasa sedih", "sedang sedih") -> reply("sad",
+                "Aku ikut prihatin mendengarnya. Kalau kamu nyaman, ceritakan apa yang sedang terjadi. Aku akan mendengarkan.",
+                "Kedengarannya hari ini cukup berat. Tidak perlu buru-buru, kamu boleh cerita pelan-pelan.",
+                "Maaf kamu sedang melalui hal yang tidak menyenangkan. Aku bisa menemanimu bicara."
+            )
+            containsAny(text, "aku senang", "saya senang", "lagi bahagia", "merasa bahagia", "aku bahagia") -> reply("happy",
+                "Wah, ikut senang mendengarnya! Apa hal paling menyenangkan yang terjadi hari ini?",
+                "Asyik! Senang rasanya mendengar kabar baik. Cerita sedikit, yuk.",
+                "Itu kabar bagus. Semoga suasana hati menyenangkan ini bertahan sepanjang hari."
+            )
+            containsAny(text, "aku bosan", "saya bosan", "lagi bosan") -> reply("bored",
+                "Kita cari kegiatan yang seru, yuk. Bisa tebak-tebakan, cerita, atau bahas teknologi.",
+                "Kalau begitu, kita ubah suasana. Mau dengar fakta unik atau bermain teka-teki?",
+                "Aku bisa menemanimu. Kita bisa ngobrol santai atau membahas sesuatu yang baru."
+            )
+            containsAny(text, "cerita lucu", "lelucon", "buat lelucon", "joke") -> reply("joke",
+                "Kenapa komputer suka kedinginan? Karena terlalu banyak membuka Windows. Hehe.",
+                "Ada dua Wi-Fi sedang ngobrol. Satu bilang, 'Kamu kok lemah?' Yang lain menjawab, 'Aku sedang mencari koneksi.'",
+                "Kenapa kalender selalu tenang? Karena hari-harinya sudah terjadwal. Hehe."
+            )
+            containsAny(text, "motivasi", "semangati aku", "beri semangat", "butuh semangat") -> reply("motivation",
+                "Pelan-pelan tidak apa-apa. Satu langkah kecil tetap membawa kamu lebih dekat ke tujuan.",
+                "Tidak harus langsung sempurna. Terus belajar, evaluasi, lalu coba lagi. Prosesmu tetap berarti.",
+                "Hari yang berat bukan berarti perjalananmu gagal. Istirahat sebentar boleh, menyerah bukan satu-satunya pilihan."
+            )
             containsAny(text, "siapa penciptamu", "siapa yang membuatmu", "siapa pembuatmu") ->
-                "Saya adalah Tata AI, aplikasi asisten yang sedang dikembangkan. Saya berjalan dengan fitur lokal di perangkat ini."
+                "Saya Tata AI, aplikasi asisten yang sedang dikembangkan. Fitur percakapan lokal saya terus ditingkatkan."
             containsAny(text, "apakah kamu offline", "bisa tanpa internet", "tanpa internet") ->
-                "Bisa. Perintah dasar, pengetahuan yang tersimpan, dan percakapan dengan pola lokal dapat berjalan tanpa internet. Membaca berita terbaru tetap membutuhkan koneksi."
+                "Bisa. Perintah dasar, pengetahuan tersimpan, dan percakapan berpola lokal dapat berjalan tanpa internet. Berita terbaru memerlukan koneksi."
             containsAny(text, "apa yang kamu ingat", "apa yang kamu pelajari", "pengetahuanmu") ->
-                "Saya dapat mencari pengetahuan yang sudah disimpan dengan izin pengguna. Saya tidak menyimpan percakapan baru secara otomatis."
+                "Saya bisa mencari pengetahuan yang sudah disimpan dengan izinmu. Saya tidak menyimpan percakapan baru sebagai pengetahuan secara otomatis."
             containsAny(text, "jam berapa", "sekarang jam") ->
                 "Sekarang pukul " + SimpleDateFormat("HH:mm", Locale("id", "ID")).format(Date()) + "."
             containsAny(text, "hari apa", "tanggal berapa", "tanggal hari ini") ->
                 "Hari ini " + SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id", "ID")).format(Date()) + "."
-            containsAny(text, "ayo ngobrol", "temani aku", "ngobrol yuk") ->
-                "Tentu. Kita bisa ngobrol. Kamu ingin membahas kegiatan hari ini, teknologi, pengetahuan umum, atau hal lain?"
+            containsAny(text, "ayo ngobrol", "temani aku", "ngobrol yuk") -> reply("chat",
+                "Tentu. Kita bisa ngobrol santai. Ada hal menarik yang terjadi hari ini?",
+                "Siap, aku temani. Kita mulai dari cerita harimu atau topik yang sedang kamu pikirkan.",
+                "Boleh! Aku siap mendengarkan. Mau ngobrol ringan atau membahas sesuatu yang lebih serius?"
+            )
             else -> null
+        }
+    }
+
+    private fun reply(topic: String, vararg options: String): String {
+        lastTopic = topic
+        val index = responseIndexes[topic] ?: 0
+        responseIndexes[topic] = (index + 1) % options.size
+        return options[index % options.size]
+    }
+
+    private fun followUp(): String {
+        return when (lastTopic) {
+            "sad" -> "Aku masih mendengarkan. Bagian mana yang paling mengganggu pikiranmu saat ini?"
+            "happy" -> "Apa ada hal lain dari kejadian itu yang membuatmu merasa senang?"
+            "bored" -> "Kita pilih satu kegiatan dulu. Aku bisa mulai dengan teka-teki sederhana."
+            "motivation" -> "Coba tentukan satu hal kecil yang realistis untuk kamu selesaikan hari ini."
+            "joke" -> "Mau satu lagi? Aku punya beberapa tebak-tebakan ringan."
+            "chat" -> "Ceritakan saja dari bagian yang paling ingin kamu mulai. Aku akan mengikuti alur ceritamu."
+            "greeting" -> "Aku ingin tahu juga, bagaimana harimu sejauh ini?"
+            "thanks" -> "Sama-sama. Kita bisa lanjut membahas hal lain kapan saja."
+            else -> "Boleh. Bagian mana yang ingin kamu dalami? Beri sedikit petunjuk agar aku tidak salah menangkap maksudmu."
         }
     }
 

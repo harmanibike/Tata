@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import re
 import sys
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlsplit
 
 REQUIRED_COLUMNS = {
     "source_id", "title", "owner", "canonical_uri", "accessed_at",
@@ -19,7 +19,22 @@ REQUIRED_COLUMNS = {
 }
 YES_NO_UNCLEAR = {"yes", "no", "unclear"}
 DECISIONS = {"pending", "approved", "rejected"}
-URI_RE = re.compile(r"^https?://\S+$", re.I)
+
+
+def is_inspectable_http_url(value: str) -> bool:
+    """Accept only absolute HTTP(S) URLs with a host and no embedded credentials."""
+    try:
+        parsed = urlsplit(value.strip())
+        if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+            return False
+        if parsed.username is not None or parsed.password is not None:
+            return False
+        # Accessing .port validates malformed and out-of-range port values.
+        if parsed.port is not None and not 1 <= parsed.port <= 65535:
+            return False
+        return True
+    except ValueError:
+        return False
 
 
 def validate_register(path: Path) -> tuple[list[str], dict]:
@@ -48,8 +63,11 @@ def validate_register(path: Path) -> tuple[list[str], dict]:
 
                 for field in ("canonical_uri", "license_evidence_uri"):
                     value = (row.get(field) or "").strip()
-                    if not URI_RE.fullmatch(value):
-                        errors.append(f"baris {line_number}: {field} harus berupa URL http/https yang dapat diperiksa")
+                    if not is_inspectable_http_url(value):
+                        errors.append(
+                            f"baris {line_number}: {field} harus berupa URL http/https "
+                            "absolut dengan host valid tanpa kredensial"
+                        )
 
                 accessed_at = (row.get("accessed_at") or "").strip()
                 try:

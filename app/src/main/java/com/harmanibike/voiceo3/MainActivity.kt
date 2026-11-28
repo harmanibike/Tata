@@ -1014,7 +1014,9 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             return
         }
         activityScope.launch {
-            val answer = router.handle(spoken)
+            val answer = runCatching { router.handle(spoken) }.getOrElse {
+                "Maaf, terjadi kendala saat memproses pertanyaan ini. Coba kirim ulang dengan kalimat lebih singkat."
+            }
             if (answer == CommandRouter.CONFIRM_CLEAR_KNOWLEDGE) {
                 appendLog("Anda", spoken)
                 showClearKnowledgeConfirmation()
@@ -1022,7 +1024,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
                 // Unknown questions and the research prompt remain visible only in this session.
                 // They are deliberately excluded from both knowledge and chat-history storage.
                 appendLog("Anda", spoken, persist = false)
-                val question = answer.removePrefix(CommandRouter.UNKNOWN_QUERY_PREFIX).trim()
+                val question = answer.removePrefix(CommandRouter.UNKNOWN_QUERY_PREFIX).trim().ifBlank { spoken }
                 showResearchOptions(question)
             } else {
                 appendLog("Anda", spoken)
@@ -1033,13 +1035,20 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun showResearchOptions(question: String) {
-        val message = "Saya belum menemukan jawaban yang cukup meyakinkan. Mau saya bantu mencarinya?\n\nPertanyaan ini tidak akan disimpan sebagai pengetahuan Tata."
+        val message = "Pertanyaan: \"$question\"\n\n" +
+            "Saya belum menemukan jawaban yang cukup dapat dipercaya, jadi saya tidak akan menebak. " +
+            "Pilih Cari di Internet untuk melihat sumber, Tanya ChatGPT/Gemini untuk meminta jawaban pembanding, " +
+            "atau tempelkan jawaban yang Anda temukan agar bisa saya bantu ringkas.\n\n" +
+            "Pertanyaan ini hanya dipakai sementara dan tidak disimpan sebagai pengetahuan Tata."
         appendLog(
-            "Tata",
-            "Saya belum tahu jawabannya. Saya bisa membantu mencarinya di internet atau membuka AI lain. Pertanyaan ini hanya tampil sementara dan tidak disimpan ke database.",
+            "Tata AI",
+            "Untuk pertanyaan: \"$question\"\nSaya belum memiliki jawaban yang cukup terverifikasi. Saya tidak ingin mengarang. " +
+                "Saya bisa membantu membuka pencarian internet, menyiapkan pertanyaan untuk ChatGPT atau Gemini, " +
+                "atau merangkum jawaban yang Anda tempelkan. Pilih salah satu langkah pada jendela bantuan. " +
+                "Pertanyaan ini hanya sementara dan tidak disimpan sebagai pengetahuan Tata.",
             persist = false
         )
-        speakAssistant("Saya belum tahu jawabannya. Mau kita cari di internet atau bertanya ke AI lain?")
+        speakAssistant("Untuk pertanyaan itu, saya belum punya jawaban yang cukup pasti. Saya bisa bantu mencari sumber atau menyiapkan pertanyaan untuk AI lain. Silakan pilih langkah di layar.")
         AlertDialog.Builder(this)
             .setTitle("Cari tahu bersama")
             .setMessage(message)

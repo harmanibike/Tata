@@ -528,16 +528,16 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             else -> record.status
         }
         val message = buildString {
-            append("PERTANYAAN / KONTEKS\\n").append(record.question)
-            append("\\n\\nKOREKSI YANG AKAN DIPERIKSA\\n").append(record.correction)
-            if (record.source.isNotBlank()) append("\\n\\nSUMBER / REFERENSI\\n").append(record.source)
-            append("\\n\\nSTATUS: ").append(statusLabel)
+            append("PERTANYAAN / KONTEKS\n").append(record.question)
+            append("\n\nKOREKSI YANG AKAN DIPERIKSA\n").append(record.correction)
+            if (record.source.isNotBlank()) append("\n\nSUMBER / REFERENSI\n").append(record.source)
+            append("\n\nSTATUS: ").append(statusLabel)
             if (record.status == "perlu_ditinjau") {
-                append("\\n\\nPeriksa isi dan sumbernya sebelum menyetujui. Persetujuan belum otomatis mengaktifkan pengetahuan.")
+                append("\n\nPeriksa isi dan sumbernya sebelum menyetujui. Persetujuan belum otomatis mengaktifkan pengetahuan.")
             } else if (record.status == "diterima") {
-                append("\\n\\nKoreksi sudah disetujui, tetapi belum digunakan untuk menjawab. Pilih Aktifkan jika sudah yakin.")
+                append("\n\nKoreksi sudah disetujui, tetapi belum digunakan untuk menjawab. Pilih Aktifkan jika sudah yakin.")
             } else if (record.status == "diterapkan" || record.status == "sudah_diuji") {
-                append("\\n\\nKoreksi sudah diterapkan ke pengetahuan lokal Tata.")
+                append("\n\nKoreksi sudah diterapkan ke pengetahuan lokal Tata.")
             }
         }
         val options = arrayOf("Edit catatan") + when (record.status) {
@@ -619,10 +619,10 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             return
         }
         val confirmation = buildString {
-            append("Pertanyaan:\\n").append(record.question)
-            append("\\n\\nJawaban yang akan diaktifkan:\\n").append(record.correction)
-            if (record.source.isNotBlank()) append("\\n\\nSumber:\\n").append(record.source)
-            append("\\n\\nSetelah dikonfirmasi, Tata dapat menggunakan jawaban ini secara offline. Ini tidak melatih bobot model AI.")
+            append("Pertanyaan:\n").append(record.question)
+            append("\n\nJawaban yang akan diaktifkan:\n").append(record.correction)
+            if (record.source.isNotBlank()) append("\n\nSumber:\n").append(record.source)
+            append("\n\nSetelah dikonfirmasi, Tata dapat menggunakan jawaban ini secara offline. Ini tidak melatih bobot model AI.")
         }
         AlertDialog.Builder(this).setTitle("Konfirmasi aktivasi pengetahuan")
             .setMessage(confirmation)

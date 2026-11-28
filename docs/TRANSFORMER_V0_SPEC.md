@@ -101,3 +101,8 @@ python tools/model/train_transformer.py --corpus corpus-split.jsonl --tokenizer 
 ## Evaluator held-out test
 
 Script `tools/model/evaluate_transformer.py` memuat checkpoint dan menghitung loss/perplexity pada split `test` yang telah lolos tinjauan. Data test tidak pernah dimuat oleh loop training. Evaluator juga dapat menghasilkan contoh greedy dari prompt manual, tetapi hasilnya hanya untuk inspeksi manusia dan tidak membuktikan kebenaran atau keamanan. Laporan mencatat hash korpus/tokenizer dan jumlah token yang dinilai. Perplexity harus dilengkapi evaluasi kualitatif Bahasa Indonesia, halusinasi, privasi, bias, repetisi, dan uji perangkat.
+
+
+## Variasi eksperimen konteks
+
+Implementasi trainer menyediakan `--context-length` dengan default 256. Nilai lebih kecil hanya untuk pilot pipeline ketika panjang contoh terbatas; setiap hasil harus mencatat konteks aktual dan tidak dibandingkan seolah-olah konfigurasi sama. Validation mengambil sampel jendela penuh yang tersebar merata di seluruh split validation, bukan hanya potongan awal.

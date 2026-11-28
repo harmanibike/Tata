@@ -25,16 +25,26 @@ class TataCharacterBpeTokenizerTest {
         val tokenizer = TataCharacterBpeTokenizer.fromJson(
             fixture.getJSONObject("tokenizer").toString()
         )
-        val samples = fixture.getJSONArray("samples")
-        for (index in 0 until samples.length()) {
-            val sample = samples.getJSONObject(index)
-            val text = sample.getString("text")
-            val expectedIds = sample.getJSONArray("token_ids")
-            assertEquals(
-                (0 until expectedIds.length()).map { expectedIds.getInt(it) },
-                tokenizer.encode(text)
+        fun assertCase(case: JSONObject) {
+            val caseTokenizer = TataCharacterBpeTokenizer.fromJson(
+                case.getJSONObject("tokenizer").toString()
             )
-            assertEquals(sample.getString("decoded"), tokenizer.decode(tokenizer.encode(text)))
+            val samples = case.getJSONArray("samples")
+            for (index in 0 until samples.length()) {
+                val sample = samples.getJSONObject(index)
+                val sampleText = sample.getString("text")
+                val expectedIds = sample.getJSONArray("token_ids")
+                assertEquals(
+                    (0 until expectedIds.length()).map { expectedIds.getInt(it) },
+                    caseTokenizer.encode(sampleText)
+                )
+                assertEquals(sample.getString("decoded"), caseTokenizer.decode(caseTokenizer.encode(sampleText)))
+            }
+        }
+        assertCase(fixture)
+        val additional = fixture.getJSONArray("additional_cases")
+        for (index in 0 until additional.length()) {
+            assertCase(additional.getJSONObject(index))
         }
     }
 

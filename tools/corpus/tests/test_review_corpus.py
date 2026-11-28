@@ -12,8 +12,8 @@ def record(example_id="ex-1", privacy="passed", quality="pending"):
         "source": {"source_id": "source-1", "title": "Owned material",
                    "license": "owned_or_explicitly_permitted", "uri": None},
         "language": "id", "task": "instruction_response",
-        "messages": [{"role": "user", "content": "Apa itu fotosintesis?"},
-                     {"role": "assistant", "content": "Proses tumbuhan membuat makanan."}],
+        "messages": [{"role": "user", "content": "Apa itu fotosintesis " + example_id + "?"},
+                     {"role": "assistant", "content": "Proses tumbuhan membuat makanan " + example_id + "."}],
         "privacy_review": privacy, "quality_review": quality, "split": "unassigned",
     }
 

@@ -41,6 +41,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var logView: LinearLayout
     private lateinit var messageInput: EditText
     private lateinit var listenButton: Button
+    private lateinit var conversationStatusView: TextView
     private var ttsReady = false
     private var recognizerReady = false
     private var conversationModeActive = false
@@ -125,6 +126,7 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setTypeface(null, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
         }
+        conversationStatusView = stateLabel
         panel.addView(stateLabel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(6) })
 
         val micButton = Button(this).apply {
@@ -140,8 +142,8 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
             setOnClickListener { toggleConversationMode() }
         }
         listenButton = micButton
-        panel.addView(micButton, LinearLayout.LayoutParams(dp(206), dp(206)).apply {
-            topMargin = dp(10); bottomMargin = dp(20)
+        panel.addView(micButton, LinearLayout.LayoutParams(dp(124), dp(124)).apply {
+            topMargin = dp(3); bottomMargin = dp(8)
         })
 
         val scroll = ScrollView(this).apply {
@@ -642,8 +644,13 @@ class MainActivity : Activity(), TextToSpeech.OnInitListener {
     }
 
     private fun updateListenButton(label: String) {
-        if (!activityDestroyed && ::listenButton.isInitialized) {
-            runOnUiThread { if (!activityDestroyed && ::listenButton.isInitialized) listenButton.text = label }
+        if (activityDestroyed) return
+        runOnUiThread {
+            if (activityDestroyed) return@runOnUiThread
+            if (::conversationStatusView.isInitialized) conversationStatusView.text = label
+            if (::listenButton.isInitialized) {
+                listenButton.text = if (label.contains("Hentikan", ignoreCase = true)) "■" else "🎙"
+            }
         }
     }
 

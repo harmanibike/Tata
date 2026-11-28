@@ -71,6 +71,11 @@ class CommandRouter(
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TITLE, "Catatan Tata")
                 }, "aplikasi catatan")
+            ResearchIntent.isExplicitWebSearch(rawCommand) -> {
+                val query = ResearchIntent.cleanQuery(rawCommand)
+                val result = networkHelper.searchWeb(query)
+                result?.takeIf { it.isNotBlank() } ?: (UNKNOWN_QUERY_PREFIX + query)
+            }
             else -> {
                 val localAnswer = knowledgeStore.search(command)
                 if (localAnswer != null) localAnswer
@@ -90,13 +95,9 @@ class CommandRouter(
                         }?.takeIf { it.isNotBlank() }
                         if (localAnswer != null) localAnswer
                         else {
-                            val webQuery = rawCommand.replace(
-                                Regex("(?i)^\\s*(tolong\\s+)?(cari|telusuri|search)\\s+(di\\s+)?(internet|web)\\s*(tentang|mengenai)?\\s*"),
-                                ""
-                            ).trim().ifBlank { rawCommand }
-                            val webAnswer = networkHelper.searchWeb(webQuery)
-                            if (!webAnswer.isNullOrBlank()) webAnswer
-                            else UNKNOWN_QUERY_PREFIX + rawCommand
+                            // Pertanyaan yang belum terjawab tetap lokal dan sementara.
+                            // Web hanya diakses melalui ResearchIntent yang eksplisit.
+                            UNKNOWN_QUERY_PREFIX + rawCommand
                         }
                     }
                 }
